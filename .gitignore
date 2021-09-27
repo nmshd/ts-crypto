@@ -1,0 +1,10 @@
+node_modules
+lib
+tmp-nightwatch
+chromedriver.log
+tests_output
+debug.log
+dist
+dist-test
+lib-web
+lib-esm
