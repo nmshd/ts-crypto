@@ -1,6 +1,6 @@
 import { buildInformation as servalBuildInformation } from "@js-soft/ts-serval";
 
-export default {
+export const buildInformation = {
     version: "{{version}}",
     build: "{{build}}",
     date: "{{date}}",
