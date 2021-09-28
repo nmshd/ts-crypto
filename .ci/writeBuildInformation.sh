@@ -11,15 +11,14 @@ if [ -z "$BUILD_NUMBER" ]; then
     exit 1
 fi
 
+if [ -z "$COMMIT_HASH" ]; then
+    echo "The environment variable 'COMMIT_HASH' must be set."
+    exit 1
+fi
+
 DEPENDENCIES=$(jq .dependencies package.json -cr)
 if [ "$DEPENDENCIES" = "null" ]; then
     DEPENDENCIES="{}"
-fi
-
-COMMIT_HASH=$(git rev-parse HEAD)
-if [ -z "$COMMIT_HASH" ]; then
-    echo "Couldn't determine the hash of the latest commit."
-    exit 1
 fi
 
 VERSION=$(jq .version package.json -cr)
@@ -30,14 +29,14 @@ fi
 
 DATE=$(date -u --iso-8601=seconds)
 
-TARGET_FILE="./dist/BuildInformation.js"
-
 echo "Writing the following properties into $TARGET_FILE"
 echo "  - DEPENDENCIES: $DEPENDENCIES"
 echo "  - VERSION: $VERSION"
 echo "  - BUILD_NUMBER: $BUILD_NUMBER"
 echo "  - COMMIT_HASH: $COMMIT_HASH"
 echo "  - DATE: $DATE"
+
+TARGET_FILE="./dist/BuildInformation.js"
 
 sed -i "s/\"{{dependencies}}\"/$DEPENDENCIES/" $TARGET_FILE
 sed -i "s/{{version}}/$VERSION/" $TARGET_FILE
