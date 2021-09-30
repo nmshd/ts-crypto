@@ -1,5 +1,5 @@
 export * from "./BaseX";
-export * from "./BuildInformation";
+export * from "./buildInformation";
 export * from "./CoreBuffer";
 export * from "./CryptoDerivation";
 export * from "./CryptoError";
