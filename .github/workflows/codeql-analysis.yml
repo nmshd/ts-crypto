@@ -2,7 +2,7 @@ name: "CodeQL"
 
 on:
   push:
-    branches: [main, ci/setup-codeql-scanning]
+    branches: [main]
   pull_request:
     branches: [main]
   schedule:
@@ -23,13 +23,6 @@ jobs:
         uses: github/codeql-action/init@v1
         with:
           languages: javascript
-
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v1
-
-      #- run: |
-      #   make bootstrap
-      #   make release
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v1
