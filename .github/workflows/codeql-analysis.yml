@@ -2,7 +2,7 @@ name: "CodeQL"
 
 on:
   push:
-    branches: [main, chore/setup-codeql-scanning]
+    branches: [main, ci/setup-codeql-scanning]
   pull_request:
     branches: [main]
   schedule:
