@@ -157,7 +157,7 @@ export class CryptoSignatureTest {
                     expect(signature.algorithm).to.be.equal(hash);
                 });
 
-                it("should return with different signatures every time it is called with same message", async function () {
+                it("should create signatures", async function () {
                     signature1 = await CryptoSignatures.sign(buffer, sender.privateKey, hash);
                     signature2 = await CryptoSignatures.sign(buffer, sender.privateKey, hash);
                     signature3 = await CryptoSignatures.sign(buffer, sender.privateKey, hash);
