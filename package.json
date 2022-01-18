@@ -1,6 +1,6 @@
 {
     "name": "@nmshd/crypto",
-    "version": "1.0.6",
+    "version": "1.0.7",
     "description": "The Enmeshed crypto library.",
     "homepage": "https://enmeshed.eu",
     "repository": "github:nmshd/cns-crypto",
