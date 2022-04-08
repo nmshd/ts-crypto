@@ -10,9 +10,9 @@ export class CryptoSecretKeyTest {
                 const algorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.XCHACHA20_POLY1305;
                 let importedSecretKey: CryptoSecretKey;
 
-                it("fromString() should import from Base64", async function () {
+                it("fromString() should import from Base64", function () {
                     const b64 = "AUio8cs62qJhmra6W1TXgwK0Y1wWo7cpywebexmANnI";
-                    const privateKey = await CryptoSecretKey.fromJSON({
+                    const privateKey = CryptoSecretKey.fromJSON({
                         key: b64,
                         alg: algorithm
                     });
