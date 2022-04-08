@@ -1,6 +1,6 @@
-import { ISerializableAsync, ISerialized, type } from "@js-soft/ts-serval";
+import { ISerializable, ISerialized, type } from "@js-soft/ts-serval";
 import { CoreBuffer, IClearable, ICoreBuffer } from "../CoreBuffer";
-import { CryptoSerializableAsync } from "../CryptoSerializableAsync";
+import { CryptoSerializable } from "../CryptoSerializable";
 import { CryptoEncryptionAlgorithm } from "../encryption/CryptoEncryption";
 
 export interface ICryptoExchangeSecretsSerialized extends ISerialized {
@@ -9,14 +9,14 @@ export interface ICryptoExchangeSecretsSerialized extends ISerialized {
     tx: string;
 }
 
-export interface ICryptoExchangeSecrets extends ISerializableAsync {
+export interface ICryptoExchangeSecrets extends ISerializable {
     algorithm: CryptoEncryptionAlgorithm;
     receivingKey: ICoreBuffer;
     transmissionKey: ICoreBuffer;
 }
 
 @type("CryptoExchangeSecrets")
-export class CryptoExchangeSecrets extends CryptoSerializableAsync implements ICryptoExchangeSecrets, IClearable {
+export class CryptoExchangeSecrets extends CryptoSerializable implements ICryptoExchangeSecrets, IClearable {
     public readonly algorithm: CryptoEncryptionAlgorithm;
     public readonly receivingKey: CoreBuffer;
     public readonly transmissionKey: CoreBuffer;
@@ -54,7 +54,7 @@ export class CryptoExchangeSecrets extends CryptoSerializableAsync implements IC
         return CoreBuffer.utf8_base64(this.serialize(verbose));
     }
 
-    public static from(value: CryptoExchangeSecrets | ICryptoExchangeSecrets): Promise<CryptoExchangeSecrets> {
+    public static from(value: CryptoExchangeSecrets | ICryptoExchangeSecrets): CryptoExchangeSecrets {
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         if (!value.algorithm || !value.receivingKey || !value.transmissionKey) {
             throw new Error("No algorithm, receivingKey or transmissionKey property set.");
@@ -62,10 +62,10 @@ export class CryptoExchangeSecrets extends CryptoSerializableAsync implements IC
 
         const receivingKey = CoreBuffer.from(value.receivingKey);
         const transmissionKey = CoreBuffer.from(value.transmissionKey);
-        return Promise.resolve(new CryptoExchangeSecrets(receivingKey, transmissionKey, value.algorithm));
+        return new CryptoExchangeSecrets(receivingKey, transmissionKey, value.algorithm);
     }
 
-    public static fromJSON(value: ICryptoExchangeSecretsSerialized): Promise<CryptoExchangeSecrets> {
+    public static fromJSON(value: ICryptoExchangeSecretsSerialized): CryptoExchangeSecrets {
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         if (!value.alg || !value.rx || !value.tx) {
             throw new Error("No algorithm, receivingKey or transmissionKey property set.");
@@ -73,15 +73,15 @@ export class CryptoExchangeSecrets extends CryptoSerializableAsync implements IC
 
         const receivingKey = CoreBuffer.fromBase64URL(value.rx);
         const transmissionKey = CoreBuffer.fromBase64URL(value.tx);
-        return Promise.resolve(new CryptoExchangeSecrets(receivingKey, transmissionKey, value.alg));
+        return new CryptoExchangeSecrets(receivingKey, transmissionKey, value.alg);
     }
 
     public static fromBase64(value: string): Promise<CryptoExchangeSecrets> {
         return Promise.resolve(this.deserialize(CoreBuffer.base64_utf8(value)));
     }
 
-    public static async deserialize(value: string): Promise<CryptoExchangeSecrets> {
+    public static deserialize(value: string): CryptoExchangeSecrets {
         const obj = JSON.parse(value);
-        return await this.fromJSON(obj);
+        return this.fromJSON(obj);
     }
 }

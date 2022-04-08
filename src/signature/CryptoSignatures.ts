@@ -28,7 +28,7 @@ export class CryptoSignatures {
                     const publicKey = (await SodiumWrapper.ready()).crypto_sign_ed25519_sk_to_pk(
                         privateKey.privateKey.buffer
                     );
-                    return await CryptoSignaturePublicKey.from({
+                    return CryptoSignaturePublicKey.from({
                         algorithm: privateKey.algorithm,
                         publicKey: CoreBuffer.from(publicKey)
                     });

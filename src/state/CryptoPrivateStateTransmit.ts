@@ -58,7 +58,7 @@ export class CryptoPrivateStateTransmit extends CryptoPrivateState {
         return new CryptoPrivateStateTransmit(nonce, counter, secretKey, algorithm, id);
     }
 
-    public static from(obj: CryptoPrivateState | ICryptoPrivateState): Promise<CryptoPrivateStateTransmit> {
+    public static from(obj: CryptoPrivateState | ICryptoPrivateState): CryptoPrivateStateTransmit {
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         if (!obj.secretKey) {
             throw new CryptoError(CryptoErrorCode.StateWrongSecretKey, "No secretKey property set.");
@@ -75,18 +75,16 @@ export class CryptoPrivateStateTransmit extends CryptoPrivateState {
             throw new CryptoError(CryptoErrorCode.StateWrongType, "The given object has a wrong state type.");
         }
 
-        return Promise.resolve(
-            new CryptoPrivateStateTransmit(
-                CoreBuffer.from(obj.nonce),
-                obj.counter,
-                CoreBuffer.from(obj.secretKey),
-                obj.algorithm,
-                obj.id
-            )
+        return new CryptoPrivateStateTransmit(
+            CoreBuffer.from(obj.nonce),
+            obj.counter,
+            CoreBuffer.from(obj.secretKey),
+            obj.algorithm,
+            obj.id
         );
     }
 
-    public static fromJSON(value: ICryptoPrivateStateSerialized): Promise<CryptoPrivateStateTransmit> {
+    public static fromJSON(value: ICryptoPrivateStateSerialized): CryptoPrivateStateTransmit {
         CryptoValidation.checkEncryptionAlgorithm(value.alg);
         CryptoValidation.checkCounter(value.cnt);
         CryptoValidation.checkSerializedBuffer(value.nnc, 0, 24, "nonce");
@@ -96,18 +94,16 @@ export class CryptoPrivateStateTransmit extends CryptoPrivateState {
         }
         const nonceBuffer = CoreBuffer.fromBase64URL(value.nnc);
         const secretKeyBuffer = CoreBuffer.fromBase64URL(value.key);
-        return Promise.resolve(
-            new CryptoPrivateStateTransmit(
-                nonceBuffer,
-                value.cnt,
-                secretKeyBuffer,
-                value.alg as CryptoEncryptionAlgorithm,
-                value.id
-            )
+        return new CryptoPrivateStateTransmit(
+            nonceBuffer,
+            value.cnt,
+            secretKeyBuffer,
+            value.alg as CryptoEncryptionAlgorithm,
+            value.id
         );
     }
 
-    public static async deserialize(value: string): Promise<CryptoPrivateStateTransmit> {
-        return await this.fromJSON(JSON.parse(value));
+    public static deserialize(value: string): CryptoPrivateStateTransmit {
+        return this.fromJSON(JSON.parse(value));
     }
 }

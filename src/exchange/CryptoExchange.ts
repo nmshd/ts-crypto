@@ -25,7 +25,7 @@ export class CryptoExchange {
                     const publicKey = (await SodiumWrapper.ready()).crypto_scalarmult_base(
                         privateKey.privateKey.buffer
                     );
-                    return await CryptoExchangePublicKey.from({
+                    return CryptoExchangePublicKey.from({
                         algorithm: privateKey.algorithm,
                         publicKey: CoreBuffer.from(publicKey)
                     });
@@ -103,7 +103,7 @@ export class CryptoExchange {
             throw new CryptoError(CryptoErrorCode.ExchangeKeyDerivation, `${e}`);
         }
 
-        const secrets = await CryptoExchangeSecrets.from({
+        const secrets = CryptoExchangeSecrets.from({
             receivingKey: CoreBuffer.from(sharedKey.sharedRx),
             transmissionKey: CoreBuffer.from(sharedKey.sharedTx),
             algorithm: algorithm
@@ -143,7 +143,7 @@ export class CryptoExchange {
             throw new CryptoError(CryptoErrorCode.ExchangeKeyDerivation, `${e}`);
         }
 
-        const secrets = await CryptoExchangeSecrets.from({
+        const secrets = CryptoExchangeSecrets.from({
             receivingKey: CoreBuffer.from(sharedKey.sharedRx),
             transmissionKey: CoreBuffer.from(sharedKey.sharedTx),
             algorithm: algorithm

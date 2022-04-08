@@ -1,4 +1,4 @@
-import { SerializableAsync } from "@js-soft/ts-serval";
+import { Serializable } from "@js-soft/ts-serval";
 import {
     CoreBuffer,
     CryptoDerivation,
@@ -47,23 +47,23 @@ export class CryptoExchangeTest {
                     expect(keypair.publicKey.algorithm).to.be.equal(CryptoExchangeAlgorithm.ECDH_X25519);
                 });
 
-                it("should serialize and deserialize signature public keys", async function () {
+                it("should serialize and deserialize signature public keys", function () {
                     const serialized = keypair.publicKey.serialize();
-                    const deserialized = await CryptoExchangePublicKey.deserialize(serialized);
+                    const deserialized = CryptoExchangePublicKey.deserialize(serialized);
                     expect(deserialized.publicKey.toBase64URL()).equals(keypair.publicKey.publicKey.toBase64URL());
                     expect(deserialized.algorithm).equals(keypair.publicKey.algorithm);
                 });
 
-                it("should serialize and deserialize signature private keys", async function () {
+                it("should serialize and deserialize signature private keys", function () {
                     const serialized = keypair.privateKey.serialize();
-                    const deserialized = await CryptoExchangePrivateKey.deserialize(serialized);
+                    const deserialized = CryptoExchangePrivateKey.deserialize(serialized);
                     expect(deserialized.privateKey.toBase64URL()).equals(keypair.privateKey.privateKey.toBase64URL());
                     expect(deserialized.algorithm).equals(keypair.privateKey.algorithm);
                 });
 
-                it("should serialize and deserialize signature keypairs", async function () {
+                it("should serialize and deserialize signature keypairs", function () {
                     const serialized = keypair.serialize();
-                    const deserialized = await CryptoExchangeKeypair.deserialize(serialized);
+                    const deserialized = CryptoExchangeKeypair.deserialize(serialized);
                     expect(deserialized.privateKey.privateKey.toBase64URL()).equals(
                         keypair.privateKey.privateKey.toBase64URL()
                     );
@@ -72,23 +72,23 @@ export class CryptoExchangeTest {
                     );
                 });
 
-                it("should convert signature public keys to base64 and back again", async function () {
+                it("should convert signature public keys to base64 and back again", function () {
                     const serialized = keypair.publicKey.toBase64();
-                    const deserialized = await CryptoExchangePublicKey.fromBase64(serialized);
+                    const deserialized = CryptoExchangePublicKey.fromBase64(serialized);
                     expect(deserialized.publicKey.toBase64URL()).equals(keypair.publicKey.publicKey.toBase64URL());
                     expect(deserialized.algorithm).equals(keypair.publicKey.algorithm);
                 });
 
-                it("should convert signature private keys to base64 and back again", async function () {
+                it("should convert signature private keys to base64 and back again", function () {
                     const serialized = keypair.privateKey.toBase64();
-                    const deserialized = await CryptoExchangePrivateKey.fromBase64(serialized);
+                    const deserialized = CryptoExchangePrivateKey.fromBase64(serialized);
                     expect(deserialized.privateKey.toBase64URL()).equals(keypair.privateKey.privateKey.toBase64URL());
                     expect(deserialized.algorithm).equals(keypair.privateKey.algorithm);
                 });
 
-                it("should convert signature keypairs to base64 and back again", async function () {
+                it("should convert signature keypairs to base64 and back again", function () {
                     const serialized = keypair.toBase64();
-                    const deserialized = await CryptoExchangeKeypair.fromBase64(serialized);
+                    const deserialized = CryptoExchangeKeypair.fromBase64(serialized);
                     expect(deserialized.privateKey.privateKey.toBase64URL()).equals(
                         keypair.privateKey.privateKey.toBase64URL()
                     );
@@ -97,31 +97,25 @@ export class CryptoExchangeTest {
                     );
                 });
 
-                it("should serialize and deserialize signature public keys from @type", async function () {
+                it("should serialize and deserialize signature public keys from @type", function () {
                     const serialized = keypair.publicKey.serialize();
-                    const deserialized = (await SerializableAsync.deserializeUnknown(
-                        serialized
-                    )) as CryptoExchangePublicKey;
+                    const deserialized = Serializable.deserializeUnknown(serialized) as CryptoExchangePublicKey;
                     expect(deserialized).instanceOf(CryptoExchangePublicKey);
                     expect(deserialized.publicKey.toBase64URL()).equals(keypair.publicKey.publicKey.toBase64URL());
                     expect(deserialized.algorithm).equals(keypair.publicKey.algorithm);
                 });
 
-                it("should serialize and deserialize signature private keys from @type", async function () {
+                it("should serialize and deserialize signature private keys from @type", function () {
                     const serialized = keypair.privateKey.serialize();
-                    const deserialized = (await SerializableAsync.deserializeUnknown(
-                        serialized
-                    )) as CryptoExchangePrivateKey;
+                    const deserialized = Serializable.deserializeUnknown(serialized) as CryptoExchangePrivateKey;
                     expect(deserialized).instanceOf(CryptoExchangePrivateKey);
                     expect(deserialized.privateKey.toBase64URL()).equals(keypair.privateKey.privateKey.toBase64URL());
                     expect(deserialized.algorithm).equals(keypair.privateKey.algorithm);
                 });
 
-                it("should serialize and deserialize signature keypairs from @type", async function () {
+                it("should serialize and deserialize signature keypairs from @type", function () {
                     const serialized = keypair.serialize();
-                    const deserialized = (await SerializableAsync.deserializeUnknown(
-                        serialized
-                    )) as CryptoExchangeKeypair;
+                    const deserialized = Serializable.deserializeUnknown(serialized) as CryptoExchangeKeypair;
                     expect(deserialized).instanceOf(CryptoExchangeKeypair);
                     expect(deserialized.privateKey.privateKey.toBase64URL()).equals(
                         keypair.privateKey.privateKey.toBase64URL()
@@ -148,21 +142,21 @@ export class CryptoExchangeTest {
                 });
 
                 it("should create equal client and server keys", async function () {
-                    const senderPub = (await CryptoPublicKey.fromString(
+                    const senderPub = CryptoPublicKey.fromString(
                         sender.publicKey.toString(),
                         asymmetric
-                    )) as CryptoExchangePublicKey;
-                    const recipientPub = (await CryptoPublicKey.fromString(
+                    ) as CryptoExchangePublicKey;
+                    const recipientPub = CryptoPublicKey.fromString(
                         recipient.publicKey.toString(),
                         asymmetric
-                    )) as CryptoExchangePublicKey;
+                    ) as CryptoExchangePublicKey;
 
-                    const client = await CryptoExchangeKeypair.fromJSON({
+                    const client = CryptoExchangeKeypair.fromJSON({
                         prv: sender.privateKey.toJSON(),
                         pub: sender.publicKey.toJSON()
                     });
 
-                    const server = await CryptoExchangeKeypair.fromJSON({
+                    const server = CryptoExchangeKeypair.fromJSON({
                         prv: recipient.privateKey.toJSON(),
                         pub: recipient.publicKey.toJSON()
                     });
@@ -183,20 +177,18 @@ export class CryptoExchangeTest {
                     expect(clientKeys2.receivingKey.toBase64URL()).equals(serverKeys2.transmissionKey.toBase64URL());
                 });
 
-                it("should serialize and deserialize the sender's secrets", async function () {
+                it("should serialize and deserialize the sender's secrets", function () {
                     const serialized = secretsSender.serialize();
-                    const deserialized = await CryptoExchangeSecrets.deserialize(serialized);
+                    const deserialized = CryptoExchangeSecrets.deserialize(serialized);
                     expect(deserialized.receivingKey.toBase64URL()).equals(secretsSender.receivingKey.toBase64URL());
                     expect(deserialized.transmissionKey.toBase64URL()).equals(
                         secretsSender.transmissionKey.toBase64URL()
                     );
                 });
 
-                it("should serialize and deserialize the sender's secrets from @type", async function () {
+                it("should serialize and deserialize the sender's secrets from @type", function () {
                     const serialized = secretsSender.serialize();
-                    const deserialized = (await SerializableAsync.deserializeUnknown(
-                        serialized
-                    )) as CryptoExchangeSecrets;
+                    const deserialized = Serializable.deserializeUnknown(serialized) as CryptoExchangeSecrets;
                     expect(deserialized).instanceOf(CryptoExchangeSecrets);
                     expect(deserialized.receivingKey.toBase64URL()).equals(secretsSender.receivingKey.toBase64URL());
                     expect(deserialized.transmissionKey.toBase64URL()).equals(

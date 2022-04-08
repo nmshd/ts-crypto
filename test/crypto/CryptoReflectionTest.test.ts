@@ -20,8 +20,7 @@ export class CryptoReflectionTest {
         "CryptoPrivateStateReceive",
         "CryptoPrivateStateTransmit",
         "CryptoPublicState",
-        "CoreBuffer",
-        "CryptoSerializableAsync"
+        "CoreBuffer"
     ];
     public static run(): void {
         describe("CryptoReflection", function () {

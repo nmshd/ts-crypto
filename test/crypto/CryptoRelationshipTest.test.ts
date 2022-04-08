@@ -1,4 +1,4 @@
-import { SerializableAsync } from "@js-soft/ts-serval";
+import { Serializable } from "@js-soft/ts-serval";
 import {
     CoreBuffer,
     CryptoCipher,
@@ -107,9 +107,9 @@ export class CryptoRelationshipTest {
                 expect(request.signatureKeypair).to.exist;
             });
 
-            it("should serialize and deserialize a relationship request crypto object", async function () {
+            it("should serialize and deserialize a relationship request crypto object", function () {
                 const serialized = request.serialize();
-                const deserialized = await CryptoRelationshipRequestSecrets.deserialize(serialized);
+                const deserialized = CryptoRelationshipRequestSecrets.deserialize(serialized);
                 expect(deserialized.peerIdentityKey.toBase64()).equals(request.peerIdentityKey.toBase64());
                 expect(deserialized.secretKey.toBase64()).equals(request.secretKey.toBase64());
                 expect(deserialized.signatureKeypair.toBase64()).equals(request.signatureKeypair.toBase64());
@@ -119,11 +119,9 @@ export class CryptoRelationshipTest {
                 expect(deserialized.peerExchangeKey.toBase64()).equals(request.peerExchangeKey.toBase64());
             });
 
-            it("should serialize and deserialize a relationship request crypto object from @type", async function () {
+            it("should serialize and deserialize a relationship request crypto object from @type", function () {
                 const serialized = request.serialize();
-                const deserialized = (await SerializableAsync.deserializeUnknown(
-                    serialized
-                )) as CryptoRelationshipRequestSecrets;
+                const deserialized = Serializable.deserializeUnknown(serialized) as CryptoRelationshipRequestSecrets;
                 expect(deserialized).instanceOf(CryptoRelationshipRequestSecrets);
                 expect(deserialized.peerIdentityKey.toBase64()).equals(request.peerIdentityKey.toBase64());
                 expect(deserialized.secretKey.toBase64()).equals(request.secretKey.toBase64());
@@ -139,7 +137,7 @@ export class CryptoRelationshipTest {
                     templatorTemplateExchangePublicKey,
                     templatorIdentityPublicKey
                 );
-                publicRequest = await request.toPublicRequest();
+                publicRequest = request.toPublicRequest();
                 expect(publicRequest).to.exist;
                 expect(publicRequest.signatureKey).to.exist;
                 expect(publicRequest.exchangeKey).to.exist;
@@ -156,7 +154,7 @@ export class CryptoRelationshipTest {
                     publicRequest,
                     templatorTemplateExchangeKey
                 );
-                publicResponse = await templatorRelationship.toPublicResponse();
+                publicResponse = templatorRelationship.toPublicResponse();
                 expect(publicResponse).to.exist;
                 expect(publicResponse.exchangeKey).to.exist;
                 expect(publicResponse.signatureKey).to.exist;
@@ -179,9 +177,9 @@ export class CryptoRelationshipTest {
                 responseCipher = await templatorRelationship.encrypt(content);
             });
 
-            it("should serialize and deserialize a relationship secrets object", async function () {
+            it("should serialize and deserialize a relationship secrets object", function () {
                 const serialized = templatorRelationship.serialize();
-                const deserialized = await CryptoRelationshipSecrets.deserialize(serialized);
+                const deserialized = CryptoRelationshipSecrets.deserialize(serialized);
                 expect(deserialized.peerSignatureKey.toBase64()).equals(
                     templatorRelationship.peerSignatureKey.toBase64()
                 );
@@ -205,11 +203,9 @@ export class CryptoRelationshipTest {
                 expect(deserialized.transmitState.serialize()).equals(templatorRelationship.transmitState.serialize());
             });
 
-            it("should serialize and deserialize a relationship secrets object from @type", async function () {
+            it("should serialize and deserialize a relationship secrets object from @type", function () {
                 const serialized = templatorRelationship.serialize();
-                const deserialized = (await SerializableAsync.deserializeUnknown(
-                    serialized
-                )) as CryptoRelationshipSecrets;
+                const deserialized = Serializable.deserializeUnknown(serialized) as CryptoRelationshipSecrets;
                 expect(deserialized).instanceOf(CryptoRelationshipSecrets);
                 expect(deserialized.peerSignatureKey.toBase64()).equals(
                     templatorRelationship.peerSignatureKey.toBase64()

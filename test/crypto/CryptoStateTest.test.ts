@@ -1,4 +1,4 @@
-import { SerializableAsync } from "@js-soft/ts-serval";
+import { Serializable } from "@js-soft/ts-serval";
 import {
     CoreBuffer,
     CryptoCipher,
@@ -152,8 +152,8 @@ export class CryptoStateTest {
                 expect(CryptoTestUtil.isCleared(stateTx.secretKey)).to.be.true;
             });
 
-            it("should deserialize the states (1)", async function () {
-                stateTx = await CryptoPrivateStateTransmit.fromJSON(serializedTx);
+            it("should deserialize the states (1)", function () {
+                stateTx = CryptoPrivateStateTransmit.fromJSON(serializedTx);
 
                 expect(stateTx).to.exist;
                 expect(stateTx.stateType).to.equal(CryptoStateType.Transmit);
@@ -164,7 +164,7 @@ export class CryptoStateTest {
                 expect(stateTx.secretKey).to.exist;
                 expect(stateTx.secretKey.buffer.byteLength).to.be.equal(32);
 
-                stateRx = await CryptoPrivateStateReceive.fromJSON(serializedRx);
+                stateRx = CryptoPrivateStateReceive.fromJSON(serializedRx);
 
                 expect(stateRx).to.exist;
                 expect(stateRx.stateType).to.equal(CryptoStateType.Receive);
@@ -179,10 +179,10 @@ export class CryptoStateTest {
                 expect(stateRx.secretKey.toBase64URL()).to.equal(stateTx.secretKey.toBase64URL());
             });
 
-            it("should deserialize the states (2)", async function () {
-                let stateTx = await CryptoPrivateStateTransmit.fromJSON(serializedTx);
+            it("should deserialize the states (2)", function () {
+                let stateTx = CryptoPrivateStateTransmit.fromJSON(serializedTx);
                 const serialized = stateTx.serialize();
-                stateTx = await CryptoPrivateStateTransmit.deserialize(serialized);
+                stateTx = CryptoPrivateStateTransmit.deserialize(serialized);
 
                 expect(stateTx).to.exist;
                 expect(stateTx.stateType).to.equal(CryptoStateType.Transmit);
@@ -193,9 +193,9 @@ export class CryptoStateTest {
                 expect(stateTx.secretKey).to.exist;
                 expect(stateTx.secretKey.buffer.byteLength).to.be.equal(32);
 
-                let stateRx = await CryptoPrivateStateReceive.fromJSON(serializedRx);
+                let stateRx = CryptoPrivateStateReceive.fromJSON(serializedRx);
                 const serialized2 = stateRx.serialize();
-                stateRx = await CryptoPrivateStateReceive.deserialize(serialized2);
+                stateRx = CryptoPrivateStateReceive.deserialize(serialized2);
 
                 expect(stateRx).to.exist;
                 expect(stateRx.stateType).to.equal(CryptoStateType.Receive);
@@ -210,10 +210,10 @@ export class CryptoStateTest {
                 expect(stateRx.secretKey.toBase64URL()).to.equal(stateTx.secretKey.toBase64URL());
             });
 
-            it("should deserialize the states from @type", async function () {
-                let stateTx = await CryptoPrivateStateTransmit.fromJSON(serializedTx);
+            it("should deserialize the states from @type", function () {
+                let stateTx = CryptoPrivateStateTransmit.fromJSON(serializedTx);
                 const serialized = stateTx.serialize();
-                stateTx = (await SerializableAsync.deserializeUnknown(serialized)) as CryptoPrivateStateTransmit;
+                stateTx = Serializable.deserializeUnknown(serialized) as CryptoPrivateStateTransmit;
                 expect(stateTx).instanceOf(CryptoPrivateStateTransmit);
                 expect(stateTx).to.exist;
                 expect(stateTx.stateType).to.equal(CryptoStateType.Transmit);
@@ -224,9 +224,9 @@ export class CryptoStateTest {
                 expect(stateTx.secretKey).to.exist;
                 expect(stateTx.secretKey.buffer.byteLength).to.be.equal(32);
 
-                let stateRx = await CryptoPrivateStateReceive.fromJSON(serializedRx);
+                let stateRx = CryptoPrivateStateReceive.fromJSON(serializedRx);
                 const serialized2 = stateRx.serialize();
-                stateRx = (await SerializableAsync.deserializeUnknown(serialized2)) as CryptoPrivateStateReceive;
+                stateRx = Serializable.deserializeUnknown(serialized2) as CryptoPrivateStateReceive;
                 expect(stateRx).instanceOf(CryptoPrivateStateReceive);
                 expect(stateRx).to.exist;
                 expect(stateRx.stateType).to.equal(CryptoStateType.Receive);

@@ -1,6 +1,6 @@
-import { ISerializableAsync, ISerialized, serialize, type, validate } from "@js-soft/ts-serval";
+import { ISerializable, ISerialized, serialize, type, validate } from "@js-soft/ts-serval";
 import { CoreBuffer, IClearable } from "../CoreBuffer";
-import { CryptoSerializableAsync } from "../CryptoSerializableAsync";
+import { CryptoSerializable } from "../CryptoSerializable";
 import {
     CryptoExchangePublicKey,
     ICryptoExchangePublicKey,
@@ -22,7 +22,7 @@ export interface ICryptoRelationshipPublicResponseSerialized extends ISerialized
     sta: ICryptoPublicStateSerialized;
 }
 
-export interface ICryptoRelationshipPublicResponse extends ISerializableAsync {
+export interface ICryptoRelationshipPublicResponse extends ISerializable {
     id?: string;
     exchangeKey: ICryptoExchangePublicKey;
     signatureKey: ICryptoSignaturePublicKey;
@@ -31,7 +31,7 @@ export interface ICryptoRelationshipPublicResponse extends ISerializableAsync {
 
 @type("CryptoRelationshipPublicResponse")
 export class CryptoRelationshipPublicResponse
-    extends CryptoSerializableAsync
+    extends CryptoSerializable
     implements ICryptoRelationshipPublicResponse, IClearable
 {
     @validate({ nullable: true })
@@ -84,34 +84,29 @@ export class CryptoRelationshipPublicResponse
         return await CryptoSignatures.verify(content, signature, this.signatureKey);
     }
 
-    public static async from(
+    public static from(
         value: CryptoRelationshipPublicResponse | ICryptoRelationshipPublicResponse
-    ): Promise<CryptoRelationshipPublicResponse> {
-        const [signatureKey, exchangeKey, state] = await Promise.all([
-            CryptoSignaturePublicKey.from(value.signatureKey),
-            CryptoExchangePublicKey.from(value.exchangeKey),
-            CryptoPublicState.from(value.state)
-        ]);
-        return new CryptoRelationshipPublicResponse(signatureKey, exchangeKey, state);
-    }
-
-    public static async fromJSON(
-        value: ICryptoRelationshipPublicResponseSerialized
-    ): Promise<CryptoRelationshipPublicResponse> {
-        const [signatureKey, exchangeKey, state] = await Promise.all([
-            CryptoSignaturePublicKey.fromJSON(value.sig),
-            CryptoExchangePublicKey.fromJSON(value.exc),
-            CryptoPublicState.fromJSON(value.sta)
-        ]);
+    ): CryptoRelationshipPublicResponse {
+        const signatureKey = CryptoSignaturePublicKey.from(value.signatureKey);
+        const exchangeKey = CryptoExchangePublicKey.from(value.exchangeKey);
+        const state = CryptoPublicState.from(value.state);
 
         return new CryptoRelationshipPublicResponse(signatureKey, exchangeKey, state);
     }
 
-    public static async fromBase64(value: string): Promise<CryptoRelationshipPublicResponse> {
-        return await this.deserialize(CoreBuffer.base64_utf8(value));
+    public static fromJSON(value: ICryptoRelationshipPublicResponseSerialized): CryptoRelationshipPublicResponse {
+        const signatureKey = CryptoSignaturePublicKey.fromJSON(value.sig);
+        const exchangeKey = CryptoExchangePublicKey.fromJSON(value.exc);
+        const state = CryptoPublicState.fromJSON(value.sta);
+
+        return new CryptoRelationshipPublicResponse(signatureKey, exchangeKey, state);
     }
 
-    public static async deserialize(value: string): Promise<CryptoRelationshipPublicResponse> {
-        return await this.fromJSON(JSON.parse(value));
+    public static fromBase64(value: string): CryptoRelationshipPublicResponse {
+        return this.deserialize(CoreBuffer.base64_utf8(value));
+    }
+
+    public static deserialize(value: string): CryptoRelationshipPublicResponse {
+        return this.fromJSON(JSON.parse(value));
     }
 }

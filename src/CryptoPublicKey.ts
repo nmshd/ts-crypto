@@ -1,6 +1,6 @@
 import { type } from "@js-soft/ts-serval";
 import { CoreBuffer, Encoding, ICoreBuffer } from "./CoreBuffer";
-import { CryptoSerializableAsync } from "./CryptoSerializableAsync";
+import { CryptoSerializable } from "./CryptoSerializable";
 import { CryptoExchangeAlgorithm } from "./exchange/CryptoExchange";
 import { CryptoSignatureAlgorithm } from "./signature/CryptoSignatures";
 
@@ -24,7 +24,7 @@ export interface ICryptoPublicKeyStatic {
 }
 
 @type("CryptoPublicKey")
-export class CryptoPublicKey extends CryptoSerializableAsync implements ICryptoPublicKey {
+export class CryptoPublicKey extends CryptoSerializable implements ICryptoPublicKey {
     public readonly algorithm: CryptoExchangeAlgorithm | CryptoSignatureAlgorithm;
     public readonly publicKey: ICoreBuffer;
 
@@ -60,50 +60,47 @@ export class CryptoPublicKey extends CryptoSerializableAsync implements ICryptoP
         return pem;
     }
 
-    public static async fromPEM(
-        pem: string,
-        algorithm: CryptoExchangeAlgorithm | CryptoSignatureAlgorithm
-    ): Promise<CryptoPublicKey> {
+    public static fromPEM(pem: string, algorithm: CryptoExchangeAlgorithm | CryptoSignatureAlgorithm): CryptoPublicKey {
         const value = this.stripPEM(pem);
-        return await this.fromString(value, algorithm, Encoding.Base64);
+        return this.fromString(value, algorithm, Encoding.Base64);
     }
 
     public static fromString(
         value: string,
         algorithm: CryptoExchangeAlgorithm | CryptoSignatureAlgorithm,
         encoding: Encoding = Encoding.Base64_UrlSafe_NoPadding
-    ): Promise<CryptoPublicKey> {
+    ): CryptoPublicKey {
         const buffer: ICoreBuffer = CoreBuffer.fromString(value, encoding);
 
-        return Promise.resolve(new CryptoPublicKey(algorithm, buffer));
+        return new CryptoPublicKey(algorithm, buffer);
     }
 
     public static fromObject(
         value: any,
         algorithm: CryptoExchangeAlgorithm | CryptoSignatureAlgorithm
-    ): Promise<CryptoPublicKey> {
-        const buffer: ICoreBuffer = CoreBuffer.fromObject(value);
+    ): CryptoPublicKey {
+        const buffer = CoreBuffer.fromObject(value);
 
-        return Promise.resolve(new CryptoPublicKey(algorithm, buffer));
+        return new CryptoPublicKey(algorithm, buffer);
     }
 
-    public static async deserialize(value: string): Promise<CryptoPublicKey> {
+    public static deserialize(value: string): CryptoPublicKey {
         const obj = JSON.parse(value);
-        return await this.from(obj);
+        return this.from(obj);
     }
 
-    public static async from(value: any): Promise<CryptoPublicKey> {
+    public static from(value: any): CryptoPublicKey {
         if (!value || !value.publicKey || !value.algorithm) {
             throw new Error("No value, public key or algorithm set");
         }
 
         if (typeof value.privateKey === "string") {
-            return await this.fromString(value.publicKey, value.algorithm);
+            return this.fromString(value.publicKey, value.algorithm);
         }
-        return await this.fromObject(value.publicKey, value.algorithm);
+        return this.fromObject(value.publicKey, value.algorithm);
     }
 
-    public static async fromBase64(value: string): Promise<CryptoPublicKey> {
-        return await this.deserialize(CoreBuffer.base64_utf8(value));
+    public static fromBase64(value: string): CryptoPublicKey {
+        return this.deserialize(CoreBuffer.base64_utf8(value));
     }
 }

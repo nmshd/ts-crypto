@@ -1,7 +1,7 @@
-import { ISerializableAsync, serialize, type, validate } from "@js-soft/ts-serval";
+import { ISerializable, serialize, type, validate } from "@js-soft/ts-serval";
 import { CoreBuffer, ICoreBuffer } from "../CoreBuffer";
 import { CryptoDerivation } from "../CryptoDerivation";
-import { CryptoSerializableAsync } from "../CryptoSerializableAsync";
+import { CryptoSerializable } from "../CryptoSerializable";
 import { CryptoCipher } from "../encryption/CryptoCipher";
 import { CryptoEncryption } from "../encryption/CryptoEncryption";
 import { CryptoSecretKey, ICryptoSecretKey } from "../encryption/CryptoSecretKey";
@@ -16,7 +16,7 @@ import { CryptoSignaturePublicKey, ICryptoSignaturePublicKey } from "../signatur
 import { CryptoSignatures } from "../signature/CryptoSignatures";
 import { CryptoRelationshipPublicRequest } from "./CryptoRelationshipPublicRequest";
 
-export interface ICryptoRelationshipRequestSecrets extends ISerializableAsync {
+export interface ICryptoRelationshipRequestSecrets extends ISerializable {
     id?: string;
     exchangeKeypair: ICryptoExchangeKeypair;
     signatureKeypair: ICryptoSignatureKeypair;
@@ -28,10 +28,7 @@ export interface ICryptoRelationshipRequestSecrets extends ISerializableAsync {
 }
 
 @type("CryptoRelationshipRequestSecrets")
-export class CryptoRelationshipRequestSecrets
-    extends CryptoSerializableAsync
-    implements ICryptoRelationshipRequestSecrets
-{
+export class CryptoRelationshipRequestSecrets extends CryptoSerializable implements ICryptoRelationshipRequestSecrets {
     @validate({ nullable: true })
     @serialize()
     public id?: string;
@@ -64,12 +61,12 @@ export class CryptoRelationshipRequestSecrets
     @serialize({ alias: "nnc" })
     public nonce: CoreBuffer;
 
-    public static async from(value: ICryptoRelationshipRequestSecrets): Promise<CryptoRelationshipRequestSecrets> {
-        return (await super.from(value, CryptoRelationshipRequestSecrets)) as CryptoRelationshipRequestSecrets;
+    public static from(value: ICryptoRelationshipRequestSecrets): CryptoRelationshipRequestSecrets {
+        return super.from(value, CryptoRelationshipRequestSecrets) as CryptoRelationshipRequestSecrets;
     }
 
-    public static async deserialize(value: string): Promise<CryptoRelationshipRequestSecrets> {
-        return (await super.deserialize(value, CryptoRelationshipRequestSecrets)) as CryptoRelationshipRequestSecrets;
+    public static deserialize(value: string): CryptoRelationshipRequestSecrets {
+        return super.deserialize(value, CryptoRelationshipRequestSecrets) as CryptoRelationshipRequestSecrets;
     }
 
     public async sign(
@@ -95,8 +92,8 @@ export class CryptoRelationshipRequestSecrets
         return await CryptoEncryption.decrypt(cipher, this.secretKey);
     }
 
-    public async toPublicRequest(): Promise<CryptoRelationshipPublicRequest> {
-        return await CryptoRelationshipPublicRequest.from({
+    public toPublicRequest(): CryptoRelationshipPublicRequest {
+        return CryptoRelationshipPublicRequest.from({
             id: this.id,
             exchangeKey: this.exchangeKeypair.publicKey,
             signatureKey: this.signatureKeypair.publicKey,
@@ -119,7 +116,7 @@ export class CryptoRelationshipRequestSecrets
         const masterKey = await CryptoExchange.deriveRequestor(ephemeralKeypair, peerExchangeKey);
         const secretKey = await CryptoDerivation.deriveKeyFromBase(masterKey.transmissionKey, 1, "REQTMP01");
 
-        return await CryptoRelationshipRequestSecrets.from({
+        return CryptoRelationshipRequestSecrets.from({
             exchangeKeypair: exchangeKeypair,
             ephemeralKeypair: ephemeralKeypair,
             signatureKeypair: signatureKeypair,

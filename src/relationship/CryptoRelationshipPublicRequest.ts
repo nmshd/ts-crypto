@@ -1,6 +1,6 @@
-import { ISerializableAsync, ISerialized, serialize, type, validate } from "@js-soft/ts-serval";
+import { ISerializable, ISerialized, serialize, type, validate } from "@js-soft/ts-serval";
 import { CoreBuffer, IClearable, ICoreBuffer } from "../CoreBuffer";
-import { CryptoSerializableAsync } from "../CryptoSerializableAsync";
+import { CryptoSerializable } from "../CryptoSerializable";
 import {
     CryptoExchangePublicKey,
     ICryptoExchangePublicKey,
@@ -20,7 +20,7 @@ export interface ICryptoRelationshipPublicRequestSerialized extends ISerialized 
     nnc: string;
 }
 
-export interface ICryptoRelationshipPublicRequest extends ISerializableAsync {
+export interface ICryptoRelationshipPublicRequest extends ISerializable {
     id?: string;
     exchangeKey: ICryptoExchangePublicKey;
     signatureKey: ICryptoSignaturePublicKey;
@@ -30,7 +30,7 @@ export interface ICryptoRelationshipPublicRequest extends ISerializableAsync {
 
 @type("CryptoRelationshipPublicRequest")
 export class CryptoRelationshipPublicRequest
-    extends CryptoSerializableAsync
+    extends CryptoSerializable
     implements ICryptoRelationshipPublicRequest, IClearable
 {
     @validate({ nullable: true })
@@ -87,36 +87,31 @@ export class CryptoRelationshipPublicRequest
         this.nonce.clear();
     }
 
-    public static async from(
+    public static from(
         value: CryptoRelationshipPublicRequest | ICryptoRelationshipPublicRequest
-    ): Promise<CryptoRelationshipPublicRequest> {
-        const [signatureKey, exchangeKey, ephemeralKey, nonce] = await Promise.all([
-            CryptoSignaturePublicKey.from(value.signatureKey),
-            CryptoExchangePublicKey.from(value.exchangeKey),
-            CryptoExchangePublicKey.from(value.ephemeralKey),
-            CoreBuffer.from(value.nonce)
-        ]);
-        return new CryptoRelationshipPublicRequest(signatureKey, exchangeKey, ephemeralKey, nonce);
-    }
-
-    public static async fromJSON(
-        value: ICryptoRelationshipPublicRequestSerialized
-    ): Promise<CryptoRelationshipPublicRequest> {
-        const [signatureKey, exchangeKey, ephemeralKey, nonce] = await Promise.all([
-            CryptoSignaturePublicKey.fromJSON(value.sig),
-            CryptoExchangePublicKey.fromJSON(value.exc),
-            CryptoExchangePublicKey.fromJSON(value.eph),
-            CoreBuffer.fromBase64URL(value.nnc)
-        ]);
+    ): CryptoRelationshipPublicRequest {
+        const signatureKey = CryptoSignaturePublicKey.from(value.signatureKey);
+        const exchangeKey = CryptoExchangePublicKey.from(value.exchangeKey);
+        const ephemeralKey = CryptoExchangePublicKey.from(value.ephemeralKey);
+        const nonce = CoreBuffer.from(value.nonce);
 
         return new CryptoRelationshipPublicRequest(signatureKey, exchangeKey, ephemeralKey, nonce);
     }
 
-    public static async fromBase64(value: string): Promise<CryptoRelationshipPublicRequest> {
-        return await this.deserialize(CoreBuffer.base64_utf8(value));
+    public static fromJSON(value: ICryptoRelationshipPublicRequestSerialized): CryptoRelationshipPublicRequest {
+        const signatureKey = CryptoSignaturePublicKey.fromJSON(value.sig);
+        const exchangeKey = CryptoExchangePublicKey.fromJSON(value.exc);
+        const ephemeralKey = CryptoExchangePublicKey.fromJSON(value.eph);
+        const nonce = CoreBuffer.fromBase64URL(value.nnc);
+
+        return new CryptoRelationshipPublicRequest(signatureKey, exchangeKey, ephemeralKey, nonce);
     }
 
-    public static async deserialize(value: string): Promise<CryptoRelationshipPublicRequest> {
-        return await this.fromJSON(JSON.parse(value));
+    public static fromBase64(value: string): CryptoRelationshipPublicRequest {
+        return this.deserialize(CoreBuffer.base64_utf8(value));
+    }
+
+    public static deserialize(value: string): CryptoRelationshipPublicRequest {
+        return this.fromJSON(JSON.parse(value));
     }
 }

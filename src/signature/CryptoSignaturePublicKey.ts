@@ -1,4 +1,4 @@
-import { ISerializableAsync, ISerialized, type } from "@js-soft/ts-serval";
+import { ISerializable, ISerialized, type } from "@js-soft/ts-serval";
 import { CoreBuffer, IClearable, ICoreBuffer } from "../CoreBuffer";
 import { CryptoPublicKey } from "../CryptoPublicKey";
 import { CryptoSignatureAlgorithm } from "./CryptoSignatures";
@@ -9,7 +9,7 @@ export interface ICryptoSignaturePublicKeySerialized extends ISerialized {
     pub: string;
 }
 
-export interface ICryptoSignaturePublicKey extends ISerializableAsync {
+export interface ICryptoSignaturePublicKey extends ISerializable {
     algorithm: CryptoSignatureAlgorithm;
     publicKey: ICoreBuffer;
 }
@@ -52,11 +52,11 @@ export class CryptoSignaturePublicKey extends CryptoPublicKey implements ICrypto
         return CoreBuffer.utf8_base64(this.serialize(verbose));
     }
 
-    public static from(value: CryptoSignaturePublicKey | ICryptoSignaturePublicKey): Promise<CryptoSignaturePublicKey> {
-        return Promise.resolve(new CryptoSignaturePublicKey(value.algorithm, CoreBuffer.from(value.publicKey)));
+    public static from(value: CryptoSignaturePublicKey | ICryptoSignaturePublicKey): CryptoSignaturePublicKey {
+        return new CryptoSignaturePublicKey(value.algorithm, CoreBuffer.from(value.publicKey));
     }
 
-    public static async fromJSON(value: ICryptoSignaturePublicKeySerialized): Promise<CryptoSignaturePublicKey> {
+    public static fromJSON(value: ICryptoSignaturePublicKeySerialized): CryptoSignaturePublicKey {
         let error;
         error = CryptoSignatureValidation.checkSignatureAlgorithm(value.alg);
         if (error) throw error;
@@ -69,18 +69,18 @@ export class CryptoSignaturePublicKey extends CryptoPublicKey implements ICrypto
         if (error) throw error;
 
         const buffer = CoreBuffer.fromBase64URL(value.pub);
-        return await this.from({
+        return this.from({
             algorithm: value.alg as CryptoSignatureAlgorithm,
             publicKey: buffer
         });
     }
 
-    public static async fromBase64(value: string): Promise<CryptoSignaturePublicKey> {
-        return await this.deserialize(CoreBuffer.base64_utf8(value));
+    public static fromBase64(value: string): CryptoSignaturePublicKey {
+        return this.deserialize(CoreBuffer.base64_utf8(value));
     }
 
-    public static async deserialize(value: string): Promise<CryptoSignaturePublicKey> {
+    public static deserialize(value: string): CryptoSignaturePublicKey {
         const obj = JSON.parse(value);
-        return await this.fromJSON(obj);
+        return this.fromJSON(obj);
     }
 }

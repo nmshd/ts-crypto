@@ -1,4 +1,4 @@
-import { SerializableAsync } from "@js-soft/ts-serval";
+import { Serializable } from "@js-soft/ts-serval";
 import {
     CoreBuffer,
     CryptoHashAlgorithm,
@@ -45,23 +45,23 @@ export class CryptoSignatureTest {
                     expect(publicKey.publicKey.toBase64URL()).equals(keypair.publicKey.publicKey.toBase64URL());
                 });
 
-                it("should serialize and deserialize signature public keys", async function () {
+                it("should serialize and deserialize signature public keys", function () {
                     const serialized = keypair.publicKey.serialize();
-                    const deserialized = await CryptoSignaturePublicKey.deserialize(serialized);
+                    const deserialized = CryptoSignaturePublicKey.deserialize(serialized);
                     expect(deserialized.publicKey.toBase64URL()).equals(keypair.publicKey.publicKey.toBase64URL());
                     expect(deserialized.algorithm).equals(keypair.publicKey.algorithm);
                 });
 
-                it("should serialize and deserialize signature private keys", async function () {
+                it("should serialize and deserialize signature private keys", function () {
                     const serialized = keypair.privateKey.serialize();
-                    const deserialized = await CryptoSignaturePrivateKey.deserialize(serialized);
+                    const deserialized = CryptoSignaturePrivateKey.deserialize(serialized);
                     expect(deserialized.privateKey.toBase64URL()).equals(keypair.privateKey.privateKey.toBase64URL());
                     expect(deserialized.algorithm).equals(keypair.privateKey.algorithm);
                 });
 
-                it("should serialize and deserialize signature keypairs", async function () {
+                it("should serialize and deserialize signature keypairs", function () {
                     const serialized = keypair.serialize();
-                    const deserialized = await CryptoSignatureKeypair.deserialize(serialized);
+                    const deserialized = CryptoSignatureKeypair.deserialize(serialized);
                     expect(deserialized.privateKey.privateKey.toBase64URL()).equals(
                         keypair.privateKey.privateKey.toBase64URL()
                     );
@@ -70,23 +70,23 @@ export class CryptoSignatureTest {
                     );
                 });
 
-                it("should convert signature public keys to base64 and back again", async function () {
+                it("should convert signature public keys to base64 and back again", function () {
                     const serialized = keypair.publicKey.toBase64();
-                    const deserialized = await CryptoSignaturePublicKey.fromBase64(serialized);
+                    const deserialized = CryptoSignaturePublicKey.fromBase64(serialized);
                     expect(deserialized.publicKey.toBase64URL()).equals(keypair.publicKey.publicKey.toBase64URL());
                     expect(deserialized.algorithm).equals(keypair.publicKey.algorithm);
                 });
 
-                it("should convert signature private keys to base64 and back again", async function () {
+                it("should convert signature private keys to base64 and back again", function () {
                     const serialized = keypair.privateKey.toBase64();
-                    const deserialized = await CryptoSignaturePrivateKey.fromBase64(serialized);
+                    const deserialized = CryptoSignaturePrivateKey.fromBase64(serialized);
                     expect(deserialized.privateKey.toBase64URL()).equals(keypair.privateKey.privateKey.toBase64URL());
                     expect(deserialized.algorithm).equals(keypair.privateKey.algorithm);
                 });
 
-                it("should convert signature keypairs to base64 and back again", async function () {
+                it("should convert signature keypairs to base64 and back again", function () {
                     const serialized = keypair.toBase64();
-                    const deserialized = await CryptoSignatureKeypair.fromBase64(serialized);
+                    const deserialized = CryptoSignatureKeypair.fromBase64(serialized);
                     expect(deserialized.privateKey.privateKey.toBase64URL()).equals(
                         keypair.privateKey.privateKey.toBase64URL()
                     );
@@ -95,31 +95,25 @@ export class CryptoSignatureTest {
                     );
                 });
 
-                it("should serialize and deserialize signature public keys from @type", async function () {
+                it("should serialize and deserialize signature public keys from @type", function () {
                     const serialized = keypair.publicKey.serialize();
-                    const deserialized = (await SerializableAsync.deserializeUnknown(
-                        serialized
-                    )) as CryptoSignaturePublicKey;
+                    const deserialized = Serializable.deserializeUnknown(serialized) as CryptoSignaturePublicKey;
                     expect(deserialized).instanceOf(CryptoSignaturePublicKey);
                     expect(deserialized.publicKey.toBase64URL()).equals(keypair.publicKey.publicKey.toBase64URL());
                     expect(deserialized.algorithm).equals(keypair.publicKey.algorithm);
                 });
 
-                it("should serialize and deserialize signature private keys from @type", async function () {
+                it("should serialize and deserialize signature private keys from @type", function () {
                     const serialized = keypair.privateKey.serialize();
-                    const deserialized = (await SerializableAsync.deserializeUnknown(
-                        serialized
-                    )) as CryptoSignaturePrivateKey;
+                    const deserialized = Serializable.deserializeUnknown(serialized) as CryptoSignaturePrivateKey;
                     expect(deserialized).instanceOf(CryptoSignaturePrivateKey);
                     expect(deserialized.privateKey.toBase64URL()).equals(keypair.privateKey.privateKey.toBase64URL());
                     expect(deserialized.algorithm).equals(keypair.privateKey.algorithm);
                 });
 
-                it("should serialize and deserialize signature keypairs from @type", async function () {
+                it("should serialize and deserialize signature keypairs from @type", function () {
                     const serialized = keypair.serialize();
-                    const deserialized = (await SerializableAsync.deserializeUnknown(
-                        serialized
-                    )) as CryptoSignatureKeypair;
+                    const deserialized = Serializable.deserializeUnknown(serialized) as CryptoSignatureKeypair;
                     expect(deserialized).instanceOf(CryptoSignatureKeypair);
                     expect(deserialized.privateKey.privateKey.toBase64URL()).equals(
                         keypair.privateKey.privateKey.toBase64URL()
@@ -177,7 +171,7 @@ export class CryptoSignatureTest {
 
                 it("should serialize and deserialize signatures", async function () {
                     const serialized = signature1.serialize();
-                    const deserialized = await CryptoSignature.deserialize(serialized);
+                    const deserialized = CryptoSignature.deserialize(serialized);
                     expect(deserialized.signature.toBase64URL()).equals(signature1.signature.toBase64URL());
                     expect(deserialized.algorithm).equals(signature1.algorithm);
                     const valid1 = await CryptoSignatures.verify(buffer, deserialized, sender.publicKey);

@@ -1,8 +1,8 @@
-import { ISerializableAsync, SerializableAsync, type } from "@js-soft/ts-serval";
+import { ISerializable, Serializable, type } from "@js-soft/ts-serval";
 import { CryptoStreamAddress } from "./CryptoStreamAddress";
 import { CryptoStreamHeader } from "./CryptoStreamHeader";
 
-export interface ICryptoStreamState extends ISerializableAsync {
+export interface ICryptoStreamState extends ISerializable {
     address: CryptoStreamAddress;
     header: CryptoStreamHeader;
 }
@@ -14,7 +14,7 @@ export interface ICryptoStreamaddressStatic {
 }
 
 @type("CryptoStreamState")
-export class CryptoStreamState extends SerializableAsync implements ICryptoStreamState {
+export class CryptoStreamState extends Serializable implements ICryptoStreamState {
     public readonly address: CryptoStreamAddress;
     public readonly header: CryptoStreamHeader;
 
@@ -43,18 +43,18 @@ export class CryptoStreamState extends SerializableAsync implements ICryptoStrea
         return obj;
     }
 
-    public static async from(obj: any): Promise<CryptoStreamState> {
+    public static from(obj: any): CryptoStreamState {
         if (!obj.address || !obj.header) {
             throw new Error("No address or header property set.");
         }
 
-        const address = await CryptoStreamAddress.from({ address: obj.address });
-        const header = await CryptoStreamHeader.fromBase64(obj.header);
+        const address = CryptoStreamAddress.from({ address: obj.address });
+        const header = CryptoStreamHeader.fromBase64(obj.header);
         return new CryptoStreamState(address, header);
     }
 
-    public static async deserialize(value: string): Promise<CryptoStreamState> {
+    public static deserialize(value: string): CryptoStreamState {
         const obj = JSON.parse(value);
-        return await this.from(obj);
+        return this.from(obj);
     }
 }

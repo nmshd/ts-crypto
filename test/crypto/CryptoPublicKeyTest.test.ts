@@ -12,10 +12,10 @@ export class CryptoPublicKeyTest {
                 let importedPublicKey: CryptoPublicKey;
                 let exportedPublicKey: string;
 
-                it("fromString() should import from Base64", async function () {
+                it("fromString() should import from Base64", function () {
                     const b64 =
                         "BADDh0-KAUSWqYqrqqEgEF6mkf_bTytaABRCodaKIHvbfVWw89zrhiga-YdaezEZ6hwVdTT_s8YGieliNui4Z9EOAgDtyi2SdkBp6ydBN5jh04vLVFTVXuPkitaWzsymM8oN4pkTgiXgDN7jgHh7E_0SCrf2lgWBH-wWW9uifW0Ic1Y-ZA";
-                    const publicKey = await CryptoPublicKey.fromString(b64, algorithm);
+                    const publicKey = CryptoPublicKey.fromString(b64, algorithm);
                     expect(publicKey).to.exist;
                     expect(publicKey).to.be.instanceOf(CryptoPublicKey);
                     expect(publicKey.algorithm).to.exist;
@@ -25,10 +25,10 @@ export class CryptoPublicKeyTest {
                     importedPublicKey = publicKey;
                 });
 
-                it("fromPEM() should import from PEM", async function () {
+                it("fromPEM() should import from PEM", function () {
                     const b64 =
                         "-----BEGIN PUBLIC KEY-----\r\nBADDh0+KAUSWqYqrqqEgEF6mkf/bTytaABRCodaKIHvbfVWw89zrhiga+YdaezEZ\r\n6hwVdTT/s8YGieliNui4Z9EOAgDtyi2SdkBp6ydBN5jh04vLVFTVXuPkitaWzsym\r\nM8oN4pkTgiXgDN7jgHh7E/0SCrf2lgWBH+wWW9uifW0Ic1Y+ZA==\r\n-----END PUBLIC KEY-----\r\n";
-                    const publicKey = await CryptoPublicKey.fromPEM(b64, algorithm);
+                    const publicKey = CryptoPublicKey.fromPEM(b64, algorithm);
                     expect(publicKey).to.exist;
                     expect(publicKey).to.be.instanceOf(CryptoPublicKey);
                     expect(publicKey.algorithm).to.exist;
@@ -45,9 +45,9 @@ export class CryptoPublicKeyTest {
                     return exported;
                 });
 
-                it("fromString() should import again from Base64", async function () {
+                it("fromString() should import again from Base64", function () {
                     const b64 = exportedPublicKey;
-                    const publicKey = await CryptoPublicKey.fromString(b64, algorithm);
+                    const publicKey = CryptoPublicKey.fromString(b64, algorithm);
                     expect(publicKey).to.exist;
                     expect(publicKey).to.be.instanceOf(CryptoPublicKey);
                     expect(publicKey.algorithm).to.exist;
@@ -65,9 +65,9 @@ export class CryptoPublicKeyTest {
                     return exported;
                 });
 
-                it("fromPEM() should import again from PEM", async function () {
+                it("fromPEM() should import again from PEM", function () {
                     const b64 = exportedPublicKey;
-                    const publicKey = await CryptoPublicKey.fromPEM(b64, algorithm);
+                    const publicKey = CryptoPublicKey.fromPEM(b64, algorithm);
                     expect(publicKey).to.exist;
                     expect(publicKey).to.be.instanceOf(CryptoPublicKey);
                     expect(publicKey.algorithm).to.exist;

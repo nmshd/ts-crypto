@@ -1,6 +1,6 @@
-import { ISerializableAsync, ISerialized, type } from "@js-soft/ts-serval";
+import { ISerializable, ISerialized, type } from "@js-soft/ts-serval";
 import { CoreBuffer, IClearable } from "../CoreBuffer";
-import { CryptoSerializableAsync } from "../CryptoSerializableAsync";
+import { CryptoSerializable } from "../CryptoSerializable";
 import {
     CryptoExchangePrivateKey,
     ICryptoExchangePrivateKey,
@@ -18,13 +18,13 @@ export interface ICryptoExchangeKeypairSerialized extends ISerialized {
     prv: ICryptoExchangePrivateKeySerialized;
 }
 
-export interface ICryptoExchangeKeypair extends ISerializableAsync {
+export interface ICryptoExchangeKeypair extends ISerializable {
     publicKey: ICryptoExchangePublicKey;
     privateKey: ICryptoExchangePrivateKey;
 }
 
 @type("CryptoExchangeKeypair")
-export class CryptoExchangeKeypair extends CryptoSerializableAsync implements ICryptoExchangeKeypair, IClearable {
+export class CryptoExchangeKeypair extends CryptoSerializable implements ICryptoExchangeKeypair, IClearable {
     public readonly publicKey: CryptoExchangePublicKey;
     public readonly privateKey: CryptoExchangePrivateKey;
 
@@ -54,30 +54,26 @@ export class CryptoExchangeKeypair extends CryptoSerializableAsync implements IC
         this.privateKey.clear();
     }
 
-    public static async from(value: CryptoExchangeKeypair | ICryptoExchangeKeypair): Promise<CryptoExchangeKeypair> {
-        const [privateKey, publicKey] = await Promise.all([
-            CryptoExchangePrivateKey.from(value.privateKey),
-            CryptoExchangePublicKey.from(value.publicKey)
-        ]);
+    public static from(value: CryptoExchangeKeypair | ICryptoExchangeKeypair): CryptoExchangeKeypair {
+        const privateKey = CryptoExchangePrivateKey.from(value.privateKey);
+        const publicKey = CryptoExchangePublicKey.from(value.publicKey);
 
         return new CryptoExchangeKeypair(publicKey, privateKey);
     }
 
-    public static async fromJSON(value: ICryptoExchangeKeypairSerialized): Promise<CryptoExchangeKeypair> {
-        const [privateKey, publicKey] = await Promise.all([
-            CryptoExchangePrivateKey.fromJSON(value.prv),
-            CryptoExchangePublicKey.fromJSON(value.pub)
-        ]);
+    public static fromJSON(value: ICryptoExchangeKeypairSerialized): CryptoExchangeKeypair {
+        const privateKey = CryptoExchangePrivateKey.fromJSON(value.prv);
+        const publicKey = CryptoExchangePublicKey.fromJSON(value.pub);
 
         return new CryptoExchangeKeypair(publicKey, privateKey);
     }
 
-    public static async fromBase64(value: string): Promise<CryptoExchangeKeypair> {
-        return await this.deserialize(CoreBuffer.base64_utf8(value));
+    public static fromBase64(value: string): CryptoExchangeKeypair {
+        return this.deserialize(CoreBuffer.base64_utf8(value));
     }
 
-    public static async deserialize(value: string): Promise<CryptoExchangeKeypair> {
+    public static deserialize(value: string): CryptoExchangeKeypair {
         const obj = JSON.parse(value);
-        return await this.fromJSON(obj);
+        return this.fromJSON(obj);
     }
 }

@@ -1,4 +1,4 @@
-import { SerializableAsync } from "@js-soft/ts-serval";
+import { Serializable } from "@js-soft/ts-serval";
 import {
     CoreBuffer,
     CryptoCipher,
@@ -29,16 +29,16 @@ export class CryptoEncryptionTest {
                     expect(key.algorithm).to.be.equal(CryptoEncryptionAlgorithm.XCHACHA20_POLY1305);
                 });
 
-                it("should serialize and deserialize the key correctly", async function () {
+                it("should serialize and deserialize the key correctly", function () {
                     const serialized = key.serialize();
-                    const deserialized = await CryptoSecretKey.deserialize(serialized);
+                    const deserialized = CryptoSecretKey.deserialize(serialized);
                     expect(deserialized.secretKey.toBase64URL()).equals(key.secretKey.toBase64URL());
                     expect(deserialized.algorithm).equals(key.algorithm);
                 });
 
-                it("should serialize and deserialize the key correctly from @type", async function () {
+                it("should serialize and deserialize the key correctly from @type", function () {
                     const serialized = key.serialize();
-                    const deserialized = (await SerializableAsync.deserializeUnknown(serialized)) as CryptoSecretKey;
+                    const deserialized = Serializable.deserializeUnknown(serialized) as CryptoSecretKey;
                     expect(deserialized).instanceOf(CryptoSecretKey);
                     expect(deserialized.secretKey.toBase64URL()).equals(key.secretKey.toBase64URL());
                     expect(deserialized.algorithm).equals(key.algorithm);
@@ -67,10 +67,10 @@ export class CryptoEncryptionTest {
                 it("should serialize and deserialize the cipher", async function () {
                     const cipher = await CryptoEncryption.encrypt(text, key);
 
-                    const a = await CryptoCipher.deserialize(cipher.serialize());
+                    const a = CryptoCipher.deserialize(cipher.serialize());
                     expect(a.cipher.toBase64()).equals(cipher.cipher.toBase64());
 
-                    const b = await CryptoCipher.fromJSON(cipher.toJSON());
+                    const b = CryptoCipher.fromJSON(cipher.toJSON());
                     expect(b.cipher.toBase64()).equals(cipher.cipher.toBase64());
                 });
 
@@ -78,7 +78,7 @@ export class CryptoEncryptionTest {
                     const cipher = await CryptoEncryption.encrypt(text, key);
 
                     const serialized = cipher.serialize();
-                    const deserialized = (await SerializableAsync.deserializeUnknown(serialized)) as CryptoCipher;
+                    const deserialized = Serializable.deserializeUnknown(serialized) as CryptoCipher;
                     expect(deserialized).instanceOf(CryptoCipher);
                     expect(deserialized.cipher.toBase64URL()).equals(cipher.cipher.toBase64URL());
                     expect(deserialized.counter).equals(cipher.counter);
@@ -93,9 +93,9 @@ export class CryptoEncryptionTest {
                     expect(plaintext.toArray()).to.have.members(text.toArray());
                 });
 
-                it("should deserialize/serialize a CryptoCipher with nonce", async function () {
+                it("should deserialize/serialize a CryptoCipher with nonce", function () {
                     const nonce = CoreBuffer.random(24);
-                    const cipher = await CryptoCipher.from({
+                    const cipher = CryptoCipher.from({
                         algorithm: CryptoEncryptionAlgorithm.XCHACHA20_POLY1305,
                         cipher: nonce,
                         nonce: nonce
@@ -107,9 +107,9 @@ export class CryptoEncryptionTest {
                     expect(cipher.counter).to.not.exist;
                 });
 
-                it("should deserialize/serialize a CryptoCipher with counter", async function () {
+                it("should deserialize/serialize a CryptoCipher with counter", function () {
                     const nonce = CoreBuffer.random(24);
-                    const cipher = await CryptoCipher.fromJSON({
+                    const cipher = CryptoCipher.fromJSON({
                         alg: CryptoEncryptionAlgorithm.XCHACHA20_POLY1305,
                         cph: nonce.toBase64URL(),
                         cnt: 0

@@ -229,15 +229,15 @@ export class CryptoStreamTest {
 
                 it("should decrypt stream messages even after new initialization", async function () {
                     // Template
-                    serverTransmissionStream = await CryptoStreamState.deserialize(serverTransmissionStreamSerialized);
+                    serverTransmissionStream = CryptoStreamState.deserialize(serverTransmissionStreamSerialized);
                     console.log(`Server Transmission Stream ${serverTransmissionStream}`);
                     // Request
-                    clientReceivingStream = await CryptoStreamAddress.deserialize(clientReceivingStreamSerialized);
+                    clientReceivingStream = CryptoStreamAddress.deserialize(clientReceivingStreamSerialized);
                     console.log(`Client Receiving Stream ${clientReceivingStream}`);
-                    clientTransmissionStream = await CryptoStreamState.deserialize(clientTransmissionStreamSerialized);
+                    clientTransmissionStream = CryptoStreamState.deserialize(clientTransmissionStreamSerialized);
                     console.log(`Client Transmission Stream ${clientTransmissionStream}`);
                     // Request Answer
-                    serverReceivingStream = await CryptoStreamAddress.deserialize(serverReceivingStreamSerialized);
+                    serverReceivingStream = CryptoStreamAddress.deserialize(serverReceivingStreamSerialized);
                     console.log(`Server Receiving Stream ${serverReceivingStream}`);
 
                     for (let i = 0, l = ciphersTo.length; i < l; i++) {
