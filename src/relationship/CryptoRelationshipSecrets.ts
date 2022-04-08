@@ -1,9 +1,9 @@
-import { ISerializableAsync, serialize, type, validate } from "@js-soft/ts-serval";
+import { ISerializable, serialize, type, validate } from "@js-soft/ts-serval";
 import { CoreBuffer } from "../CoreBuffer";
 import { CryptoDerivation } from "../CryptoDerivation";
 import { CryptoError } from "../CryptoError";
 import { CryptoErrorCode } from "../CryptoErrorCode";
-import { CryptoSerializableAsync } from "../CryptoSerializableAsync";
+import { CryptoSerializable } from "../CryptoSerializable";
 import { CryptoCipher } from "../encryption/CryptoCipher";
 import { CryptoEncryption, CryptoEncryptionAlgorithm } from "../encryption/CryptoEncryption";
 import { CryptoSecretKey, ICryptoSecretKey } from "../encryption/CryptoSecretKey";
@@ -24,7 +24,7 @@ import { CryptoRelationshipPublicResponse } from "./CryptoRelationshipPublicResp
 import { CryptoRelationshipRequestSecrets } from "./CryptoRelationshipRequestSecrets";
 import { CryptoRelationshipType } from "./CryptoRelationshipType";
 
-export interface ICryptoRelationshipSecrets extends ISerializableAsync {
+export interface ICryptoRelationshipSecrets extends ISerializable {
     id?: string;
     type: CryptoRelationshipType;
     exchangeKeypair: ICryptoExchangeKeypair;
@@ -39,7 +39,7 @@ export interface ICryptoRelationshipSecrets extends ISerializableAsync {
 }
 
 @type("CryptoRelationshipSecrets")
-export class CryptoRelationshipSecrets extends CryptoSerializableAsync implements ICryptoRelationshipSecrets {
+export class CryptoRelationshipSecrets extends CryptoSerializable implements ICryptoRelationshipSecrets {
     @validate({ nullable: true })
     @serialize()
     public id?: string;
@@ -84,12 +84,12 @@ export class CryptoRelationshipSecrets extends CryptoSerializableAsync implement
     @serialize({ alias: "rsk" })
     public requestSecretKey: CryptoSecretKey;
 
-    public static async from(value: ICryptoRelationshipSecrets): Promise<CryptoRelationshipSecrets> {
-        return (await super.from(value, CryptoRelationshipSecrets)) as CryptoRelationshipSecrets;
+    public static from(value: ICryptoRelationshipSecrets): CryptoRelationshipSecrets {
+        return super.from(value, CryptoRelationshipSecrets) as CryptoRelationshipSecrets;
     }
 
-    public static async deserialize(value: string): Promise<CryptoRelationshipSecrets> {
-        return (await super.deserialize(value, CryptoRelationshipSecrets)) as CryptoRelationshipSecrets;
+    public static deserialize(value: string): CryptoRelationshipSecrets {
+        return super.deserialize(value, CryptoRelationshipSecrets) as CryptoRelationshipSecrets;
     }
 
     public async sign(
@@ -133,8 +133,8 @@ export class CryptoRelationshipSecrets extends CryptoSerializableAsync implement
         return await CryptoEncryption.decrypt(cipher, this.requestSecretKey);
     }
 
-    public async toPublicResponse(): Promise<CryptoRelationshipPublicResponse> {
-        return await CryptoRelationshipPublicResponse.from({
+    public toPublicResponse(): CryptoRelationshipPublicResponse {
+        return CryptoRelationshipPublicResponse.from({
             exchangeKey: this.exchangeKeypair.publicKey,
             signatureKey: this.signatureKeypair.publicKey,
             state: this.transmitState.toPublicState()
@@ -173,7 +173,7 @@ export class CryptoRelationshipSecrets extends CryptoSerializableAsync implement
             })
         ]);
 
-        return await CryptoRelationshipSecrets.from({
+        return CryptoRelationshipSecrets.from({
             exchangeKeypair: exchangeKeypair,
             signatureKeypair: signatureKeypair,
             receiveState: receiveState,
@@ -243,7 +243,7 @@ export class CryptoRelationshipSecrets extends CryptoSerializableAsync implement
         const masterKey = await CryptoExchange.deriveTemplator(templateExchangeKeypair, peerTemplateKey);
         const secretKey = await CryptoDerivation.deriveKeyFromBase(masterKey.receivingKey, 1, "REQTMP01");
 
-        return await CryptoRelationshipSecrets.from({
+        return CryptoRelationshipSecrets.from({
             exchangeKeypair: exchangeKeypair,
             signatureKeypair: signatureKeypair,
             receiveState: receiveState,

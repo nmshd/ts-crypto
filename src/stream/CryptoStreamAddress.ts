@@ -1,6 +1,6 @@
-import { ISerializableAsync, SerializableAsync, type } from "@js-soft/ts-serval";
+import { ISerializable, Serializable, type } from "@js-soft/ts-serval";
 
-export interface ICryptoStreamAddress extends ISerializableAsync {
+export interface ICryptoStreamAddress extends ISerializable {
     readonly address: string;
     toString(): string;
     serialize(): string;
@@ -13,7 +13,7 @@ export interface ICryptoStreamAddressStatic {
 }
 
 @type("CryptoStreamAddress")
-export class CryptoStreamAddress extends SerializableAsync implements ICryptoStreamAddress {
+export class CryptoStreamAddress extends Serializable implements ICryptoStreamAddress {
     public readonly address: string;
 
     public constructor(address: string) {
@@ -38,19 +38,19 @@ export class CryptoStreamAddress extends SerializableAsync implements ICryptoStr
         return obj;
     }
 
-    public static from(obj: any | string): Promise<CryptoStreamAddress> {
+    public static from(obj: any | string): CryptoStreamAddress {
         if (typeof obj === "string") {
-            return Promise.resolve(new CryptoStreamAddress(obj));
+            return new CryptoStreamAddress(obj);
         }
         if (!obj.address) {
             throw new Error("No address property set.");
         }
 
-        return Promise.resolve(new CryptoStreamAddress(obj.address));
+        return new CryptoStreamAddress(obj.address);
     }
 
-    public static async deserialize(value: string): Promise<CryptoStreamAddress> {
+    public static deserialize(value: string): CryptoStreamAddress {
         const obj = JSON.parse(value);
-        return await this.from(obj);
+        return this.from(obj);
     }
 }

@@ -1,4 +1,4 @@
-import { ISerializableAsync, ISerialized, type } from "@js-soft/ts-serval";
+import { ISerializable, ISerialized, type } from "@js-soft/ts-serval";
 import { CoreBuffer, IClearable, ICoreBuffer } from "../CoreBuffer";
 import { CryptoPrivateKey } from "../CryptoPrivateKey";
 import { CryptoSignaturePublicKey } from "./CryptoSignaturePublicKey";
@@ -10,7 +10,7 @@ export interface ICryptoSignaturePrivateKeySerialized extends ISerialized {
     prv: string;
     id?: string;
 }
-export interface ICryptoSignaturePrivateKey extends ISerializableAsync {
+export interface ICryptoSignaturePrivateKey extends ISerializable {
     algorithm: CryptoSignatureAlgorithm;
     privateKey: ICoreBuffer;
     id?: string;
@@ -60,13 +60,11 @@ export class CryptoSignaturePrivateKey extends CryptoPrivateKey implements ICryp
         return await CryptoSignatures.privateKeyToPublicKey(this);
     }
 
-    public static from(
-        value: CryptoSignaturePrivateKey | ICryptoSignaturePrivateKey
-    ): Promise<CryptoSignaturePrivateKey> {
-        return Promise.resolve(new CryptoSignaturePrivateKey(value.algorithm, CoreBuffer.from(value.privateKey)));
+    public static from(value: CryptoSignaturePrivateKey | ICryptoSignaturePrivateKey): CryptoSignaturePrivateKey {
+        return new CryptoSignaturePrivateKey(value.algorithm, CoreBuffer.from(value.privateKey));
     }
 
-    public static fromJSON(value: ICryptoSignaturePrivateKeySerialized): Promise<CryptoSignaturePrivateKey> {
+    public static fromJSON(value: ICryptoSignaturePrivateKeySerialized): CryptoSignaturePrivateKey {
         let error;
 
         error = CryptoSignatureValidation.checkSignatureAlgorithm(value.alg);
@@ -76,14 +74,14 @@ export class CryptoSignaturePrivateKey extends CryptoPrivateKey implements ICryp
         if (error) throw error;
 
         const buffer = CoreBuffer.fromBase64URL(value.prv);
-        return Promise.resolve(new CryptoSignaturePrivateKey(value.alg as CryptoSignatureAlgorithm, buffer));
+        return new CryptoSignaturePrivateKey(value.alg as CryptoSignatureAlgorithm, buffer);
     }
 
-    public static async fromBase64(value: string): Promise<CryptoSignaturePrivateKey> {
-        return await this.deserialize(CoreBuffer.base64_utf8(value));
+    public static fromBase64(value: string): CryptoSignaturePrivateKey {
+        return this.deserialize(CoreBuffer.base64_utf8(value));
     }
 
-    public static async deserialize(value: string): Promise<CryptoSignaturePrivateKey> {
-        return await this.fromJSON(JSON.parse(value));
+    public static deserialize(value: string): CryptoSignaturePrivateKey {
+        return this.fromJSON(JSON.parse(value));
     }
 }

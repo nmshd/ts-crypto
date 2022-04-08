@@ -1,7 +1,7 @@
-import { ISerializableAsync, SerializableAsync, type } from "@js-soft/ts-serval";
+import { ISerializable, Serializable, type } from "@js-soft/ts-serval";
 import { CoreBuffer, ICoreBuffer } from "../CoreBuffer";
 
-export interface ICryptoStreamHeader extends ISerializableAsync {
+export interface ICryptoStreamHeader extends ISerializable {
     readonly header: ICoreBuffer;
     toString(): string;
     serialize(): string;
@@ -14,7 +14,7 @@ export interface ICryptoStreamHeaderStatic {
 }
 
 @type("CryptoStreamHeader")
-export class CryptoStreamHeader extends SerializableAsync implements ICryptoStreamHeader {
+export class CryptoStreamHeader extends Serializable implements ICryptoStreamHeader {
     public readonly header: ICoreBuffer;
 
     public constructor(header: ICoreBuffer) {
@@ -44,22 +44,22 @@ export class CryptoStreamHeader extends SerializableAsync implements ICryptoStre
         return this.header.toBase64();
     }
 
-    public static from(obj: any): Promise<CryptoStreamHeader> {
+    public static from(obj: any): CryptoStreamHeader {
         if (!obj.header) {
             throw new Error("No state or header property set.");
         }
 
         const header = CoreBuffer.fromBase64(obj.header);
-        return Promise.resolve(new CryptoStreamHeader(header));
+        return new CryptoStreamHeader(header);
     }
 
-    public static deserialize(value: string): Promise<CryptoStreamHeader> {
+    public static deserialize(value: string): CryptoStreamHeader {
         const obj = JSON.parse(value);
-        return Promise.resolve(this.from(obj));
+        return this.from(obj);
     }
 
-    public static fromBase64(value: string): Promise<CryptoStreamHeader> {
+    public static fromBase64(value: string): CryptoStreamHeader {
         const buffer = CoreBuffer.fromBase64(value);
-        return Promise.resolve(new CryptoStreamHeader(buffer));
+        return new CryptoStreamHeader(buffer);
     }
 }

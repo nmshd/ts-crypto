@@ -1,4 +1,4 @@
-import { ISerializableAsync, ISerialized, SerializableAsync, type } from "@js-soft/ts-serval";
+import { ISerializable, ISerialized, Serializable, type } from "@js-soft/ts-serval";
 import { CoreBuffer, IClearable } from "../CoreBuffer";
 import { CryptoValidation } from "../CryptoValidation";
 import { CryptoEncryptionAlgorithm } from "../encryption/CryptoEncryption";
@@ -11,7 +11,7 @@ export interface ICryptoPublicStateSerialized extends ISerialized {
     typ: number;
 }
 
-export interface ICryptoPublicState extends ISerializableAsync {
+export interface ICryptoPublicState extends ISerializable {
     nonce: CoreBuffer;
     algorithm: CryptoEncryptionAlgorithm;
     id?: string;
@@ -19,7 +19,7 @@ export interface ICryptoPublicState extends ISerializableAsync {
 }
 
 @type("CryptoPublicState")
-export class CryptoPublicState extends SerializableAsync implements ICryptoPublicState, IClearable {
+export class CryptoPublicState extends Serializable implements ICryptoPublicState, IClearable {
     private readonly _id?: string;
     public get id(): string | undefined {
         return this._id;
@@ -75,11 +75,11 @@ export class CryptoPublicState extends SerializableAsync implements ICryptoPubli
         return obj;
     }
 
-    public static from(value: CryptoPublicState | ICryptoPublicState): Promise<CryptoPublicState> {
-        return Promise.resolve(new CryptoPublicState(value.nonce, value.algorithm, value.stateType, value.id));
+    public static from(value: CryptoPublicState | ICryptoPublicState): CryptoPublicState {
+        return new CryptoPublicState(value.nonce, value.algorithm, value.stateType, value.id);
     }
 
-    public static fromJSON(value: ICryptoPublicStateSerialized): Promise<CryptoPublicState> {
+    public static fromJSON(value: ICryptoPublicStateSerialized): CryptoPublicState {
         let error;
         error = CryptoValidation.checkEncryptionAlgorithm(value.alg);
         if (error) throw error;
@@ -91,21 +91,19 @@ export class CryptoPublicState extends SerializableAsync implements ICryptoPubli
         if (error) throw error;
 
         const buffer = CoreBuffer.fromBase64URL(value.nnc);
-        return Promise.resolve(
-            new CryptoPublicState(
-                buffer,
-                value.alg as CryptoEncryptionAlgorithm,
-                value.typ as CryptoStateType,
-                value.id
-            )
+        return new CryptoPublicState(
+            buffer,
+            value.alg as CryptoEncryptionAlgorithm,
+            value.typ as CryptoStateType,
+            value.id
         );
     }
 
-    public static async fromBase64(value: string): Promise<CryptoPublicState> {
-        return await this.deserialize(CoreBuffer.base64_utf8(value));
+    public static fromBase64(value: string): CryptoPublicState {
+        return this.deserialize(CoreBuffer.base64_utf8(value));
     }
 
-    public static async deserialize(value: string): Promise<CryptoPublicState> {
-        return await this.fromJSON(JSON.parse(value));
+    public static deserialize(value: string): CryptoPublicState {
+        return this.fromJSON(JSON.parse(value));
     }
 }

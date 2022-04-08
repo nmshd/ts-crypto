@@ -44,11 +44,11 @@ export class CryptoExchangePublicKey extends CryptoPublicKey implements ICryptoE
         this.publicKey.clear();
     }
 
-    public static from(value: CryptoExchangePublicKey | ICryptoExchangePublicKey): Promise<CryptoExchangePublicKey> {
-        return Promise.resolve(new CryptoExchangePublicKey(value.algorithm, value.publicKey));
+    public static from(value: CryptoExchangePublicKey | ICryptoExchangePublicKey): CryptoExchangePublicKey {
+        return new CryptoExchangePublicKey(value.algorithm, value.publicKey);
     }
 
-    public static async fromJSON(value: ICryptoExchangePublicKeySerialized): Promise<CryptoExchangePublicKey> {
+    public static fromJSON(value: ICryptoExchangePublicKeySerialized): CryptoExchangePublicKey {
         CryptoExchangeValidation.checkExchangeAlgorithm(value.alg);
         CryptoExchangeValidation.checkExchangePrivateKeyAsNumber(
             value.pub,
@@ -57,18 +57,18 @@ export class CryptoExchangePublicKey extends CryptoPublicKey implements ICryptoE
         );
 
         const buffer = CoreBuffer.fromBase64URL(value.pub);
-        return await this.from({
+        return this.from({
             algorithm: value.alg as CryptoExchangeAlgorithm,
             publicKey: buffer
         });
     }
 
-    public static async fromBase64(value: string): Promise<CryptoExchangePublicKey> {
-        return await this.deserialize(CoreBuffer.base64_utf8(value));
+    public static fromBase64(value: string): CryptoExchangePublicKey {
+        return this.deserialize(CoreBuffer.base64_utf8(value));
     }
 
-    public static async deserialize(value: string): Promise<CryptoExchangePublicKey> {
+    public static deserialize(value: string): CryptoExchangePublicKey {
         const obj = JSON.parse(value);
-        return await this.fromJSON(obj);
+        return this.fromJSON(obj);
     }
 }

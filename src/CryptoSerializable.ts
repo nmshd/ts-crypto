@@ -1,8 +1,7 @@
-import { ISerializableAsync, SerializableAsync, type } from "@js-soft/ts-serval";
+import { ISerializable, Serializable } from "@js-soft/ts-serval";
 import { CoreBuffer } from "./CoreBuffer";
 
-@type("CryptoSerializableAsync")
-export class CryptoSerializableAsync extends SerializableAsync implements ISerializableAsync {
+export abstract class CryptoSerializable extends Serializable implements ISerializable {
     public serialize(verbose = true): string {
         return JSON.stringify(this.toJSON(verbose));
     }

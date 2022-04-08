@@ -1,4 +1,4 @@
-import { ISerializableAsync, ISerialized, SerializableAsync } from "@js-soft/ts-serval";
+import { ISerializable, ISerialized, Serializable } from "@js-soft/ts-serval";
 import { CoreBuffer, IClearable, ICoreBuffer } from "../CoreBuffer";
 import { CryptoError } from "../CryptoError";
 import { CryptoErrorCode } from "../CryptoErrorCode";
@@ -16,7 +16,7 @@ export interface ICryptoPrivateStateSerialized extends ISerialized {
     typ: number;
 }
 
-export interface ICryptoPrivateState extends ISerializableAsync {
+export interface ICryptoPrivateState extends ISerializable {
     secretKey: ICoreBuffer;
     nonce: ICoreBuffer;
     counter: number;
@@ -25,7 +25,7 @@ export interface ICryptoPrivateState extends ISerializableAsync {
     stateType: CryptoStateType;
 }
 
-export class CryptoPrivateState extends SerializableAsync implements ICryptoPrivateState, IClearable {
+export class CryptoPrivateState extends Serializable implements ICryptoPrivateState, IClearable {
     private readonly _id?: string;
     public get id(): string | undefined {
         return this._id;
@@ -118,7 +118,7 @@ export class CryptoPrivateState extends SerializableAsync implements ICryptoPriv
         return obj;
     }
 
-    public static from(obj: CryptoPrivateState | ICryptoPrivateState): Promise<CryptoPrivateState> {
+    public static from(obj: CryptoPrivateState | ICryptoPrivateState): CryptoPrivateState {
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         if (!obj.secretKey) {
             throw new CryptoError(CryptoErrorCode.StateWrongSecretKey, "No secretKey property set.");
@@ -131,19 +131,17 @@ export class CryptoPrivateState extends SerializableAsync implements ICryptoPriv
             throw new CryptoError(CryptoErrorCode.StateWrongCounter, "Wrong counter.");
         }
 
-        return Promise.resolve(
-            new CryptoPrivateState(
-                CoreBuffer.from(obj.nonce),
-                obj.counter,
-                CoreBuffer.from(obj.secretKey),
-                obj.algorithm,
-                obj.stateType,
-                obj.id
-            )
+        return new CryptoPrivateState(
+            CoreBuffer.from(obj.nonce),
+            obj.counter,
+            CoreBuffer.from(obj.secretKey),
+            obj.algorithm,
+            obj.stateType,
+            obj.id
         );
     }
 
-    public static fromJSON(value: ICryptoPrivateStateSerialized): Promise<CryptoPrivateState> {
+    public static fromJSON(value: ICryptoPrivateStateSerialized): CryptoPrivateState {
         CryptoValidation.checkEncryptionAlgorithm(value.alg);
         CryptoValidation.checkCounter(value.cnt);
         CryptoValidation.checkSerializedBuffer(value.nnc, 0, 24, "nonce");
@@ -153,20 +151,18 @@ export class CryptoPrivateState extends SerializableAsync implements ICryptoPriv
         }
         const nonceBuffer = CoreBuffer.fromBase64URL(value.nnc);
         const secretKeyBuffer = CoreBuffer.fromBase64URL(value.key);
-        return Promise.resolve(
-            new CryptoPrivateState(
-                nonceBuffer,
-                value.cnt,
-                secretKeyBuffer,
-                value.alg as CryptoEncryptionAlgorithm,
-                value.typ as CryptoStateType,
-                value.id
-            )
+        return new CryptoPrivateState(
+            nonceBuffer,
+            value.cnt,
+            secretKeyBuffer,
+            value.alg as CryptoEncryptionAlgorithm,
+            value.typ as CryptoStateType,
+            value.id
         );
     }
 
-    public static async deserialize(value: string): Promise<CryptoPrivateState> {
+    public static deserialize(value: string): CryptoPrivateState {
         const obj = JSON.parse(value);
-        return await this.from(obj);
+        return this.from(obj);
     }
 }

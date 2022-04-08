@@ -2,7 +2,7 @@ import { ISerializable, ISerialized, type } from "@js-soft/ts-serval";
 import { CoreBuffer, IClearable, ICoreBuffer } from "../CoreBuffer";
 import { CryptoError } from "../CryptoError";
 import { CryptoErrorCode } from "../CryptoErrorCode";
-import { CryptoSerializableAsync } from "../CryptoSerializableAsync";
+import { CryptoSerializable } from "../CryptoSerializable";
 import { CryptoValidation } from "../CryptoValidation";
 import { CryptoEncryptionAlgorithm } from "./CryptoEncryption";
 
@@ -21,7 +21,7 @@ export interface ICryptoCipher extends ISerializable {
 }
 
 @type("CryptoCipher")
-export class CryptoCipher extends CryptoSerializableAsync implements ICryptoCipher, IClearable {
+export class CryptoCipher extends CryptoSerializable implements ICryptoCipher, IClearable {
     public static MIN_CIPHER_BYTES = 2;
     public static MAX_CIPHER_BYTES = 100 * 1024 * 1024;
 
@@ -78,18 +78,16 @@ export class CryptoCipher extends CryptoSerializableAsync implements ICryptoCiph
         if (this.nonce) this.nonce.clear();
     }
 
-    public static from(value: CryptoCipher | ICryptoCipher): Promise<CryptoCipher> {
-        return Promise.resolve(
-            new CryptoCipher(
-                CoreBuffer.from(value.cipher),
-                value.algorithm,
-                CoreBuffer.from(value.nonce),
-                value.counter
-            )
+    public static from(value: CryptoCipher | ICryptoCipher): CryptoCipher {
+        return new CryptoCipher(
+            CoreBuffer.from(value.cipher),
+            value.algorithm,
+            CoreBuffer.from(value.nonce),
+            value.counter
         );
     }
 
-    public static fromJSON(value: ICryptoCipherSerialized): Promise<CryptoCipher> {
+    public static fromJSON(value: ICryptoCipherSerialized): CryptoCipher {
         CryptoValidation.checkObject(value);
         CryptoValidation.checkEncryptionAlgorithm(value.alg);
 
@@ -108,17 +106,15 @@ export class CryptoCipher extends CryptoSerializableAsync implements ICryptoCiph
         CryptoValidation.checkSerializedBuffer(value.cph, this.MIN_CIPHER_BYTES, this.MAX_CIPHER_BYTES, "cipher");
 
         const cipherBuffer = CoreBuffer.fromBase64URL(value.cph);
-        return Promise.resolve(
-            new CryptoCipher(cipherBuffer, value.alg as CryptoEncryptionAlgorithm, nonceBuffer, counter)
-        );
+        return new CryptoCipher(cipherBuffer, value.alg as CryptoEncryptionAlgorithm, nonceBuffer, counter);
     }
 
-    public static async fromBase64(value: string): Promise<CryptoCipher> {
-        return await this.deserialize(CoreBuffer.base64_utf8(value));
+    public static fromBase64(value: string): CryptoCipher {
+        return this.deserialize(CoreBuffer.base64_utf8(value));
     }
 
-    public static async deserialize(value: string): Promise<CryptoCipher> {
+    public static deserialize(value: string): CryptoCipher {
         const obj = JSON.parse(value);
-        return await this.fromJSON(obj);
+        return this.fromJSON(obj);
     }
 }

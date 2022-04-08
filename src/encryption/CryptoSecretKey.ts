@@ -1,6 +1,6 @@
 import { ISerializable, ISerialized, type } from "@js-soft/ts-serval";
 import { CoreBuffer, IClearable, ICoreBuffer } from "../CoreBuffer";
-import { CryptoSerializableAsync } from "../CryptoSerializableAsync";
+import { CryptoSerializable } from "../CryptoSerializable";
 import { CryptoValidation } from "../CryptoValidation";
 import { CryptoEncryptionAlgorithm } from "./CryptoEncryption";
 
@@ -15,7 +15,7 @@ export interface ICryptoSecretKey extends ISerializable {
 }
 
 @type("CryptoSecretKey")
-export class CryptoSecretKey extends CryptoSerializableAsync implements ICryptoSecretKey, IClearable {
+export class CryptoSecretKey extends CryptoSerializable implements ICryptoSecretKey, IClearable {
     public readonly algorithm: CryptoEncryptionAlgorithm;
     public readonly secretKey: CoreBuffer;
 
@@ -47,27 +47,27 @@ export class CryptoSecretKey extends CryptoSerializableAsync implements ICryptoS
         this.secretKey.clear();
     }
 
-    public static from(value: CryptoSecretKey | ICryptoSecretKey): Promise<CryptoSecretKey> {
-        return Promise.resolve(new CryptoSecretKey(CoreBuffer.from(value.secretKey), value.algorithm));
+    public static from(value: CryptoSecretKey | ICryptoSecretKey): CryptoSecretKey {
+        return new CryptoSecretKey(CoreBuffer.from(value.secretKey), value.algorithm);
     }
 
-    public static async fromJSON(value: ICryptoSecretKeySerialized): Promise<CryptoSecretKey> {
+    public static fromJSON(value: ICryptoSecretKeySerialized): CryptoSecretKey {
         CryptoValidation.checkEncryptionAlgorithm(value.alg);
         CryptoValidation.checkSerializedSecretKeyForAlgorithm(value.key, value.alg as CryptoEncryptionAlgorithm);
 
         const buffer = CoreBuffer.fromBase64URL(value.key);
-        return await this.from({
+        return this.from({
             algorithm: value.alg as CryptoEncryptionAlgorithm,
             secretKey: buffer
         });
     }
 
-    public static fromBase64(value: string): Promise<CryptoSecretKey> {
+    public static fromBase64(value: string): CryptoSecretKey {
         return this.deserialize(CoreBuffer.base64_utf8(value));
     }
 
-    public static async deserialize(value: string): Promise<CryptoSecretKey> {
+    public static deserialize(value: string): CryptoSecretKey {
         const obj = JSON.parse(value);
-        return await this.fromJSON(obj);
+        return this.fromJSON(obj);
     }
 }
