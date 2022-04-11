@@ -1,4 +1,4 @@
-import { ISerializable, ISerialized, type } from "@js-soft/ts-serval";
+import { ISerializable, ISerialized, serialize, type, validate } from "@js-soft/ts-serval";
 import { CoreBuffer, IClearable, ICoreBuffer } from "../CoreBuffer";
 import { CryptoSerializable } from "../CryptoSerializable";
 import { CryptoEncryptionAlgorithm } from "../encryption/CryptoEncryption";
@@ -17,28 +17,25 @@ export interface ICryptoExchangeSecrets extends ISerializable {
 
 @type("CryptoExchangeSecrets")
 export class CryptoExchangeSecrets extends CryptoSerializable implements ICryptoExchangeSecrets, IClearable {
-    public readonly algorithm: CryptoEncryptionAlgorithm;
-    public readonly receivingKey: CoreBuffer;
-    public readonly transmissionKey: CoreBuffer;
+    @validate()
+    @serialize()
+    public algorithm: CryptoEncryptionAlgorithm;
 
-    public constructor(receivingKey: CoreBuffer, transmissionKey: CoreBuffer, algorithm: CryptoEncryptionAlgorithm) {
-        super();
+    @validate()
+    @serialize()
+    public receivingKey: CoreBuffer;
 
-        this.receivingKey = receivingKey;
-        this.transmissionKey = transmissionKey;
-        this.algorithm = algorithm;
-    }
+    @validate()
+    @serialize()
+    public transmissionKey: CoreBuffer;
 
     public override toJSON(verbose = true): ICryptoExchangeSecretsSerialized {
-        const obj: ICryptoExchangeSecretsSerialized = {
+        return {
             rx: this.receivingKey.toBase64URL(),
             tx: this.transmissionKey.toBase64URL(),
-            alg: this.algorithm
+            alg: this.algorithm,
+            "@type": verbose ? "CryptoExchangeSecrets" : undefined
         };
-        if (verbose) {
-            obj["@type"] = "CryptoExchangeSecrets";
-        }
-        return obj;
     }
 
     public clear(): void {

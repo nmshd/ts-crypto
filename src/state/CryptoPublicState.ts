@@ -22,19 +22,19 @@ export interface ICryptoPublicState extends ISerializable {
 export class CryptoPublicState extends Serializable implements ICryptoPublicState, IClearable {
     @validate()
     @serialize()
-    public readonly id?: string;
+    public id?: string;
 
     @validate()
     @serialize()
-    public readonly nonce: CoreBuffer;
+    public nonce: CoreBuffer;
 
     @validate()
     @serialize()
-    public readonly algorithm: CryptoEncryptionAlgorithm;
+    public algorithm: CryptoEncryptionAlgorithm;
 
     @validate()
     @serialize()
-    public readonly stateType: CryptoStateType;
+    public stateType: CryptoStateType;
 
     public clear(): void {
         this.nonce.clear();

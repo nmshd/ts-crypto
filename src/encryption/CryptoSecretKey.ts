@@ -16,8 +16,8 @@ export interface ICryptoSecretKey extends ISerializable {
 
 @type("CryptoSecretKey")
 export class CryptoSecretKey extends CryptoSerializable implements ICryptoSecretKey, IClearable {
-    public readonly algorithm: CryptoEncryptionAlgorithm;
-    public readonly secretKey: CoreBuffer;
+    public algorithm: CryptoEncryptionAlgorithm;
+    public secretKey: CoreBuffer;
 
     public constructor(
         secretKey: CoreBuffer,

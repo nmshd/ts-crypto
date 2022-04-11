@@ -27,11 +27,11 @@ export interface ICryptoSignatureKeypair extends ISerializable {
 export class CryptoSignatureKeypair extends CryptoSerializable implements ICryptoSignatureKeypair, IClearable {
     @validate()
     @serialize()
-    public readonly publicKey: CryptoSignaturePublicKey;
+    public publicKey: CryptoSignaturePublicKey;
 
     @validate()
     @serialize()
-    public readonly privateKey: CryptoSignaturePrivateKey;
+    public privateKey: CryptoSignaturePrivateKey;
 
     public override toJSON(verbose = true): ICryptoSignatureKeypairSerialized {
         return {

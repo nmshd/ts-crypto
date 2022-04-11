@@ -2,7 +2,7 @@ import { ISerializable, Serializable, serialize, type, validate } from "@js-soft
 import { CoreBuffer, ICoreBuffer } from "../CoreBuffer";
 
 export interface ICryptoStreamHeader extends ISerializable {
-    readonly header: ICoreBuffer;
+    header: ICoreBuffer;
 }
 
 export interface ICryptoStreamHeaderStatic {
@@ -15,7 +15,7 @@ export interface ICryptoStreamHeaderStatic {
 export class CryptoStreamHeader extends Serializable implements ICryptoStreamHeader {
     @validate()
     @serialize()
-    public readonly header: ICoreBuffer;
+    public header: CoreBuffer;
 
     public override toString(): string {
         return this.serialize();

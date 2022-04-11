@@ -66,7 +66,7 @@ export class CryptoExchange {
 
         const privateKey = CryptoExchangePrivateKey.from({ algorithm, privateKey: CoreBuffer.from(privateKeyBuffer) });
         const publicKey = CryptoExchangePublicKey.from({ algorithm, publicKey: CoreBuffer.from(publicKeyBuffer) });
-        const keypair = new CryptoExchangeKeypair(publicKey, privateKey);
+        const keypair = CryptoExchangeKeypair.from({ publicKey, privateKey });
 
         return keypair;
     }

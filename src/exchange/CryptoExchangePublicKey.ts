@@ -18,11 +18,11 @@ export interface ICryptoExchangePublicKey {
 export class CryptoExchangePublicKey extends CryptoPublicKey implements ICryptoExchangePublicKey, IClearable {
     @validate()
     @serialize()
-    public override readonly algorithm: CryptoExchangeAlgorithm;
+    public override algorithm: CryptoExchangeAlgorithm;
 
     @validate()
     @serialize()
-    public override readonly publicKey: CoreBuffer;
+    public override publicKey: CoreBuffer;
 
     public override toJSON(verbose = true): ICryptoExchangePublicKeySerialized {
         return {

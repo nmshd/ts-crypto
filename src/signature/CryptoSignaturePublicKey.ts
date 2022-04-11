@@ -1,4 +1,4 @@
-import { ISerializable, ISerialized, serialize, type, validate } from "@js-soft/ts-serval";
+import { ISerializable, ISerialized, type } from "@js-soft/ts-serval";
 import { CoreBuffer, IClearable, ICoreBuffer } from "../CoreBuffer";
 import { CryptoPublicKey } from "../CryptoPublicKey";
 import { CryptoSignatureAlgorithm } from "./CryptoSignatureAlgorithm";
@@ -16,13 +16,7 @@ export interface ICryptoSignaturePublicKey extends ISerializable {
 
 @type("CryptoSignaturePublicKey")
 export class CryptoSignaturePublicKey extends CryptoPublicKey implements ICryptoSignaturePublicKey, IClearable {
-    @validate()
-    @serialize()
-    public override readonly algorithm: CryptoSignatureAlgorithm;
-
-    @validate()
-    @serialize()
-    public override readonly publicKey: CoreBuffer;
+    public override algorithm: CryptoSignatureAlgorithm;
 
     public override toJSON(verbose = true): ICryptoSignaturePublicKeySerialized {
         return {

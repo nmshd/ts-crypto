@@ -27,20 +27,11 @@ export interface ICryptoExchangeKeypair extends ISerializable {
 export class CryptoExchangeKeypair extends CryptoSerializable implements ICryptoExchangeKeypair, IClearable {
     @validate()
     @serialize()
-    public readonly publicKey: CryptoExchangePublicKey;
+    public publicKey: CryptoExchangePublicKey;
 
     @validate()
     @serialize()
-    public readonly privateKey: CryptoExchangePrivateKey;
-
-    public constructor(publicKey: CryptoExchangePublicKey, privateKey: CryptoExchangePrivateKey) {
-        CryptoExchangeValidation.checkExchangeKeypair(privateKey, publicKey);
-
-        super();
-
-        this.publicKey = publicKey;
-        this.privateKey = privateKey;
-    }
+    public privateKey: CryptoExchangePrivateKey;
 
     public override toJSON(verbose = true): ICryptoExchangeKeypairSerialized {
         const obj: ICryptoExchangeKeypairSerialized = {

@@ -1,7 +1,7 @@
 import { ISerializable, Serializable, serialize, type, validate } from "@js-soft/ts-serval";
 
 export interface ICryptoStreamAddress extends ISerializable {
-    readonly address: string;
+    address: string;
     toString(): string;
     serialize(): string;
 }
@@ -16,7 +16,7 @@ export interface ICryptoStreamAddressStatic {
 export class CryptoStreamAddress extends Serializable implements ICryptoStreamAddress {
     @validate()
     @serialize()
-    public readonly address: string;
+    public address: string;
 
     public override toString(): string {
         return this.serialize();

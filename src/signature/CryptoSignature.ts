@@ -1,4 +1,4 @@
-import { ISerializable, ISerialized, type } from "@js-soft/ts-serval";
+import { ISerializable, ISerialized, serialize, type, validate } from "@js-soft/ts-serval";
 import { CoreBuffer, IClearable } from "../CoreBuffer";
 import { CryptoSerializable } from "../CryptoSerializable";
 import { CryptoHashAlgorithm } from "../hash/CryptoHash";
@@ -20,26 +20,21 @@ export interface ICryptoSignature extends ISerializable {
 
 @type("CryptoSignature")
 export class CryptoSignature extends CryptoSerializable implements ICryptoSignature, IClearable {
-    public readonly signature: CoreBuffer;
-    public readonly algorithm: CryptoHashAlgorithm;
-    public readonly keyId?: string;
-    public readonly id?: string;
+    @validate()
+    @serialize()
+    public signature: CoreBuffer;
 
-    public constructor(signature: CoreBuffer, algorithm: CryptoHashAlgorithm, keyId?: string, id?: string) {
-        let error;
-        error = CryptoSignatureValidation.checkHashAlgorithm(algorithm);
-        if (error) throw error;
+    @validate()
+    @serialize()
+    public algorithm: CryptoHashAlgorithm;
 
-        error = CryptoSignatureValidation.checkSignatureAsBuffer(signature);
-        if (error) throw error;
+    @validate({ nullable: true })
+    @serialize()
+    public keyId?: string;
 
-        super();
-
-        this.signature = signature;
-        this.algorithm = algorithm;
-        this.keyId = keyId;
-        this.id = id;
-    }
+    @validate({ nullable: true })
+    @serialize()
+    public id?: string;
 
     public override toJSON(verbose = true): ICryptoSignatureSerialized {
         const obj: ICryptoSignatureSerialized = {

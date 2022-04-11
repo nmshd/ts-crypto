@@ -17,11 +17,11 @@ export interface ICryptoStreamaddressStatic {
 export class CryptoStreamState extends Serializable implements ICryptoStreamState {
     @validate()
     @serialize()
-    public readonly address: CryptoStreamAddress;
+    public address: CryptoStreamAddress;
 
     @validate()
     @serialize()
-    public readonly header: CryptoStreamHeader;
+    public header: CryptoStreamHeader;
 
     public override toString(): string {
         return this.serialize();

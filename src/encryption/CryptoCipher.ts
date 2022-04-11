@@ -27,19 +27,19 @@ export class CryptoCipher extends CryptoSerializable implements ICryptoCipher, I
 
     @validate()
     @serialize()
-    public readonly algorithm: CryptoEncryptionAlgorithm;
+    public algorithm: CryptoEncryptionAlgorithm;
 
     @validate()
     @serialize()
-    public readonly cipher: CoreBuffer;
+    public cipher: CoreBuffer;
 
     @validate({ nullable: true })
     @serialize()
-    public readonly counter?: number;
+    public counter?: number;
 
     @validate({ nullable: true })
     @serialize()
-    public readonly nonce?: CoreBuffer;
+    public nonce?: CoreBuffer;
 
     public override toJSON(verbose = true): ICryptoCipherSerialized {
         return {

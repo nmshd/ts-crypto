@@ -19,11 +19,11 @@ export interface ICryptoExchangePrivateKey extends ISerializable {
 export class CryptoExchangePrivateKey extends CryptoPrivateKey implements ICryptoExchangePrivateKey, IClearable {
     @validate()
     @serialize()
-    public override readonly algorithm: CryptoExchangeAlgorithm;
+    public override algorithm: CryptoExchangeAlgorithm;
 
     @validate()
     @serialize()
-    public override readonly privateKey: CoreBuffer;
+    public override privateKey: CoreBuffer;
 
     public override toJSON(verbose = true): ICryptoExchangePrivateKeySerialized {
         return {

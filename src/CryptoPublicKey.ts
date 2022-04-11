@@ -5,8 +5,8 @@ import { CryptoExchangeAlgorithm } from "./exchange/CryptoExchange";
 import { CryptoSignatureAlgorithm } from "./signature/CryptoSignatureAlgorithm";
 
 export interface ICryptoPublicKey {
-    readonly publicKey: ICoreBuffer;
-    readonly algorithm: CryptoExchangeAlgorithm | CryptoSignatureAlgorithm;
+    publicKey: ICoreBuffer;
+    algorithm: CryptoExchangeAlgorithm | CryptoSignatureAlgorithm;
     toString(): string;
     toPEM(): string;
     toJSON(): Object;
@@ -27,11 +27,11 @@ export interface ICryptoPublicKeyStatic {
 export class CryptoPublicKey extends CryptoSerializable implements ICryptoPublicKey {
     @validate()
     @serialize()
-    public readonly algorithm: CryptoExchangeAlgorithm | CryptoSignatureAlgorithm;
+    public algorithm: CryptoExchangeAlgorithm | CryptoSignatureAlgorithm;
 
     @validate()
     @serialize()
-    public readonly publicKey: CoreBuffer;
+    public publicKey: CoreBuffer;
 
     public override toString(): string {
         return this.publicKey.toString(Encoding.Base64_UrlSafe_NoPadding);

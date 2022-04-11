@@ -1,9 +1,7 @@
 import { CoreBuffer } from "./CoreBuffer";
 import { CryptoError } from "./CryptoError";
 import { CryptoErrorCode } from "./CryptoErrorCode";
-import { CryptoCipher } from "./encryption/CryptoCipher";
 import { CryptoEncryptionAlgorithm } from "./encryption/CryptoEncryption";
-import { CryptoSecretKey } from "./encryption/CryptoSecretKey";
 import { CryptoHashAlgorithm } from "./hash/CryptoHash";
 import { CryptoStateType } from "./state/CryptoStateType";
 
@@ -141,39 +139,6 @@ export class CryptoValidation {
 
         if ((!error && id.length < minLength) || id.length > maxLength) {
             error = new CryptoError(CryptoErrorCode.WrongId, "Id must be more than 0 and less than 101 characters.");
-        }
-
-        if (error && throwError) throw error;
-        return error;
-    }
-
-    public static checkPlaintext(plaintext: CoreBuffer, throwError = true): CryptoError | undefined {
-        let error;
-        if (!(plaintext instanceof CoreBuffer)) {
-            error = new CryptoError(CryptoErrorCode.EncryptionWrongPlaintext, "Plaintext must be of type CoreBuffer.");
-        }
-
-        if (error && throwError) throw error;
-        return error;
-    }
-
-    public static checkCipher(cipher: CryptoCipher, throwError = true): CryptoError | undefined {
-        let error;
-        if (!(cipher instanceof CryptoCipher)) {
-            error = new CryptoError(CryptoErrorCode.EncryptionWrongCipher, "Cipher must be of type CryptoCipher.");
-        }
-
-        if (error && throwError) throw error;
-        return error;
-    }
-
-    public static checkSecretKey(secretKey: CryptoSecretKey, throwError = true): CryptoError | undefined {
-        let error;
-        if (!(secretKey instanceof CryptoSecretKey)) {
-            error = new CryptoError(
-                CryptoErrorCode.EncryptionWrongSecretKey,
-                "SecretKey must be of type CryptoSecretKey."
-            );
         }
 
         if (error && throwError) throw error;
