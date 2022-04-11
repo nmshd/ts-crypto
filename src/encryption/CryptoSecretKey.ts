@@ -1,4 +1,4 @@
-import { ISerializable, ISerialized, type } from "@js-soft/ts-serval";
+import { ISerializable, ISerialized, serialize, type, validate } from "@js-soft/ts-serval";
 import { CoreBuffer, IClearable, ICoreBuffer } from "../CoreBuffer";
 import { CryptoSerializable } from "../CryptoSerializable";
 import { CryptoValidation } from "../CryptoValidation";
@@ -16,21 +16,12 @@ export interface ICryptoSecretKey extends ISerializable {
 
 @type("CryptoSecretKey")
 export class CryptoSecretKey extends CryptoSerializable implements ICryptoSecretKey, IClearable {
+    @validate()
+    @serialize()
     public algorithm: CryptoEncryptionAlgorithm;
+    @validate()
+    @serialize()
     public secretKey: CoreBuffer;
-
-    public constructor(
-        secretKey: CoreBuffer,
-        algorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.XCHACHA20_POLY1305
-    ) {
-        CryptoValidation.checkEncryptionAlgorithm(algorithm);
-        CryptoValidation.checkSecretKeyForAlgorithm(secretKey, algorithm);
-
-        super();
-
-        this.algorithm = algorithm;
-        this.secretKey = secretKey;
-    }
 
     public override toJSON(verbose = true): ICryptoSecretKeySerialized {
         return {

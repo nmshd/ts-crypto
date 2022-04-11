@@ -48,8 +48,7 @@ export abstract class CryptoEncryption {
                 throw new CryptoError(CryptoErrorCode.NotYetImplemented);
         }
 
-        const secretKey = new CryptoSecretKey(buffer, algorithm);
-        return secretKey;
+        return CryptoSecretKey.from({ secretKey: buffer, algorithm });
     }
 
     /**

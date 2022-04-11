@@ -24,7 +24,7 @@ export interface ICryptoPrivateState extends ISerializable {
 }
 
 export class CryptoPrivateState extends Serializable implements ICryptoPrivateState, IClearable {
-    @validate()
+    @validate({ nullable: true })
     @serialize()
     public id?: string;
 

@@ -20,7 +20,7 @@ export interface ICryptoPublicState extends ISerializable {
 
 @type("CryptoPublicState")
 export class CryptoPublicState extends Serializable implements ICryptoPublicState, IClearable {
-    @validate()
+    @validate({ nullable: true })
     @serialize()
     public id?: string;
 
