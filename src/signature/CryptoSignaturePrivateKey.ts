@@ -18,41 +18,23 @@ export interface ICryptoSignaturePrivateKey extends ISerializable {
 
 @type("CryptoSignaturePrivateKey")
 export class CryptoSignaturePrivateKey extends CryptoPrivateKey implements ICryptoSignaturePrivateKey, IClearable {
-    public readonly algorithm: CryptoSignatureAlgorithm;
-    public readonly privateKey: CoreBuffer;
+    public override readonly algorithm: CryptoSignatureAlgorithm;
+    public override readonly privateKey: CoreBuffer;
     public readonly id?: string;
 
-    public constructor(algorithm: CryptoSignatureAlgorithm, privateKey: CoreBuffer, id?: string) {
-        CryptoSignatureValidation.checkSignatureAlgorithm(algorithm);
-        CryptoSignatureValidation.checkSignaturePrivateKeyAsBuffer(privateKey);
-
-        super(algorithm, privateKey);
-
-        this.algorithm = algorithm;
-        this.privateKey = privateKey;
-        this.id = id;
-    }
-
-    public toJSON(verbose = true): ICryptoSignaturePrivateKeySerialized {
-        const obj: ICryptoSignaturePrivateKeySerialized = {
+    public override toJSON(verbose = true): ICryptoSignaturePrivateKeySerialized {
+        return {
             prv: this.privateKey.toBase64URL(),
-            alg: this.algorithm
+            alg: this.algorithm,
+            "@type": verbose ? "CryptoSignaturePrivateKey" : undefined
         };
-        if (verbose) {
-            obj["@type"] = "CryptoSignaturePrivateKey";
-        }
-        return obj;
     }
 
     public clear(): void {
         this.privateKey.clear();
     }
 
-    public serialize(verbose = true): string {
-        return JSON.stringify(this.toJSON(verbose));
-    }
-
-    public toBase64(verbose = true): string {
+    public override toBase64(verbose = true): string {
         return CoreBuffer.utf8_base64(this.serialize(verbose));
     }
 
@@ -60,28 +42,34 @@ export class CryptoSignaturePrivateKey extends CryptoPrivateKey implements ICryp
         return await CryptoSignatures.privateKeyToPublicKey(this);
     }
 
-    public static from(value: CryptoSignaturePrivateKey | ICryptoSignaturePrivateKey): CryptoSignaturePrivateKey {
-        return new CryptoSignaturePrivateKey(value.algorithm, CoreBuffer.from(value.privateKey));
+    public static override from(
+        value: CryptoSignaturePrivateKey | ICryptoSignaturePrivateKey
+    ): CryptoSignaturePrivateKey {
+        return this.fromAny(value);
+    }
+
+    public static override preFrom(value: any): any {
+        if (value.prv) {
+            value = {
+                algorithm: value.alg,
+                privateKey: value.prv
+            };
+        }
+
+        let error = CryptoSignatureValidation.checkSignatureAlgorithm(value.algorithm);
+        if (error) throw error;
+
+        error = CryptoSignatureValidation.checkSignaturePrivateKeyAsString(value.privateKey, "privateKey");
+        if (error) throw error;
+
+        return value;
     }
 
     public static fromJSON(value: ICryptoSignaturePrivateKeySerialized): CryptoSignaturePrivateKey {
-        let error;
-
-        error = CryptoSignatureValidation.checkSignatureAlgorithm(value.alg);
-        if (error) throw error;
-
-        error = CryptoSignatureValidation.checkSignaturePrivateKeyAsString(value.prv, "privateKey");
-        if (error) throw error;
-
-        const buffer = CoreBuffer.fromBase64URL(value.prv);
-        return new CryptoSignaturePrivateKey(value.alg as CryptoSignatureAlgorithm, buffer);
+        return this.fromAny(value);
     }
 
-    public static fromBase64(value: string): CryptoSignaturePrivateKey {
+    public static override fromBase64(value: string): CryptoSignaturePrivateKey {
         return this.deserialize(CoreBuffer.base64_utf8(value));
-    }
-
-    public static deserialize(value: string): CryptoSignaturePrivateKey {
-        return this.fromJSON(JSON.parse(value));
     }
 }

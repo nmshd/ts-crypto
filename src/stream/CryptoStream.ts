@@ -37,17 +37,17 @@ export class CryptoStream implements ICryptoStream {
         const sodium = await SodiumWrapper.ready();
         const stream = sodium.crypto_secretstream_xchacha20poly1305_init_push(key.buffer);
         const headerBuffer = CoreBuffer.from(stream.header);
-        return new CryptoStreamState(
-            new CryptoStreamAddress(stream.state as unknown as string),
-            new CryptoStreamHeader(headerBuffer)
-        );
+        return CryptoStreamState.from({
+            address: CryptoStreamAddress.from(stream.state as unknown as string),
+            header: CryptoStreamHeader.from(headerBuffer)
+        });
     }
 
     public static async initClient(header: CryptoStreamHeader, key: CoreBuffer): Promise<CryptoStreamAddress> {
         const sodium = await SodiumWrapper.ready();
         const stream = sodium.crypto_secretstream_xchacha20poly1305_init_pull(header.header.buffer, key.buffer);
 
-        return new CryptoStreamAddress(stream as any);
+        return CryptoStreamAddress.from(stream as any);
     }
 
     public static async encrypt(message: ICoreBuffer, stream: CryptoStreamAddress): Promise<CoreBuffer> {

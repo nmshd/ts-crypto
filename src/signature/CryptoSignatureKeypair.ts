@@ -1,4 +1,4 @@
-import { ISerializable, ISerialized, type } from "@js-soft/ts-serval";
+import { ISerializable, ISerialized, serialize, type, validate } from "@js-soft/ts-serval";
 import { CoreBuffer, IClearable } from "../CoreBuffer";
 import { CryptoSerializable } from "../CryptoSerializable";
 import {
@@ -25,28 +25,20 @@ export interface ICryptoSignatureKeypair extends ISerializable {
 
 @type("CryptoSignatureKeypair")
 export class CryptoSignatureKeypair extends CryptoSerializable implements ICryptoSignatureKeypair, IClearable {
+    @validate()
+    @serialize()
     public readonly publicKey: CryptoSignaturePublicKey;
+
+    @validate()
+    @serialize()
     public readonly privateKey: CryptoSignaturePrivateKey;
 
-    public constructor(publicKey: CryptoSignaturePublicKey, privateKey: CryptoSignaturePrivateKey) {
-        const error = CryptoSignatureValidation.checkSignatureKeypair(privateKey, publicKey);
-        if (error) throw error;
-
-        super();
-
-        this.publicKey = publicKey;
-        this.privateKey = privateKey;
-    }
-
-    public toJSON(verbose = true): ICryptoSignatureKeypairSerialized {
-        const obj: ICryptoSignatureKeypairSerialized = {
+    public override toJSON(verbose = true): ICryptoSignatureKeypairSerialized {
+        return {
             pub: this.publicKey.toJSON(false),
-            prv: this.privateKey.toJSON(false)
+            prv: this.privateKey.toJSON(false),
+            "@type": verbose ? "CryptoSignatureKeypair" : undefined
         };
-        if (verbose) {
-            obj["@type"] = "CryptoSignatureKeypair";
-        }
-        return obj;
     }
 
     public clear(): void {
@@ -55,25 +47,27 @@ export class CryptoSignatureKeypair extends CryptoSerializable implements ICrypt
     }
 
     public static from(value: CryptoSignatureKeypair | ICryptoSignatureKeypair): CryptoSignatureKeypair {
-        const privateKey = CryptoSignaturePrivateKey.from(value.privateKey);
-        const publicKey = CryptoSignaturePublicKey.from(value.publicKey);
+        return this.fromAny(value);
+    }
 
-        return new CryptoSignatureKeypair(publicKey, privateKey);
+    protected static override preFrom(value: any): any {
+        if (value.pub) {
+            value = {
+                publicKey: value.pub,
+                privateKey: value.prv
+            };
+        }
+
+        CryptoSignatureValidation.checkSignatureKeypair(value.privateKey, value.publicKey);
+
+        return value;
     }
 
     public static fromJSON(value: ICryptoSignatureKeypairSerialized): CryptoSignatureKeypair {
-        const privateKey = CryptoSignaturePrivateKey.fromJSON(value.prv);
-        const publicKey = CryptoSignaturePublicKey.fromJSON(value.pub);
-
-        return new CryptoSignatureKeypair(publicKey, privateKey);
+        return this.fromAny(value);
     }
 
     public static fromBase64(value: string): CryptoSignatureKeypair {
         return this.deserialize(CoreBuffer.base64_utf8(value));
-    }
-
-    public static deserialize(value: string): CryptoSignatureKeypair {
-        const obj = JSON.parse(value);
-        return this.fromJSON(obj);
     }
 }

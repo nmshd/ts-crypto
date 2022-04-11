@@ -10,17 +10,7 @@ import { CryptoStateType } from "./CryptoStateType";
 
 @type("CryptoPrivateStateTransmit")
 export class CryptoPrivateStateTransmit extends CryptoPrivateState {
-    public constructor(
-        nonce: CoreBuffer,
-        counter: number,
-        secretKey: CoreBuffer,
-        algorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.XCHACHA20_POLY1305,
-        id?: string
-    ) {
-        super(nonce, counter, secretKey, algorithm, CryptoStateType.Transmit, id);
-    }
-
-    public toJSON(): ICryptoPrivateStateSerialized {
+    public override toJSON(): ICryptoPrivateStateSerialized {
         const obj = super.toJSON();
         obj["@type"] = "CryptoPrivateStateTransmit";
         return obj;
@@ -55,55 +45,30 @@ export class CryptoPrivateStateTransmit extends CryptoPrivateState {
         const nonce = CryptoEncryption.createNonce(algorithm);
         const counter = 0;
 
-        return new CryptoPrivateStateTransmit(nonce, counter, secretKey, algorithm, id);
+        return this.from({ nonce, counter, secretKey, algorithm, id, stateType: CryptoStateType.Transmit });
     }
 
-    public static from(obj: CryptoPrivateState | ICryptoPrivateState): CryptoPrivateStateTransmit {
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-        if (!obj.secretKey) {
-            throw new CryptoError(CryptoErrorCode.StateWrongSecretKey, "No secretKey property set.");
-        }
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-        if (!obj.nonce) {
-            throw new CryptoError(CryptoErrorCode.StateWrongNonce, "No nonce nor counter property set.");
-        }
-        if (typeof obj.counter === "undefined") {
-            throw new CryptoError(CryptoErrorCode.StateWrongCounter, "Wrong counter.");
-        }
+    public static override from(obj: CryptoPrivateState | ICryptoPrivateState): CryptoPrivateStateTransmit {
+        return this.fromAny(obj);
+    }
 
-        if (obj.stateType !== CryptoStateType.Transmit) {
-            throw new CryptoError(CryptoErrorCode.StateWrongType, "The given object has a wrong state type.");
-        }
+    protected static override preFrom(value: any): any {
+        value = super.preFrom(value);
 
-        return new CryptoPrivateStateTransmit(
-            CoreBuffer.from(obj.nonce),
-            obj.counter,
-            CoreBuffer.from(obj.secretKey),
-            obj.algorithm,
-            obj.id
+        CryptoValidation.checkSerializedBuffer(value.nonce, 0, 24, "nonce");
+        CryptoValidation.checkSerializedSecretKeyForAlgorithm(
+            value.secretKey,
+            value.algorithm as CryptoEncryptionAlgorithm
         );
-    }
 
-    public static fromJSON(value: ICryptoPrivateStateSerialized): CryptoPrivateStateTransmit {
-        CryptoValidation.checkEncryptionAlgorithm(value.alg);
-        CryptoValidation.checkCounter(value.cnt);
-        CryptoValidation.checkSerializedBuffer(value.nnc, 0, 24, "nonce");
-        CryptoValidation.checkSerializedSecretKeyForAlgorithm(value.key, value.alg as CryptoEncryptionAlgorithm);
-        if (value.typ) {
-            CryptoValidation.checkStateType(value.typ);
+        if (value.stateType) {
+            CryptoValidation.checkStateType(value.stateType);
         }
-        const nonceBuffer = CoreBuffer.fromBase64URL(value.nnc);
-        const secretKeyBuffer = CoreBuffer.fromBase64URL(value.key);
-        return new CryptoPrivateStateTransmit(
-            nonceBuffer,
-            value.cnt,
-            secretKeyBuffer,
-            value.alg as CryptoEncryptionAlgorithm,
-            value.id
-        );
+
+        return value;
     }
 
-    public static deserialize(value: string): CryptoPrivateStateTransmit {
-        return this.fromJSON(JSON.parse(value));
+    public static override fromJSON(value: ICryptoPrivateStateSerialized): CryptoPrivateStateTransmit {
+        return this.fromAny(value);
     }
 }

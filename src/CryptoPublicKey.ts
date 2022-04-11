@@ -1,4 +1,4 @@
-import { type } from "@js-soft/ts-serval";
+import { serialize, type, validate } from "@js-soft/ts-serval";
 import { CoreBuffer, Encoding, ICoreBuffer } from "./CoreBuffer";
 import { CryptoSerializable } from "./CryptoSerializable";
 import { CryptoExchangeAlgorithm } from "./exchange/CryptoExchange";
@@ -25,25 +25,15 @@ export interface ICryptoPublicKeyStatic {
 
 @type("CryptoPublicKey")
 export class CryptoPublicKey extends CryptoSerializable implements ICryptoPublicKey {
+    @validate()
+    @serialize()
     public readonly algorithm: CryptoExchangeAlgorithm | CryptoSignatureAlgorithm;
+
+    @validate()
+    @serialize()
     public readonly publicKey: ICoreBuffer;
 
-    public constructor(algorithm: CryptoExchangeAlgorithm | CryptoSignatureAlgorithm, publicKey: ICoreBuffer) {
-        super();
-        this.algorithm = algorithm;
-        this.publicKey = publicKey;
-    }
-
-    public toJSON(): Object {
-        const obj = {
-            "@type": "CryptoPublicKey",
-            publicKey: this.toString(),
-            algorithm: this.algorithm
-        };
-        return obj;
-    }
-
-    public toString(): string {
+    public override toString(): string {
         return this.publicKey.toString(Encoding.Base64_UrlSafe_NoPadding);
     }
 
@@ -72,7 +62,7 @@ export class CryptoPublicKey extends CryptoSerializable implements ICryptoPublic
     ): CryptoPublicKey {
         const buffer: ICoreBuffer = CoreBuffer.fromString(value, encoding);
 
-        return new CryptoPublicKey(algorithm, buffer);
+        return this.fromAny({ algorithm, publicKey: buffer });
     }
 
     public static fromObject(
@@ -80,24 +70,11 @@ export class CryptoPublicKey extends CryptoSerializable implements ICryptoPublic
         algorithm: CryptoExchangeAlgorithm | CryptoSignatureAlgorithm
     ): CryptoPublicKey {
         const buffer = CoreBuffer.fromObject(value);
-
-        return new CryptoPublicKey(algorithm, buffer);
-    }
-
-    public static deserialize(value: string): CryptoPublicKey {
-        const obj = JSON.parse(value);
-        return this.from(obj);
+        return this.fromAny({ algorithm, publicKey: buffer });
     }
 
     public static from(value: any): CryptoPublicKey {
-        if (!value || !value.publicKey || !value.algorithm) {
-            throw new Error("No value, public key or algorithm set");
-        }
-
-        if (typeof value.privateKey === "string") {
-            return this.fromString(value.publicKey, value.algorithm);
-        }
-        return this.fromObject(value.publicKey, value.algorithm);
+        return this.fromAny(value);
     }
 
     public static fromBase64(value: string): CryptoPublicKey {

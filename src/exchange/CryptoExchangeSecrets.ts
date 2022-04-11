@@ -29,7 +29,7 @@ export class CryptoExchangeSecrets extends CryptoSerializable implements ICrypto
         this.algorithm = algorithm;
     }
 
-    public toJSON(verbose = true): ICryptoExchangeSecretsSerialized {
+    public override toJSON(verbose = true): ICryptoExchangeSecretsSerialized {
         const obj: ICryptoExchangeSecretsSerialized = {
             rx: this.receivingKey.toBase64URL(),
             tx: this.transmissionKey.toBase64URL(),
@@ -46,11 +46,11 @@ export class CryptoExchangeSecrets extends CryptoSerializable implements ICrypto
         this.transmissionKey.clear();
     }
 
-    public serialize(verbose = true): string {
+    public override serialize(verbose = true): string {
         return JSON.stringify(this.toJSON(verbose));
     }
 
-    public toBase64(verbose = true): string {
+    public override toBase64(verbose = true): string {
         return CoreBuffer.utf8_base64(this.serialize(verbose));
     }
 
@@ -78,10 +78,5 @@ export class CryptoExchangeSecrets extends CryptoSerializable implements ICrypto
 
     public static fromBase64(value: string): Promise<CryptoExchangeSecrets> {
         return Promise.resolve(this.deserialize(CoreBuffer.base64_utf8(value)));
-    }
-
-    public static deserialize(value: string): CryptoExchangeSecrets {
-        const obj = JSON.parse(value);
-        return this.fromJSON(obj);
     }
 }

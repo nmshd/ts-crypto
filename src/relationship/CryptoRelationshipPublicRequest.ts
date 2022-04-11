@@ -53,31 +53,14 @@ export class CryptoRelationshipPublicRequest
     @serialize()
     public nonce: CoreBuffer;
 
-    public constructor(
-        signatureKey: CryptoSignaturePublicKey,
-        exchangeKey: CryptoExchangePublicKey,
-        ephemeralKey: CryptoExchangePublicKey,
-        nonce: CoreBuffer
-    ) {
-        super();
-
-        this.signatureKey = signatureKey;
-        this.exchangeKey = exchangeKey;
-        this.ephemeralKey = ephemeralKey;
-        this.nonce = nonce;
-    }
-
-    public toJSON(verbose = true): ICryptoRelationshipPublicRequestSerialized {
-        const obj: ICryptoRelationshipPublicRequestSerialized = {
+    public override toJSON(verbose = true): ICryptoRelationshipPublicRequestSerialized {
+        return {
             exc: this.exchangeKey.toJSON(false),
             sig: this.signatureKey.toJSON(false),
             eph: this.ephemeralKey.toJSON(false),
-            nnc: this.nonce.toBase64URL()
+            nnc: this.nonce.toBase64URL(),
+            "@type": verbose ? "CryptoRelationshipPublicRequest" : undefined
         };
-        if (verbose) {
-            obj["@type"] = "CryptoRelationshipPublicRequest";
-        }
-        return obj;
     }
 
     public clear(): void {
@@ -90,28 +73,27 @@ export class CryptoRelationshipPublicRequest
     public static from(
         value: CryptoRelationshipPublicRequest | ICryptoRelationshipPublicRequest
     ): CryptoRelationshipPublicRequest {
-        const signatureKey = CryptoSignaturePublicKey.from(value.signatureKey);
-        const exchangeKey = CryptoExchangePublicKey.from(value.exchangeKey);
-        const ephemeralKey = CryptoExchangePublicKey.from(value.ephemeralKey);
-        const nonce = CoreBuffer.from(value.nonce);
+        return this.fromAny(value);
+    }
 
-        return new CryptoRelationshipPublicRequest(signatureKey, exchangeKey, ephemeralKey, nonce);
+    protected static override preFrom(value: any): any {
+        if (value.exc) {
+            value = {
+                exchangeKey: value.exc,
+                signatureKey: value.sig,
+                ephemeralKey: value.eph,
+                nonce: value.nnc
+            };
+        }
+
+        return value;
     }
 
     public static fromJSON(value: ICryptoRelationshipPublicRequestSerialized): CryptoRelationshipPublicRequest {
-        const signatureKey = CryptoSignaturePublicKey.fromJSON(value.sig);
-        const exchangeKey = CryptoExchangePublicKey.fromJSON(value.exc);
-        const ephemeralKey = CryptoExchangePublicKey.fromJSON(value.eph);
-        const nonce = CoreBuffer.fromBase64URL(value.nnc);
-
-        return new CryptoRelationshipPublicRequest(signatureKey, exchangeKey, ephemeralKey, nonce);
+        return this.fromAny(value);
     }
 
     public static fromBase64(value: string): CryptoRelationshipPublicRequest {
         return this.deserialize(CoreBuffer.base64_utf8(value));
-    }
-
-    public static deserialize(value: string): CryptoRelationshipPublicRequest {
-        return this.fromJSON(JSON.parse(value));
     }
 }

@@ -11,17 +11,7 @@ import { CryptoStateType } from "./CryptoStateType";
 
 @type("CryptoPrivateStateReceive")
 export class CryptoPrivateStateReceive extends CryptoPrivateState {
-    public constructor(
-        nonce: CoreBuffer,
-        counter: number,
-        secretKey: CoreBuffer,
-        algorithm: CryptoEncryptionAlgorithm,
-        id?: string
-    ) {
-        super(nonce, counter, secretKey, algorithm, CryptoStateType.Receive, id);
-    }
-
-    public toJSON(): ICryptoPrivateStateSerialized {
+    public override toJSON(): ICryptoPrivateStateSerialized {
         const obj = super.toJSON();
         obj["@type"] = "CryptoPrivateStateReceive";
         return obj;
@@ -51,76 +41,51 @@ export class CryptoPrivateStateReceive extends CryptoPrivateState {
     }
 
     public static fromNonce(nonce: CoreBuffer, secretKey: CoreBuffer, counter = 0): CryptoPrivateStateReceive {
-        return new CryptoPrivateStateReceive(
-            nonce.clone(),
+        return CryptoPrivateStateReceive.from({
+            nonce: nonce.clone(),
             counter,
             secretKey,
-            CryptoEncryptionAlgorithm.XCHACHA20_POLY1305
-        );
+            algorithm: CryptoEncryptionAlgorithm.XCHACHA20_POLY1305,
+            stateType: CryptoStateType.Receive
+        });
     }
 
     public static fromPublicState(
         publicState: CryptoPublicState,
         secretKey: CoreBuffer,
         counter = 0
-    ): Promise<CryptoPrivateStateReceive> {
-        return Promise.resolve(
-            new CryptoPrivateStateReceive(
-                publicState.nonce.clone(),
-                counter,
-                secretKey,
-                publicState.algorithm,
-                publicState.id
-            )
-        );
+    ): CryptoPrivateStateReceive {
+        return CryptoPrivateStateReceive.from({
+            nonce: publicState.nonce.clone(),
+            counter,
+            secretKey,
+            algorithm: publicState.algorithm,
+            id: publicState.id,
+            stateType: CryptoStateType.Receive
+        });
     }
 
-    public static from(obj: CryptoPrivateState | ICryptoPrivateState): CryptoPrivateStateReceive {
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-        if (!obj.secretKey) {
-            throw new CryptoError(CryptoErrorCode.StateWrongSecretKey, "No secretKey set.");
-        }
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-        if (!obj.nonce) {
-            throw new CryptoError(CryptoErrorCode.StateWrongNonce, "No nonce set.");
-        }
-        if (typeof obj.counter === "undefined") {
-            throw new CryptoError(CryptoErrorCode.StateWrongCounter, "No counter.");
-        }
+    protected static override preFrom(value: any): any {
+        value = super.preFrom(value);
 
-        if (obj.stateType !== CryptoStateType.Receive) {
-            throw new CryptoError(CryptoErrorCode.StateWrongType, "The given object has a wrong state type.");
-        }
-
-        return new CryptoPrivateStateReceive(
-            CoreBuffer.from(obj.nonce),
-            obj.counter,
-            CoreBuffer.from(obj.secretKey),
-            obj.algorithm,
-            obj.id
+        CryptoValidation.checkSerializedBuffer(value.nonce, 0, 24, "nonce");
+        CryptoValidation.checkSerializedSecretKeyForAlgorithm(
+            value.secretKey,
+            value.algorithm as CryptoEncryptionAlgorithm
         );
+
+        if (value.stateType) {
+            CryptoValidation.checkStateType(value.stateType);
+        }
+
+        return value;
     }
 
-    public static fromJSON(value: ICryptoPrivateStateSerialized): CryptoPrivateStateReceive {
-        CryptoValidation.checkEncryptionAlgorithm(value.alg);
-        CryptoValidation.checkCounter(value.cnt);
-        CryptoValidation.checkSerializedBuffer(value.nnc, 0, 24, "nnc");
-        CryptoValidation.checkSerializedSecretKeyForAlgorithm(value.key, value.alg as CryptoEncryptionAlgorithm);
-        if (value.typ) {
-            CryptoValidation.checkStateType(value.typ);
-        }
-        const nonceBuffer = CoreBuffer.fromBase64URL(value.nnc);
-        const secretKeyBuffer = CoreBuffer.fromBase64URL(value.key);
-        return new CryptoPrivateStateReceive(
-            nonceBuffer,
-            value.cnt,
-            secretKeyBuffer,
-            value.alg as CryptoEncryptionAlgorithm,
-            value.id
-        );
+    public static override from(obj: CryptoPrivateState | ICryptoPrivateState): CryptoPrivateStateReceive {
+        return this.fromAny(obj);
     }
 
-    public static deserialize(value: string): CryptoPrivateStateReceive {
-        return this.fromJSON(JSON.parse(value));
+    public static override fromJSON(value: ICryptoPrivateStateSerialized): CryptoPrivateStateReceive {
+        return this.fromAny(value);
     }
 }

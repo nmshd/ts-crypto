@@ -1,4 +1,4 @@
-import { ISerializable, ISerialized, type } from "@js-soft/ts-serval";
+import { ISerializable, ISerialized, serialize, type, validate } from "@js-soft/ts-serval";
 import { CoreBuffer, IClearable } from "../CoreBuffer";
 import { CryptoSerializable } from "../CryptoSerializable";
 import {
@@ -25,7 +25,12 @@ export interface ICryptoExchangeKeypair extends ISerializable {
 
 @type("CryptoExchangeKeypair")
 export class CryptoExchangeKeypair extends CryptoSerializable implements ICryptoExchangeKeypair, IClearable {
+    @validate()
+    @serialize()
     public readonly publicKey: CryptoExchangePublicKey;
+
+    @validate()
+    @serialize()
     public readonly privateKey: CryptoExchangePrivateKey;
 
     public constructor(publicKey: CryptoExchangePublicKey, privateKey: CryptoExchangePrivateKey) {
@@ -37,7 +42,7 @@ export class CryptoExchangeKeypair extends CryptoSerializable implements ICrypto
         this.privateKey = privateKey;
     }
 
-    public toJSON(verbose = true): ICryptoExchangeKeypairSerialized {
+    public override toJSON(verbose = true): ICryptoExchangeKeypairSerialized {
         const obj: ICryptoExchangeKeypairSerialized = {
             pub: this.publicKey.toJSON(false),
             prv: this.privateKey.toJSON(false)
@@ -54,26 +59,28 @@ export class CryptoExchangeKeypair extends CryptoSerializable implements ICrypto
         this.privateKey.clear();
     }
 
-    public static from(value: CryptoExchangeKeypair | ICryptoExchangeKeypair): CryptoExchangeKeypair {
-        const privateKey = CryptoExchangePrivateKey.from(value.privateKey);
-        const publicKey = CryptoExchangePublicKey.from(value.publicKey);
+    protected static override preFrom(value: any): any {
+        if (value.pub) {
+            value = {
+                publicKey: value.pub,
+                privateKey: value.prv
+            };
+        }
 
-        return new CryptoExchangeKeypair(publicKey, privateKey);
+        CryptoExchangeValidation.checkExchangeKeypair(value.privateKey, value.publicKey);
+
+        return value;
+    }
+
+    public static from(value: CryptoExchangeKeypair | ICryptoExchangeKeypair): CryptoExchangeKeypair {
+        return this.fromAny(value);
     }
 
     public static fromJSON(value: ICryptoExchangeKeypairSerialized): CryptoExchangeKeypair {
-        const privateKey = CryptoExchangePrivateKey.fromJSON(value.prv);
-        const publicKey = CryptoExchangePublicKey.fromJSON(value.pub);
-
-        return new CryptoExchangeKeypair(publicKey, privateKey);
+        return this.fromAny(value);
     }
 
     public static fromBase64(value: string): CryptoExchangeKeypair {
         return this.deserialize(CoreBuffer.base64_utf8(value));
-    }
-
-    public static deserialize(value: string): CryptoExchangeKeypair {
-        const obj = JSON.parse(value);
-        return this.fromJSON(obj);
     }
 }

@@ -32,15 +32,12 @@ export class CryptoSecretKey extends CryptoSerializable implements ICryptoSecret
         this.secretKey = secretKey;
     }
 
-    public toJSON(verbose = true): ICryptoSecretKeySerialized {
-        const obj: ICryptoSecretKeySerialized = {
+    public override toJSON(verbose = true): ICryptoSecretKeySerialized {
+        return {
             key: this.secretKey.toBase64URL(),
-            alg: this.algorithm
+            alg: this.algorithm,
+            "@type": verbose ? "CryptoSecretKey" : undefined
         };
-        if (verbose) {
-            obj["@type"] = "CryptoSecretKey";
-        }
-        return obj;
     }
 
     public clear(): void {
@@ -48,26 +45,31 @@ export class CryptoSecretKey extends CryptoSerializable implements ICryptoSecret
     }
 
     public static from(value: CryptoSecretKey | ICryptoSecretKey): CryptoSecretKey {
-        return new CryptoSecretKey(CoreBuffer.from(value.secretKey), value.algorithm);
+        return this.fromAny(value);
+    }
+
+    protected static override preFrom(value: any): any {
+        if (value.alg) {
+            value = {
+                algorithm: value.alg,
+                secretKey: value.key
+            };
+        }
+
+        CryptoValidation.checkEncryptionAlgorithm(value.algorithm);
+        CryptoValidation.checkSerializedSecretKeyForAlgorithm(
+            value.secretKey,
+            value.algorithm as CryptoEncryptionAlgorithm
+        );
+
+        return value;
     }
 
     public static fromJSON(value: ICryptoSecretKeySerialized): CryptoSecretKey {
-        CryptoValidation.checkEncryptionAlgorithm(value.alg);
-        CryptoValidation.checkSerializedSecretKeyForAlgorithm(value.key, value.alg as CryptoEncryptionAlgorithm);
-
-        const buffer = CoreBuffer.fromBase64URL(value.key);
-        return this.from({
-            algorithm: value.alg as CryptoEncryptionAlgorithm,
-            secretKey: buffer
-        });
+        return this.fromAny(value);
     }
 
     public static fromBase64(value: string): CryptoSecretKey {
         return this.deserialize(CoreBuffer.base64_utf8(value));
-    }
-
-    public static deserialize(value: string): CryptoSecretKey {
-        const obj = JSON.parse(value);
-        return this.fromJSON(obj);
     }
 }

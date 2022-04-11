@@ -186,7 +186,7 @@ export class CoreBuffer extends Serializable implements ICoreBuffer {
         return this;
     }
 
-    public toString(encoding: Encoding = Encoding.Base64, label?: string): string {
+    public override toString(encoding: Encoding = Encoding.Base64, label?: string): string {
         let str;
         switch (`${encoding}`.toLowerCase()) {
             case Encoding.Csv:
@@ -242,16 +242,12 @@ export class CoreBuffer extends Serializable implements ICoreBuffer {
         return this;
     }
 
-    public toJSON(): Object {
+    public override toJSON(): Object {
         return this.serialize();
     }
 
-    public serialize(): string {
+    public override serialize(): string {
         return this.toBase64URL();
-    }
-
-    public static deserialize(value: string): CoreBuffer {
-        return CoreBuffer.from(value);
     }
 
     public add(value: number): this {
@@ -284,7 +280,7 @@ export class CoreBuffer extends Serializable implements ICoreBuffer {
     }
 
     public static from(value: any): CoreBuffer {
-        return new CoreBuffer(value);
+        return this.fromAny(value);
     }
 
     private static hexToBuffer(hex: string): CoreBuffer {

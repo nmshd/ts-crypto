@@ -1,4 +1,4 @@
-import { ISerializable, ISerialized, Serializable, type } from "@js-soft/ts-serval";
+import { ISerializable, ISerialized, Serializable, serialize, type, validate } from "@js-soft/ts-serval";
 import { CoreBuffer, IClearable } from "../CoreBuffer";
 import { CryptoValidation } from "../CryptoValidation";
 import { CryptoEncryptionAlgorithm } from "../encryption/CryptoEncryption";
@@ -20,90 +20,68 @@ export interface ICryptoPublicState extends ISerializable {
 
 @type("CryptoPublicState")
 export class CryptoPublicState extends Serializable implements ICryptoPublicState, IClearable {
-    private readonly _id?: string;
-    public get id(): string | undefined {
-        return this._id;
-    }
-    private readonly _nonce: CoreBuffer;
-    public get nonce(): CoreBuffer {
-        return this._nonce;
-    }
-    private readonly _algorithm: CryptoEncryptionAlgorithm;
-    public get algorithm(): CryptoEncryptionAlgorithm {
-        return this._algorithm;
-    }
-    private readonly _stateType: CryptoStateType;
-    public get stateType(): CryptoStateType {
-        return this._stateType;
-    }
+    @validate()
+    @serialize()
+    public readonly id?: string;
 
-    public constructor(
-        nonce: CoreBuffer,
-        algorithm: CryptoEncryptionAlgorithm,
-        stateType: CryptoStateType,
-        id?: string
-    ) {
-        CryptoValidation.checkEncryptionAlgorithm(algorithm);
-        CryptoValidation.checkNonceForAlgorithm(nonce, algorithm);
+    @validate()
+    @serialize()
+    public readonly nonce: CoreBuffer;
 
-        CryptoValidation.checkStateType(stateType);
+    @validate()
+    @serialize()
+    public readonly algorithm: CryptoEncryptionAlgorithm;
 
-        super();
-
-        this._nonce = nonce;
-        this._algorithm = algorithm;
-        this._id = id;
-        this._stateType = stateType;
-    }
+    @validate()
+    @serialize()
+    public readonly stateType: CryptoStateType;
 
     public clear(): void {
         this.nonce.clear();
     }
 
-    public toJSON(verbose = true): ICryptoPublicStateSerialized {
-        const obj: ICryptoPublicStateSerialized = {
+    public override toJSON(verbose = true): ICryptoPublicStateSerialized {
+        return {
+            "@type": verbose ? "CryptoPublicState" : undefined,
             nnc: this.nonce.toBase64URL(),
             alg: this.algorithm,
-            typ: this.stateType
+            typ: this.stateType,
+            id: this.id
         };
-        if (this.id) {
-            obj.id = this.id;
+    }
+
+    protected static override preFrom(value: any): any {
+        if (value.nnc) {
+            value = {
+                nonce: value.nnc,
+                algorithm: value.alg,
+                stateType: value.typ,
+                id: value.id
+            };
         }
-        if (verbose) {
-            obj["@type"] = "CryptoPublicState";
-        }
-        return obj;
+
+        let error;
+        error = CryptoValidation.checkEncryptionAlgorithm(value.algorithm);
+        if (error) throw error;
+
+        error = CryptoValidation.checkStateType(value.stateType);
+        if (error) throw error;
+
+        error = CryptoValidation.checkNonceAsString(value.nonce, value.algorithm as CryptoEncryptionAlgorithm);
+        if (error) throw error;
+
+        return value;
     }
 
     public static from(value: CryptoPublicState | ICryptoPublicState): CryptoPublicState {
-        return new CryptoPublicState(value.nonce, value.algorithm, value.stateType, value.id);
+        return this.fromAny(value);
     }
 
     public static fromJSON(value: ICryptoPublicStateSerialized): CryptoPublicState {
-        let error;
-        error = CryptoValidation.checkEncryptionAlgorithm(value.alg);
-        if (error) throw error;
-
-        error = CryptoValidation.checkStateType(value.typ);
-        if (error) throw error;
-
-        error = CryptoValidation.checkNonceAsString(value.nnc, value.alg as CryptoEncryptionAlgorithm);
-        if (error) throw error;
-
-        const buffer = CoreBuffer.fromBase64URL(value.nnc);
-        return new CryptoPublicState(
-            buffer,
-            value.alg as CryptoEncryptionAlgorithm,
-            value.typ as CryptoStateType,
-            value.id
-        );
+        return this.fromAny(value);
     }
 
     public static fromBase64(value: string): CryptoPublicState {
         return this.deserialize(CoreBuffer.base64_utf8(value));
-    }
-
-    public static deserialize(value: string): CryptoPublicState {
-        return this.fromJSON(JSON.parse(value));
     }
 }

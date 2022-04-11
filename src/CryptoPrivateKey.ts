@@ -1,4 +1,4 @@
-import { type } from "@js-soft/ts-serval";
+import { serialize, type, validate } from "@js-soft/ts-serval";
 import { CoreBuffer, Encoding, ICoreBuffer } from "./CoreBuffer";
 import { CryptoSerializable } from "./CryptoSerializable";
 import { CryptoExchangeAlgorithm } from "./exchange/CryptoExchange";
@@ -24,28 +24,13 @@ export interface ICryptoPrivateKeyStatic {
 
 @type("CryptoPrivateKey")
 export class CryptoPrivateKey extends CryptoSerializable implements ICryptoPrivateKey {
+    @validate()
+    @serialize()
     public readonly algorithm: CryptoExchangeAlgorithm | CryptoSignatureAlgorithm;
+
+    @validate()
+    @serialize()
     public readonly privateKey: ICoreBuffer;
-
-    public constructor(algorithm: CryptoExchangeAlgorithm | CryptoSignatureAlgorithm, privateKey: ICoreBuffer) {
-        super();
-
-        this.algorithm = algorithm;
-        this.privateKey = privateKey;
-    }
-
-    public toJSON(): Object {
-        const obj = {
-            "@type": "CryptoPrivateKey",
-            privateKey: this.toString(),
-            algorithm: this.algorithm
-        };
-        return obj;
-    }
-
-    public toString(): string {
-        return this.privateKey.toString(Encoding.Base64_UrlSafe_NoPadding);
-    }
 
     public toPEM(): string {
         return this.privateKey.toString(Encoding.Pem, "PRIVATE KEY");
@@ -60,19 +45,13 @@ export class CryptoPrivateKey extends CryptoSerializable implements ICryptoPriva
         return pem;
     }
 
-    public static deserialize(value: string): CryptoPrivateKey {
-        const obj = JSON.parse(value);
-        return this.from(obj);
-    }
-
     public static fromString(
         value: string,
         algorithm: CryptoExchangeAlgorithm | CryptoSignatureAlgorithm,
         encoding: Encoding = Encoding.Base64_UrlSafe_NoPadding
     ): CryptoPrivateKey {
         const buffer: CoreBuffer = CoreBuffer.fromString(value, encoding);
-
-        return new CryptoPrivateKey(algorithm, buffer);
+        return this.fromAny({ algorithm, privateKey: buffer });
     }
 
     public static fromObject(
@@ -81,7 +60,7 @@ export class CryptoPrivateKey extends CryptoSerializable implements ICryptoPriva
     ): CryptoPrivateKey {
         const buffer: ICoreBuffer = CoreBuffer.fromObject(value);
 
-        return new CryptoPrivateKey(algorithm, buffer);
+        return this.fromAny({ algorithm, privateKey: buffer });
     }
 
     public static fromPEM(
@@ -93,14 +72,7 @@ export class CryptoPrivateKey extends CryptoSerializable implements ICryptoPriva
     }
 
     public static from(value: any): CryptoPrivateKey {
-        if (!value || !value.publicKey || !value.algorithm) {
-            throw new Error("No value, public key or algorithm set");
-        }
-
-        if (typeof value.privateKey === "string") {
-            return this.fromString(value.privateKey, value.algorithm);
-        }
-        return this.fromObject(value.privateKey, value.algorithm);
+        return this.fromAny(value);
     }
 
     public static fromBase64(value: string): CryptoPrivateKey {

@@ -115,7 +115,11 @@ export abstract class CryptoEncryption {
                         secretKeyBuffer
                     );
                     cipherbuffer = new CoreBuffer(cipher);
-                    return new CryptoCipher(cipherbuffer, correctAlgorithm, new CoreBuffer(publicnonce));
+                    return CryptoCipher.from({
+                        cipher: cipherbuffer,
+                        algorithm: correctAlgorithm,
+                        nonce: CoreBuffer.from(publicnonce)
+                    });
                 } catch (e) {
                     throw new CryptoError(CryptoErrorCode.EncryptionEncrypt, `${e}`);
                 }
@@ -167,7 +171,7 @@ export abstract class CryptoEncryption {
                         secretKeyBuffer
                     );
                     cipherbuffer = new CoreBuffer(cipher);
-                    return new CryptoCipher(cipherbuffer, algorithm, undefined, counter);
+                    return CryptoCipher.from({ cipher: cipherbuffer, algorithm, counter });
                 } catch (e) {
                     throw new CryptoError(CryptoErrorCode.EncryptionEncrypt, `${e}`);
                 }

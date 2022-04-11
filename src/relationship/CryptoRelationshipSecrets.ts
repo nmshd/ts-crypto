@@ -85,11 +85,7 @@ export class CryptoRelationshipSecrets extends CryptoSerializable implements ICr
     public requestSecretKey: CryptoSecretKey;
 
     public static from(value: ICryptoRelationshipSecrets): CryptoRelationshipSecrets {
-        return super.from(value, CryptoRelationshipSecrets) as CryptoRelationshipSecrets;
-    }
-
-    public static deserialize(value: string): CryptoRelationshipSecrets {
-        return super.deserialize(value, CryptoRelationshipSecrets) as CryptoRelationshipSecrets;
+        return this.fromAny(value);
     }
 
     public async sign(

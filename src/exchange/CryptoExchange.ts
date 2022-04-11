@@ -64,8 +64,8 @@ export class CryptoExchange {
                 throw new CryptoError(CryptoErrorCode.NotYetImplemented);
         }
 
-        const privateKey = new CryptoExchangePrivateKey(algorithm, new CoreBuffer(privateKeyBuffer));
-        const publicKey = new CryptoExchangePublicKey(algorithm, new CoreBuffer(publicKeyBuffer));
+        const privateKey = CryptoExchangePrivateKey.from({ algorithm, privateKey: CoreBuffer.from(privateKeyBuffer) });
+        const publicKey = CryptoExchangePublicKey.from({ algorithm, publicKey: CoreBuffer.from(publicKeyBuffer) });
         const keypair = new CryptoExchangeKeypair(publicKey, privateKey);
 
         return keypair;

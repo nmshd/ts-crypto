@@ -62,10 +62,10 @@ export class CryptoSignatures {
                 throw new CryptoError(CryptoErrorCode.NotYetImplemented);
         }
 
-        const privateKey = new CryptoSignaturePrivateKey(algorithm, new CoreBuffer(pair.privateKey));
-        const publicKey = new CryptoSignaturePublicKey(algorithm, new CoreBuffer(pair.publicKey));
+        const privateKey = CryptoSignaturePrivateKey.from({ algorithm, privateKey: CoreBuffer.from(pair.privateKey) });
+        const publicKey = CryptoSignaturePublicKey.from({ algorithm, publicKey: CoreBuffer.from(pair.publicKey) });
 
-        const keypair = new CryptoSignatureKeypair(publicKey, privateKey);
+        const keypair = CryptoSignatureKeypair.from({ publicKey, privateKey });
         return keypair;
     }
 
