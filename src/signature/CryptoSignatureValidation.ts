@@ -7,12 +7,12 @@ import { CryptoSignaturePrivateKey } from "./CryptoSignaturePrivateKey";
 import { CryptoSignaturePublicKey } from "./CryptoSignaturePublicKey";
 
 export class CryptoSignatureValidation extends CryptoValidation {
-    public static readonly PRIVATE_KEY_MIN_BYTES: number = 20;
-    public static readonly PRIVATE_KEY_MAX_BYTES: number = 80;
-    public static readonly PUBLIC_KEY_MIN_BYTES: number = 20;
-    public static readonly PUBLIC_KEY_MAX_BYTES: number = 80;
-    public static readonly SIGNATURE_MIN_BYTES: number = 20;
-    public static readonly SIGNATURE_MAX_BYTES: number = 100;
+    public static readonly PRIVATE_KEY_MIN_BYTES = 20;
+    public static readonly PRIVATE_KEY_MAX_BYTES = 80;
+    public static readonly PUBLIC_KEY_MIN_BYTES = 20;
+    public static readonly PUBLIC_KEY_MAX_BYTES = 80;
+    public static readonly SIGNATURE_MIN_BYTES = 20;
+    public static readonly SIGNATURE_MAX_BYTES = 100;
 
     public static checkSignatureAlgorithm(algorithm: number, throwError = true): CryptoError | undefined {
         let error: CryptoError | undefined;

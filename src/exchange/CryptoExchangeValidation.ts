@@ -7,10 +7,10 @@ import { CryptoExchangePrivateKey } from "./CryptoExchangePrivateKey";
 import { CryptoExchangePublicKey } from "./CryptoExchangePublicKey";
 
 export class CryptoExchangeValidation extends CryptoValidation {
-    public static readonly PRIVATE_KEY_MIN_BYTES: number = 20;
-    public static readonly PRIVATE_KEY_MAX_BYTES: number = 40;
-    public static readonly PUBLIC_KEY_MIN_BYTES: number = 20;
-    public static readonly PUBLIC_KEY_MAX_BYTES: number = 40;
+    public static readonly PRIVATE_KEY_MIN_BYTES = 20;
+    public static readonly PRIVATE_KEY_MAX_BYTES = 40;
+    public static readonly PUBLIC_KEY_MIN_BYTES = 20;
+    public static readonly PUBLIC_KEY_MAX_BYTES = 40;
 
     public static checkExchangeAlgorithm(algorithm: number, throwError = true): CryptoError | undefined {
         let error;
