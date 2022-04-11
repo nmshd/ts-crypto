@@ -2,7 +2,7 @@ import { serialize, type, validate } from "@js-soft/ts-serval";
 import { CoreBuffer, Encoding, ICoreBuffer } from "./CoreBuffer";
 import { CryptoSerializable } from "./CryptoSerializable";
 import { CryptoExchangeAlgorithm } from "./exchange/CryptoExchange";
-import { CryptoSignatureAlgorithm } from "./signature/CryptoSignatures";
+import { CryptoSignatureAlgorithm } from "./signature/CryptoSignatureAlgorithm";
 
 export interface ICryptoPublicKey {
     readonly publicKey: ICoreBuffer;
@@ -31,7 +31,7 @@ export class CryptoPublicKey extends CryptoSerializable implements ICryptoPublic
 
     @validate()
     @serialize()
-    public readonly publicKey: ICoreBuffer;
+    public readonly publicKey: CoreBuffer;
 
     public override toString(): string {
         return this.publicKey.toString(Encoding.Base64_UrlSafe_NoPadding);

@@ -1,7 +1,7 @@
 import { ISerializable, ISerialized, serialize, type, validate } from "@js-soft/ts-serval";
 import { CoreBuffer, IClearable, ICoreBuffer } from "../CoreBuffer";
 import { CryptoPublicKey } from "../CryptoPublicKey";
-import { CryptoSignatureAlgorithm } from "./CryptoSignatures";
+import { CryptoSignatureAlgorithm } from "./CryptoSignatureAlgorithm";
 import { CryptoSignatureValidation } from "./CryptoSignatureValidation";
 
 export interface ICryptoSignaturePublicKeySerialized extends ISerialized {

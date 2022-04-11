@@ -2,9 +2,9 @@ import { CoreBuffer } from "../CoreBuffer";
 import { CryptoError } from "../CryptoError";
 import { CryptoErrorCode } from "../CryptoErrorCode";
 import { CryptoValidation } from "../CryptoValidation";
+import { CryptoSignatureAlgorithm } from "./CryptoSignatureAlgorithm";
 import { CryptoSignaturePrivateKey } from "./CryptoSignaturePrivateKey";
 import { CryptoSignaturePublicKey } from "./CryptoSignaturePublicKey";
-import { CryptoSignatureAlgorithm } from "./CryptoSignatures";
 
 export class CryptoSignatureValidation extends CryptoValidation {
     public static readonly PRIVATE_KEY_MIN_BYTES: number = 20;

@@ -4,19 +4,11 @@ import { CryptoErrorCode } from "../CryptoErrorCode";
 import { CryptoHashAlgorithm } from "../hash/CryptoHash";
 import { SodiumWrapper } from "../SodiumWrapper";
 import { CryptoSignature } from "./CryptoSignature";
+import { CryptoSignatureAlgorithm } from "./CryptoSignatureAlgorithm";
 import { CryptoSignatureKeypair } from "./CryptoSignatureKeypair";
 import { CryptoSignaturePrivateKey } from "./CryptoSignaturePrivateKey";
 import { CryptoSignaturePublicKey } from "./CryptoSignaturePublicKey";
 import { CryptoSignatureValidation } from "./CryptoSignatureValidation";
-
-export const enum CryptoSignatureAlgorithm {
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    ECDSA_P256 = 1,
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    ECDSA_P521 = 2,
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    ECDSA_ED25519 = 3
-}
 
 export class CryptoSignatures {
     public static async privateKeyToPublicKey(
