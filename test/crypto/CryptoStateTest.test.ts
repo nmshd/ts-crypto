@@ -58,8 +58,8 @@ export class CryptoStateTest {
                 expect(publicAny.counter).not.to.exist;
             });
 
-            it("should create private receive state out of public state", async function () {
-                stateRx = await CryptoPrivateStateReceive.fromPublicState(publicState, sharedKey);
+            it("should create private receive state out of public state", function () {
+                stateRx = CryptoPrivateStateReceive.fromPublicState(publicState, sharedKey);
                 expect(stateRx).to.exist;
                 expect(stateRx.stateType).to.equal(CryptoStateType.Receive);
                 expect(stateRx.nonce).to.exist;
