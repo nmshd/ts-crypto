@@ -68,14 +68,10 @@ export abstract class CryptoEncryption {
         nonce?: CoreBuffer,
         algorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.XCHACHA20_POLY1305
     ): Promise<CryptoCipher> {
-        CryptoValidation.checkPlaintext(plaintext);
-
         let correctAlgorithm;
         let secretKeyBuffer;
 
         if (secretKey instanceof CryptoSecretKey) {
-            CryptoValidation.checkSecretKey(secretKey);
-
             correctAlgorithm = secretKey.algorithm;
             secretKeyBuffer = secretKey.secretKey.buffer;
         } else if (secretKey instanceof CoreBuffer) {
@@ -138,8 +134,6 @@ export abstract class CryptoEncryption {
         let correctAlgorithm;
         let secretKeyBuffer;
         if (secretKey instanceof CryptoSecretKey) {
-            CryptoValidation.checkSecretKey(secretKey);
-
             correctAlgorithm = secretKey.algorithm;
             secretKeyBuffer = secretKey.secretKey.buffer;
         } else if (secretKey instanceof CoreBuffer) {
@@ -186,14 +180,10 @@ export abstract class CryptoEncryption {
         nonce?: CoreBuffer,
         algorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.XCHACHA20_POLY1305
     ): Promise<CoreBuffer> {
-        CryptoValidation.checkCipher(cipher);
-
         let correctAlgorithm;
         let secretKeyBuffer;
 
         if (secretKey instanceof CryptoSecretKey) {
-            CryptoValidation.checkSecretKey(secretKey);
-
             correctAlgorithm = secretKey.algorithm;
             secretKeyBuffer = secretKey.secretKey.buffer;
         } else if (secretKey instanceof CoreBuffer) {
