@@ -1,7 +1,10 @@
 import { ISerializable, ISerialized, serialize, type, validate } from "@js-soft/ts-serval";
 import { CoreBuffer, IClearable, ICoreBuffer } from "../CoreBuffer";
+import { CryptoError } from "../CryptoError";
+import { CryptoErrorCode } from "../CryptoErrorCode";
 import { CryptoPrivateKey } from "../CryptoPrivateKey";
-import { CryptoExchange, CryptoExchangeAlgorithm } from "./CryptoExchange";
+import { SodiumWrapper } from "../SodiumWrapper";
+import { CryptoExchangeAlgorithm } from "./CryptoExchange";
 import { CryptoExchangePublicKey } from "./CryptoExchangePublicKey";
 import { CryptoExchangeValidation } from "./CryptoExchangeValidation";
 
@@ -42,7 +45,20 @@ export class CryptoExchangePrivateKey extends CryptoPrivateKey implements ICrypt
     }
 
     public async toPublicKey(): Promise<CryptoExchangePublicKey> {
-        return await CryptoExchange.privateKeyToPublicKey(this);
+        switch (this.algorithm) {
+            case CryptoExchangeAlgorithm.ECDH_X25519:
+                try {
+                    const publicKey = (await SodiumWrapper.ready()).crypto_scalarmult_base(this.privateKey.buffer);
+                    return CryptoExchangePublicKey.from({
+                        algorithm: this.algorithm,
+                        publicKey: CoreBuffer.from(publicKey)
+                    });
+                } catch (e) {
+                    throw new CryptoError(CryptoErrorCode.ExchangeKeyGeneration, `${e}`);
+                }
+            default:
+                throw new CryptoError(CryptoErrorCode.NotYetImplemented);
+        }
     }
 
     public static override from(value: CryptoExchangePrivateKey | ICryptoExchangePrivateKey): CryptoExchangePrivateKey {
