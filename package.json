@@ -46,7 +46,7 @@
     "devDependencies": {
         "@js-soft/eslint-config-ts": "^1.5.2",
         "@js-soft/license-check": "1.0.4",
-        "@js-soft/ts-serval": "2.0.0",
+        "@js-soft/ts-serval": "2.0.1",
         "@types/chai": "^4.3.0",
         "@types/libsodium-wrappers-sumo": "^0.7.5",
         "@types/mocha": "^9.1.0",
