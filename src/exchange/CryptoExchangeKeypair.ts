@@ -1,5 +1,7 @@
 import { ISerializable, ISerialized, serialize, type, validate } from "@js-soft/ts-serval";
 import { CoreBuffer, IClearable } from "../CoreBuffer";
+import { CryptoError } from "../CryptoError";
+import { CryptoErrorCode } from "../CryptoErrorCode";
 import { CryptoSerializable } from "../CryptoSerializable";
 import {
     CryptoExchangePrivateKey,
@@ -57,7 +59,12 @@ export class CryptoExchangeKeypair extends CryptoSerializable implements ICrypto
             };
         }
 
-        // CryptoExchangeValidation.checkExchangeKeypair(value.privateKey, value.publicKey);
+        if (value.privateKey.algorithm !== value.publicKey.algorithm) {
+            throw new CryptoError(
+                CryptoErrorCode.ExchangeWrongAlgorithm,
+                "Algorithms of private and public key do not match."
+            );
+        }
 
         return value;
     }

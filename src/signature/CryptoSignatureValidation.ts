@@ -58,6 +58,18 @@ export class CryptoSignatureValidation extends CryptoValidation {
         );
     }
 
+    public static checkSignaturePrivateKey(
+        privateKey: string | CoreBuffer,
+        propertyName = "privateKey",
+        throwError = true
+    ): CryptoError | undefined {
+        if (typeof privateKey === "string") {
+            return this.checkSignaturePrivateKeyAsString(privateKey, propertyName, throwError);
+        }
+
+        return this.checkSignaturePrivateKeyAsBuffer(privateKey, propertyName, throwError);
+    }
+
     public static checkSignaturePublicKeyAsString(
         key: string,
         algorithm: CryptoSignatureAlgorithm,
@@ -88,6 +100,19 @@ export class CryptoSignatureValidation extends CryptoValidation {
         );
     }
 
+    public static checkSignaturePublicKey(
+        publicKey: string | CoreBuffer,
+        algorithm: CryptoSignatureAlgorithm,
+        propertyName = "publicKey",
+        throwError = true
+    ): CryptoError | undefined {
+        if (typeof publicKey === "string") {
+            return this.checkSignaturePublicKeyAsString(publicKey, algorithm, propertyName, throwError);
+        }
+
+        return this.checkSignaturePublicKeyAsBuffer(publicKey, algorithm, propertyName, throwError);
+    }
+
     public static checkSignatureAsString(signature: string, throwError = true): CryptoError | undefined {
         return this.checkSerializedBuffer(
             signature,
@@ -100,6 +125,12 @@ export class CryptoSignatureValidation extends CryptoValidation {
 
     public static checkSignatureAsBuffer(signature: CoreBuffer, throwError = true): CryptoError | undefined {
         return this.checkBuffer(signature, this.SIGNATURE_MIN_BYTES, this.SIGNATURE_MAX_BYTES, "signature", throwError);
+    }
+
+    public static checkSignature(signature: string | CoreBuffer, throwError = true): CryptoError | undefined {
+        if (typeof signature === "string") return this.checkSignatureAsString(signature, throwError);
+
+        return this.checkSignatureAsBuffer(signature, throwError);
     }
 
     public static checkSignaturePublicKeyId(keyId: string, throwError = true): CryptoError | undefined {

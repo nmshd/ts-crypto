@@ -4,6 +4,7 @@ import { CryptoPrivateKey } from "../CryptoPrivateKey";
 import { CryptoSignatureAlgorithm } from "./CryptoSignatureAlgorithm";
 import { CryptoSignaturePublicKey } from "./CryptoSignaturePublicKey";
 import { CryptoSignatures } from "./CryptoSignatures";
+import { CryptoSignatureValidation } from "./CryptoSignatureValidation";
 
 export interface ICryptoSignaturePrivateKeySerialized extends ISerialized {
     alg: number;
@@ -58,8 +59,8 @@ export class CryptoSignaturePrivateKey extends CryptoPrivateKey implements ICryp
             };
         }
 
-        // CryptoSignatureValidation.checkSignatureAlgorithm(value.algorithm);
-        // CryptoSignatureValidation.checkSignaturePrivateKeyAsString(value.privateKey, "privateKey");
+        CryptoSignatureValidation.checkSignatureAlgorithm(value.algorithm);
+        CryptoSignatureValidation.checkSignaturePrivateKey(value.privateKey, "privateKey");
 
         return value;
     }

@@ -2,6 +2,7 @@ import { ISerializable, ISerialized, type } from "@js-soft/ts-serval";
 import { CoreBuffer, IClearable, ICoreBuffer } from "../CoreBuffer";
 import { CryptoPublicKey } from "../CryptoPublicKey";
 import { CryptoSignatureAlgorithm } from "./CryptoSignatureAlgorithm";
+import { CryptoSignatureValidation } from "./CryptoSignatureValidation";
 
 export interface ICryptoSignaturePublicKeySerialized extends ISerialized {
     alg: number;
@@ -45,13 +46,9 @@ export class CryptoSignaturePublicKey extends CryptoPublicKey implements ICrypto
             };
         }
 
-        // CryptoSignatureValidation.checkSignatureAlgorithm(value.algorithm);
+        CryptoSignatureValidation.checkSignatureAlgorithm(value.algorithm);
 
-        // CryptoSignatureValidation.checkSignaturePublicKeyAsString(
-        //     value.publicKey,
-        //     value.algorithm as CryptoSignatureAlgorithm,
-        //     "publicKey"
-        // );
+        CryptoSignatureValidation.checkSignaturePublicKey(value.publicKey, value.algorithm, "publicKey");
 
         return value;
     }

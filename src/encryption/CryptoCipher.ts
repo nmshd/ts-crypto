@@ -3,6 +3,7 @@ import { CoreBuffer, IClearable, ICoreBuffer } from "../CoreBuffer";
 import { CryptoError } from "../CryptoError";
 import { CryptoErrorCode } from "../CryptoErrorCode";
 import { CryptoSerializable } from "../CryptoSerializable";
+import { CryptoValidation } from "../CryptoValidation";
 import { CryptoEncryptionAlgorithm } from "./CryptoEncryption";
 
 export interface ICryptoCipherSerialized extends ISerialized {
@@ -76,22 +77,30 @@ export class CryptoCipher extends CryptoSerializable implements ICryptoCipher, I
             throw new CryptoError(CryptoErrorCode.EncryptionNonceAndCounter, "Nonce and counter properties are set.");
         }
 
-        // CryptoValidation.checkBuffer(
-        //     value.cipher,
-        //     CryptoCipher.MIN_CIPHER_BYTES,
-        //     CryptoCipher.MAX_CIPHER_BYTES,
-        //     "cipher"
-        // );
-        // CryptoValidation.checkEncryptionAlgorithm(value.algorithm);
+        if (typeof value.cipher === "string") {
+            CryptoValidation.checkSerializedBuffer(
+                value.cipher,
+                this.MIN_CIPHER_BYTES,
+                this.MAX_CIPHER_BYTES,
+                "cipher"
+            );
+        } else {
+            CryptoValidation.checkBuffer(
+                value.cipher,
+                CryptoCipher.MIN_CIPHER_BYTES,
+                CryptoCipher.MAX_CIPHER_BYTES,
+                "cipher"
+            );
+        }
+
+        CryptoValidation.checkEncryptionAlgorithm(value.algorithm);
 
         if (value.counter) {
-            // CryptoValidation.checkCounter(value.counter);
+            CryptoValidation.checkCounter(value.counter);
         }
         if (value.nonce) {
-            // CryptoValidation.checkNonceForAlgorithm(value.nonce, value.algorithm);
+            CryptoValidation.checkNonce(value.nonce, value.algorithm);
         }
-
-        // CryptoValidation.checkSerializedBuffer(value.cph, this.MIN_CIPHER_BYTES, this.MAX_CIPHER_BYTES, "cipher");
 
         return value;
     }

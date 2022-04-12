@@ -98,28 +98,30 @@ export abstract class CryptoEncryption {
             publicnonce = sodium.randombytes_buf(24);
         }
 
+        let cipher: Uint8Array;
         switch (correctAlgorithm) {
             case CryptoEncryptionAlgorithm.XCHACHA20_POLY1305:
                 try {
-                    const cipher = sodium.crypto_aead_xchacha20poly1305_ietf_encrypt(
+                    cipher = sodium.crypto_aead_xchacha20poly1305_ietf_encrypt(
                         plaintext.buffer,
                         "",
                         new Uint8Array(),
                         publicnonce,
                         secretKeyBuffer
                     );
-
-                    return CryptoCipher.from({
-                        cipher: CoreBuffer.from(cipher),
-                        algorithm: correctAlgorithm,
-                        nonce: CoreBuffer.from(publicnonce)
-                    });
                 } catch (e) {
                     throw new CryptoError(CryptoErrorCode.EncryptionEncrypt, `${e}`);
                 }
+                break;
             default:
                 throw new CryptoError(CryptoErrorCode.NotYetImplemented);
         }
+
+        return CryptoCipher.from({
+            cipher: CoreBuffer.from(cipher),
+            algorithm: correctAlgorithm,
+            nonce: CoreBuffer.from(publicnonce)
+        });
     }
 
     public static async encryptWithCounter(

@@ -22,6 +22,20 @@ export class CryptoValidation {
         return error;
     }
 
+    public static checkBufferAsStringOrBuffer(
+        buffer: CoreBuffer | string,
+        minBytes = 0,
+        maxBytes: number = Number.MAX_SAFE_INTEGER,
+        propertyName?: string,
+        throwError = true
+    ): CryptoError | undefined {
+        if (typeof buffer === "string") {
+            return this.checkSerializedBuffer(buffer, minBytes, maxBytes, propertyName, throwError);
+        }
+
+        return this.checkBuffer(buffer, minBytes, maxBytes, propertyName, throwError);
+    }
+
     public static checkBuffer(
         buffer: CoreBuffer,
         minBytes = 0,
@@ -192,10 +206,12 @@ export class CryptoValidation {
     }
 
     public static checkSecretKeyForAlgorithm(
-        key?: CoreBuffer,
+        key?: CoreBuffer | string,
         algorithm?: CryptoEncryptionAlgorithm,
         throwError = true
     ): CryptoError | undefined {
+        if (typeof key === "string") key = CoreBuffer.from(key);
+
         let error;
         let buffer: Uint8Array;
         if (key instanceof CoreBuffer) {
@@ -242,6 +258,26 @@ export class CryptoValidation {
         throwError = true
     ): CryptoError | undefined {
         return this.checkSerializedBuffer(nonce, 12, 24, propertyName, throwError);
+    }
+
+    public static checkNonceAsBuffer(
+        nonce: CoreBuffer,
+        algorithm: CryptoEncryptionAlgorithm,
+        propertyName = "nonce",
+        throwError = true
+    ): CryptoError | undefined {
+        return this.checkBuffer(nonce, 12, 24, propertyName, throwError);
+    }
+
+    public static checkNonce(
+        nonce: string | CoreBuffer,
+        algorithm: CryptoEncryptionAlgorithm,
+        propertyName = "nonce",
+        throwError = true
+    ): CryptoError | undefined {
+        if (typeof nonce === "string") return this.checkNonceAsString(nonce, algorithm, propertyName, throwError);
+
+        return this.checkNonceAsBuffer(nonce, algorithm, propertyName, throwError);
     }
 
     public static checkNonceForAlgorithm(

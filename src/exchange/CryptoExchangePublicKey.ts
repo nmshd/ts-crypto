@@ -2,6 +2,7 @@ import { ISerialized, serialize, type, validate } from "@js-soft/ts-serval";
 import { CoreBuffer, IClearable } from "../CoreBuffer";
 import { CryptoPublicKey } from "../CryptoPublicKey";
 import { CryptoExchangeAlgorithm } from "./CryptoExchange";
+import { CryptoExchangeValidation } from "./CryptoExchangeValidation";
 
 export interface ICryptoExchangePublicKeySerialized extends ISerialized {
     alg: number;
@@ -43,12 +44,8 @@ export class CryptoExchangePublicKey extends CryptoPublicKey implements ICryptoE
             };
         }
 
-        // CryptoExchangeValidation.checkExchangeAlgorithm(value.algorithm);
-        // CryptoExchangeValidation.checkExchangePrivateKeyAsNumber(
-        //     value.publicKey,
-        //     value.algorithm as CryptoExchangeAlgorithm,
-        //     "publicKey"
-        // );
+        CryptoExchangeValidation.checkExchangeAlgorithm(value.algorithm);
+        CryptoExchangeValidation.checkExchangePublicKey(value.publicKey, value.algorithm);
 
         return value;
     }
@@ -58,11 +55,7 @@ export class CryptoExchangePublicKey extends CryptoPublicKey implements ICryptoE
     }
 
     public static fromJSON(value: ICryptoExchangePublicKeySerialized): CryptoExchangePublicKey {
-        const buffer = CoreBuffer.fromBase64URL(value.pub);
-        return this.from({
-            algorithm: value.alg as CryptoExchangeAlgorithm,
-            publicKey: buffer
-        });
+        return this.fromAny(value);
     }
 
     public static override fromBase64(value: string): CryptoExchangePublicKey {

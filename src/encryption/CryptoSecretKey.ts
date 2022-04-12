@@ -1,6 +1,7 @@
 import { ISerializable, ISerialized, serialize, type, validate } from "@js-soft/ts-serval";
 import { CoreBuffer, IClearable, ICoreBuffer } from "../CoreBuffer";
 import { CryptoSerializable } from "../CryptoSerializable";
+import { CryptoValidation } from "../CryptoValidation";
 import { CryptoEncryptionAlgorithm } from "./CryptoEncryption";
 
 export interface ICryptoSecretKeySerialized extends ISerialized {
@@ -46,11 +47,13 @@ export class CryptoSecretKey extends CryptoSerializable implements ICryptoSecret
             };
         }
 
-        // CryptoValidation.checkEncryptionAlgorithm(value.algorithm);
-        // CryptoValidation.checkSerializedSecretKeyForAlgorithm(
-        //     value.secretKey,
-        //     value.algorithm as CryptoEncryptionAlgorithm
-        // );
+        CryptoValidation.checkEncryptionAlgorithm(value.algorithm);
+
+        if (typeof value.secretKey === "string") {
+            CryptoValidation.checkSerializedSecretKeyForAlgorithm(value.secretKey, value.algorithm);
+        } else {
+            CryptoValidation.checkSecretKeyForAlgorithm(value.secretKey, value.algorithm);
+        }
 
         return value;
     }

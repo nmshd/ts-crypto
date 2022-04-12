@@ -2,6 +2,7 @@ import { ISerializable, ISerialized, serialize, type, validate } from "@js-soft/
 import { CoreBuffer, IClearable } from "../CoreBuffer";
 import { CryptoSerializable } from "../CryptoSerializable";
 import { CryptoHashAlgorithm } from "../hash/CryptoHash";
+import { CryptoSignatureValidation } from "./CryptoSignatureValidation";
 
 export interface ICryptoSignatureSerialized extends ISerialized {
     sig: string;
@@ -62,8 +63,8 @@ export class CryptoSignature extends CryptoSerializable implements ICryptoSignat
             };
         }
 
-        // CryptoSignatureValidation.checkHashAlgorithm(value.algorithm);
-        // CryptoSignatureValidation.checkSignatureAsString(value.signature);
+        CryptoSignatureValidation.checkSignature(value.signature);
+        CryptoSignatureValidation.checkHashAlgorithm(value.algorithm);
 
         return value;
     }

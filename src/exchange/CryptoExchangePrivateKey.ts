@@ -6,6 +6,7 @@ import { CryptoPrivateKey } from "../CryptoPrivateKey";
 import { SodiumWrapper } from "../SodiumWrapper";
 import { CryptoExchangeAlgorithm } from "./CryptoExchange";
 import { CryptoExchangePublicKey } from "./CryptoExchangePublicKey";
+import { CryptoExchangeValidation } from "./CryptoExchangeValidation";
 
 export interface ICryptoExchangePrivateKeySerialized extends ISerialized {
     alg: number;
@@ -72,13 +73,8 @@ export class CryptoExchangePrivateKey extends CryptoPrivateKey implements ICrypt
             };
         }
 
-        // CryptoExchangeValidation.checkExchangeAlgorithm(value.algorithm);
-        // CryptoExchangeValidation.checkExchangePrivateKeyAsBuffer(value.privateKey, value.algorithm);
-        // CryptoExchangeValidation.checkExchangePrivateKeyAsNumber(
-        //     value.prv,
-        //     value.alg as CryptoExchangeAlgorithm,
-        //     "privateKey"
-        // );
+        CryptoExchangeValidation.checkExchangeAlgorithm(value.algorithm);
+        CryptoExchangeValidation.checkExchangePrivateKey(value.privateKey, value.algorithm, "privateKey");
 
         return value;
     }

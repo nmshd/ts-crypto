@@ -1,5 +1,6 @@
 import { ISerializable, ISerialized, Serializable, serialize, type, validate } from "@js-soft/ts-serval";
 import { CoreBuffer, IClearable } from "../CoreBuffer";
+import { CryptoValidation } from "../CryptoValidation";
 import { CryptoEncryptionAlgorithm } from "../encryption/CryptoEncryption";
 import { CryptoStateType } from "./CryptoStateType";
 
@@ -59,9 +60,9 @@ export class CryptoPublicState extends Serializable implements ICryptoPublicStat
             };
         }
 
-        // CryptoValidation.checkEncryptionAlgorithm(value.algorithm);
-        // CryptoValidation.checkStateType(value.stateType);
-        // CryptoValidation.checkNonceAsString(value.nonce, value.algorithm as CryptoEncryptionAlgorithm);
+        CryptoValidation.checkEncryptionAlgorithm(value.algorithm);
+        CryptoValidation.checkStateType(value.stateType);
+        CryptoValidation.checkNonce(value.nonce, value.algorithm);
 
         return value;
     }
