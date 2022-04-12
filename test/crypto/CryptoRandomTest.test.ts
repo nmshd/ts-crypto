@@ -102,7 +102,7 @@ export class CryptoRandomTest {
             });
 
             describe("Execute string()", function () {
-                this.timeout(4000);
+                this.timeout(5000);
 
                 it("should return a string with a fixed length", async function () {
                     let n;
