@@ -17,6 +17,7 @@
         "strictNullChecks": true,
         "strictPropertyInitialization": false,
         "downlevelIteration": true,
+        "noImplicitOverride": true,
         "lib": ["es2017", "dom"],
         "baseUrl": "./test",
         "paths": {

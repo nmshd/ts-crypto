@@ -54,7 +54,7 @@ export class CryptoDerivation implements ICryptoDerivation {
 
         const pwhash = (await SodiumWrapper.ready()).crypto_pwhash_str(saltedMaster.buffer, iterations, memLimit);
         const hashBuffer = CoreBuffer.fromString(pwhash, Encoding.Hex);
-        return new CryptoSecretKey(hashBuffer, keyAlgorithm);
+        return CryptoSecretKey.from({ secretKey: hashBuffer, algorithm: keyAlgorithm });
     }
 
     public static async deriveKeyFromBase(
@@ -86,6 +86,6 @@ export class CryptoDerivation implements ICryptoDerivation {
             context,
             baseKey.buffer
         );
-        return new CryptoSecretKey(CoreBuffer.fromObject(subkey), keyAlgorithm);
+        return CryptoSecretKey.from({ secretKey: CoreBuffer.fromObject(subkey), algorithm: keyAlgorithm });
     }
 }

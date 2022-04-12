@@ -18,25 +18,6 @@ export const enum CryptoExchangeAlgorithm {
 }
 
 export class CryptoExchange {
-    public static async privateKeyToPublicKey(privateKey: CryptoExchangePrivateKey): Promise<CryptoExchangePublicKey> {
-        switch (privateKey.algorithm) {
-            case CryptoExchangeAlgorithm.ECDH_X25519:
-                try {
-                    const publicKey = (await SodiumWrapper.ready()).crypto_scalarmult_base(
-                        privateKey.privateKey.buffer
-                    );
-                    return CryptoExchangePublicKey.from({
-                        algorithm: privateKey.algorithm,
-                        publicKey: CoreBuffer.from(publicKey)
-                    });
-                } catch (e) {
-                    throw new CryptoError(CryptoErrorCode.ExchangeKeyGeneration, `${e}`);
-                }
-            default:
-                throw new CryptoError(CryptoErrorCode.NotYetImplemented);
-        }
-    }
-
     /**
      * Generates a keypair for the specified key exchange algorithm
      *
@@ -64,9 +45,9 @@ export class CryptoExchange {
                 throw new CryptoError(CryptoErrorCode.NotYetImplemented);
         }
 
-        const privateKey = new CryptoExchangePrivateKey(algorithm, new CoreBuffer(privateKeyBuffer));
-        const publicKey = new CryptoExchangePublicKey(algorithm, new CoreBuffer(publicKeyBuffer));
-        const keypair = new CryptoExchangeKeypair(publicKey, privateKey);
+        const privateKey = CryptoExchangePrivateKey.from({ algorithm, privateKey: CoreBuffer.from(privateKeyBuffer) });
+        const publicKey = CryptoExchangePublicKey.from({ algorithm, publicKey: CoreBuffer.from(publicKeyBuffer) });
+        const keypair = CryptoExchangeKeypair.from({ publicKey, privateKey });
 
         return keypair;
     }

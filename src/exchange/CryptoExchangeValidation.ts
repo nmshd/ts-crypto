@@ -3,14 +3,12 @@ import { CryptoError } from "../CryptoError";
 import { CryptoErrorCode } from "../CryptoErrorCode";
 import { CryptoValidation } from "../CryptoValidation";
 import { CryptoExchangeAlgorithm } from "./CryptoExchange";
-import { CryptoExchangePrivateKey } from "./CryptoExchangePrivateKey";
-import { CryptoExchangePublicKey } from "./CryptoExchangePublicKey";
 
 export class CryptoExchangeValidation extends CryptoValidation {
-    public static readonly PRIVATE_KEY_MIN_BYTES: number = 20;
-    public static readonly PRIVATE_KEY_MAX_BYTES: number = 40;
-    public static readonly PUBLIC_KEY_MIN_BYTES: number = 20;
-    public static readonly PUBLIC_KEY_MAX_BYTES: number = 40;
+    public static readonly PRIVATE_KEY_MIN_BYTES = 20;
+    public static readonly PRIVATE_KEY_MAX_BYTES = 40;
+    public static readonly PUBLIC_KEY_MIN_BYTES = 20;
+    public static readonly PUBLIC_KEY_MAX_BYTES = 40;
 
     public static checkExchangeAlgorithm(algorithm: number, throwError = true): CryptoError | undefined {
         let error;
@@ -30,7 +28,7 @@ export class CryptoExchangeValidation extends CryptoValidation {
         return error;
     }
 
-    public static checkExchangePrivateKeyAsNumber(
+    public static checkExchangePrivateKeyAsString(
         privateKey: string,
         algorithm: CryptoExchangeAlgorithm,
         propertyName = "privateKey",
@@ -61,15 +59,16 @@ export class CryptoExchangeValidation extends CryptoValidation {
     }
 
     public static checkExchangePrivateKey(
-        privateKey: CryptoExchangePrivateKey,
+        privateKey: string | CoreBuffer,
+        algorithm: CryptoExchangeAlgorithm,
+        propertyName = "privateKey",
         throwError = true
     ): CryptoError | undefined {
-        let error;
-        if (!(privateKey instanceof CryptoExchangePrivateKey)) {
-            error = new CryptoError(CryptoErrorCode.ExchangeWrongPrivateKey, "PrivateKey is not set or supported.");
+        if (typeof privateKey === "string") {
+            return this.checkExchangePrivateKeyAsString(privateKey, algorithm, propertyName, throwError);
         }
-        if (error && throwError) throw error;
-        return error;
+
+        return this.checkExchangePrivateKeyAsBuffer(privateKey, algorithm, propertyName, throwError);
     }
 
     public static checkExchangePublicKeyAsString(
@@ -103,37 +102,15 @@ export class CryptoExchangeValidation extends CryptoValidation {
     }
 
     public static checkExchangePublicKey(
-        publicKey: CryptoExchangePublicKey,
+        publicKey: string | CoreBuffer,
+        algorithm: CryptoExchangeAlgorithm,
+        propertyName = "publicKey",
         throwError = true
     ): CryptoError | undefined {
-        let error;
-        if (!(publicKey instanceof CryptoExchangePublicKey)) {
-            error = new CryptoError(CryptoErrorCode.ExchangeWrongPublicKey, "PublicKey is not set or supported.");
+        if (typeof publicKey === "string") {
+            return this.checkExchangePublicKeyAsString(publicKey, algorithm, propertyName, throwError);
         }
-        if (error && throwError) throw error;
-        return error;
-    }
 
-    public static checkExchangeKeypair(
-        privateKey: CryptoExchangePrivateKey,
-        publicKey: CryptoExchangePublicKey,
-        throwError = true
-    ): CryptoError | undefined {
-        let error;
-        error = this.checkExchangePublicKey(publicKey);
-        if (error && throwError) throw error;
-        else if (error) return error;
-        error = this.checkExchangePrivateKey(privateKey);
-        if (error && throwError) throw error;
-        else if (error) return error;
-
-        if (privateKey.algorithm !== publicKey.algorithm) {
-            error = new CryptoError(
-                CryptoErrorCode.ExchangeWrongAlgorithm,
-                "Algorithms of private and public key do not match."
-            );
-        }
-        if (error && throwError) throw error;
-        return error;
+        return this.checkExchangePublicKeyAsBuffer(publicKey, algorithm, propertyName, throwError);
     }
 }

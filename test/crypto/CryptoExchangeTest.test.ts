@@ -28,6 +28,8 @@ export class CryptoExchangeTest {
                     expect(keypair.privateKey).to.be.instanceOf(CryptoPrivateKey);
                     expect(keypair.privateKey.algorithm).to.exist;
                     expect(keypair.privateKey.privateKey).to.exist;
+                    expect(keypair.privateKey.privateKey.buffer).to.be.instanceOf(Uint8Array);
+                    expect(keypair.privateKey.privateKey.buffer.byteLength).to.be.greaterThan(0);
                 });
 
                 it("should return a CryptoPublicKey as publicKey", function () {
@@ -35,6 +37,8 @@ export class CryptoExchangeTest {
                     expect(keypair.publicKey).to.be.instanceOf(CryptoPublicKey);
                     expect(keypair.publicKey.algorithm).to.exist;
                     expect(keypair.publicKey.publicKey).to.exist;
+                    expect(keypair.publicKey.publicKey.buffer).to.be.instanceOf(Uint8Array);
+                    expect(keypair.publicKey.publicKey.buffer.byteLength).to.be.greaterThan(0);
                 });
 
                 it("should return a correct public key out of the private key", async function () {

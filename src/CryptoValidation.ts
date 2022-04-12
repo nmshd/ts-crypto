@@ -1,9 +1,7 @@
 import { CoreBuffer } from "./CoreBuffer";
 import { CryptoError } from "./CryptoError";
 import { CryptoErrorCode } from "./CryptoErrorCode";
-import { CryptoCipher } from "./encryption/CryptoCipher";
 import { CryptoEncryptionAlgorithm } from "./encryption/CryptoEncryption";
-import { CryptoSecretKey } from "./encryption/CryptoSecretKey";
 import { CryptoHashAlgorithm } from "./hash/CryptoHash";
 import { CryptoStateType } from "./state/CryptoStateType";
 
@@ -22,6 +20,20 @@ export class CryptoValidation {
 
         if (error && throwError) throw error;
         return error;
+    }
+
+    public static checkBufferAsStringOrBuffer(
+        buffer: CoreBuffer | string,
+        minBytes = 0,
+        maxBytes: number = Number.MAX_SAFE_INTEGER,
+        propertyName?: string,
+        throwError = true
+    ): CryptoError | undefined {
+        if (typeof buffer === "string") {
+            return this.checkSerializedBuffer(buffer, minBytes, maxBytes, propertyName, throwError);
+        }
+
+        return this.checkBuffer(buffer, minBytes, maxBytes, propertyName, throwError);
     }
 
     public static checkBuffer(
@@ -147,39 +159,6 @@ export class CryptoValidation {
         return error;
     }
 
-    public static checkPlaintext(plaintext: CoreBuffer, throwError = true): CryptoError | undefined {
-        let error;
-        if (!(plaintext instanceof CoreBuffer)) {
-            error = new CryptoError(CryptoErrorCode.EncryptionWrongPlaintext, "Plaintext must be of type CoreBuffer.");
-        }
-
-        if (error && throwError) throw error;
-        return error;
-    }
-
-    public static checkCipher(cipher: CryptoCipher, throwError = true): CryptoError | undefined {
-        let error;
-        if (!(cipher instanceof CryptoCipher)) {
-            error = new CryptoError(CryptoErrorCode.EncryptionWrongCipher, "Cipher must be of type CryptoCipher.");
-        }
-
-        if (error && throwError) throw error;
-        return error;
-    }
-
-    public static checkSecretKey(secretKey: CryptoSecretKey, throwError = true): CryptoError | undefined {
-        let error;
-        if (!(secretKey instanceof CryptoSecretKey)) {
-            error = new CryptoError(
-                CryptoErrorCode.EncryptionWrongSecretKey,
-                "SecretKey must be of type CryptoSecretKey."
-            );
-        }
-
-        if (error && throwError) throw error;
-        return error;
-    }
-
     public static checkSerializedSecretKeyForAlgorithm(
         key: string,
         algorithm: CryptoEncryptionAlgorithm,
@@ -227,10 +206,12 @@ export class CryptoValidation {
     }
 
     public static checkSecretKeyForAlgorithm(
-        key?: CoreBuffer,
+        key?: CoreBuffer | string,
         algorithm?: CryptoEncryptionAlgorithm,
         throwError = true
     ): CryptoError | undefined {
+        if (typeof key === "string") key = CoreBuffer.from(key);
+
         let error;
         let buffer: Uint8Array;
         if (key instanceof CoreBuffer) {
@@ -277,6 +258,26 @@ export class CryptoValidation {
         throwError = true
     ): CryptoError | undefined {
         return this.checkSerializedBuffer(nonce, 12, 24, propertyName, throwError);
+    }
+
+    public static checkNonceAsBuffer(
+        nonce: CoreBuffer,
+        algorithm: CryptoEncryptionAlgorithm,
+        propertyName = "nonce",
+        throwError = true
+    ): CryptoError | undefined {
+        return this.checkBuffer(nonce, 12, 24, propertyName, throwError);
+    }
+
+    public static checkNonce(
+        nonce: string | CoreBuffer,
+        algorithm: CryptoEncryptionAlgorithm,
+        propertyName = "nonce",
+        throwError = true
+    ): CryptoError | undefined {
+        if (typeof nonce === "string") return this.checkNonceAsString(nonce, algorithm, propertyName, throwError);
+
+        return this.checkNonceAsBuffer(nonce, algorithm, propertyName, throwError);
     }
 
     public static checkNonceForAlgorithm(

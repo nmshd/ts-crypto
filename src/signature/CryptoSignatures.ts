@@ -4,19 +4,11 @@ import { CryptoErrorCode } from "../CryptoErrorCode";
 import { CryptoHashAlgorithm } from "../hash/CryptoHash";
 import { SodiumWrapper } from "../SodiumWrapper";
 import { CryptoSignature } from "./CryptoSignature";
+import { CryptoSignatureAlgorithm } from "./CryptoSignatureAlgorithm";
 import { CryptoSignatureKeypair } from "./CryptoSignatureKeypair";
 import { CryptoSignaturePrivateKey } from "./CryptoSignaturePrivateKey";
 import { CryptoSignaturePublicKey } from "./CryptoSignaturePublicKey";
 import { CryptoSignatureValidation } from "./CryptoSignatureValidation";
-
-export const enum CryptoSignatureAlgorithm {
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    ECDSA_P256 = 1,
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    ECDSA_P521 = 2,
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    ECDSA_ED25519 = 3
-}
 
 export class CryptoSignatures {
     public static async privateKeyToPublicKey(
@@ -62,10 +54,10 @@ export class CryptoSignatures {
                 throw new CryptoError(CryptoErrorCode.NotYetImplemented);
         }
 
-        const privateKey = new CryptoSignaturePrivateKey(algorithm, new CoreBuffer(pair.privateKey));
-        const publicKey = new CryptoSignaturePublicKey(algorithm, new CoreBuffer(pair.publicKey));
+        const privateKey = CryptoSignaturePrivateKey.from({ algorithm, privateKey: CoreBuffer.from(pair.privateKey) });
+        const publicKey = CryptoSignaturePublicKey.from({ algorithm, publicKey: CoreBuffer.from(pair.publicKey) });
 
-        const keypair = new CryptoSignatureKeypair(publicKey, privateKey);
+        const keypair = CryptoSignatureKeypair.from({ publicKey, privateKey });
         return keypair;
     }
 
@@ -85,7 +77,7 @@ export class CryptoSignatures {
             const signatureArray = (await SodiumWrapper.ready()).crypto_sign_detached(content.buffer, privateKeyBuffer);
 
             const signatureBuffer: CoreBuffer = new CoreBuffer(signatureArray);
-            const signature = new CryptoSignature(signatureBuffer, algorithm, keyId, id);
+            const signature = CryptoSignature.from({ signature: signatureBuffer, algorithm, keyId, id });
             return signature;
         } catch (e) {
             const error = new CryptoError(CryptoErrorCode.SignatureSign, `${e}`);

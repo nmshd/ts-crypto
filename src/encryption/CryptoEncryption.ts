@@ -48,8 +48,7 @@ export abstract class CryptoEncryption {
                 throw new CryptoError(CryptoErrorCode.NotYetImplemented);
         }
 
-        const secretKey = new CryptoSecretKey(buffer, algorithm);
-        return secretKey;
+        return CryptoSecretKey.from({ secretKey: buffer, algorithm });
     }
 
     /**
@@ -68,14 +67,10 @@ export abstract class CryptoEncryption {
         nonce?: CoreBuffer,
         algorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.XCHACHA20_POLY1305
     ): Promise<CryptoCipher> {
-        CryptoValidation.checkPlaintext(plaintext);
-
         let correctAlgorithm;
         let secretKeyBuffer;
 
         if (secretKey instanceof CryptoSecretKey) {
-            CryptoValidation.checkSecretKey(secretKey);
-
             correctAlgorithm = secretKey.algorithm;
             secretKeyBuffer = secretKey.secretKey.buffer;
         } else if (secretKey instanceof CoreBuffer) {
@@ -103,25 +98,30 @@ export abstract class CryptoEncryption {
             publicnonce = sodium.randombytes_buf(24);
         }
 
-        let cipherbuffer: CoreBuffer;
+        let cipher: Uint8Array;
         switch (correctAlgorithm) {
             case CryptoEncryptionAlgorithm.XCHACHA20_POLY1305:
                 try {
-                    const cipher = sodium.crypto_aead_xchacha20poly1305_ietf_encrypt(
+                    cipher = sodium.crypto_aead_xchacha20poly1305_ietf_encrypt(
                         plaintext.buffer,
                         "",
                         new Uint8Array(),
                         publicnonce,
                         secretKeyBuffer
                     );
-                    cipherbuffer = new CoreBuffer(cipher);
-                    return new CryptoCipher(cipherbuffer, correctAlgorithm, new CoreBuffer(publicnonce));
                 } catch (e) {
                     throw new CryptoError(CryptoErrorCode.EncryptionEncrypt, `${e}`);
                 }
+                break;
             default:
                 throw new CryptoError(CryptoErrorCode.NotYetImplemented);
         }
+
+        return CryptoCipher.from({
+            cipher: CoreBuffer.from(cipher),
+            algorithm: correctAlgorithm,
+            nonce: CoreBuffer.from(publicnonce)
+        });
     }
 
     public static async encryptWithCounter(
@@ -134,8 +134,6 @@ export abstract class CryptoEncryption {
         let correctAlgorithm;
         let secretKeyBuffer;
         if (secretKey instanceof CryptoSecretKey) {
-            CryptoValidation.checkSecretKey(secretKey);
-
             correctAlgorithm = secretKey.algorithm;
             secretKeyBuffer = secretKey.secretKey.buffer;
         } else if (secretKey instanceof CoreBuffer) {
@@ -167,7 +165,7 @@ export abstract class CryptoEncryption {
                         secretKeyBuffer
                     );
                     cipherbuffer = new CoreBuffer(cipher);
-                    return new CryptoCipher(cipherbuffer, algorithm, undefined, counter);
+                    return CryptoCipher.from({ cipher: cipherbuffer, algorithm, counter });
                 } catch (e) {
                     throw new CryptoError(CryptoErrorCode.EncryptionEncrypt, `${e}`);
                 }
@@ -182,14 +180,10 @@ export abstract class CryptoEncryption {
         nonce?: CoreBuffer,
         algorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.XCHACHA20_POLY1305
     ): Promise<CoreBuffer> {
-        CryptoValidation.checkCipher(cipher);
-
         let correctAlgorithm;
         let secretKeyBuffer;
 
         if (secretKey instanceof CryptoSecretKey) {
-            CryptoValidation.checkSecretKey(secretKey);
-
             correctAlgorithm = secretKey.algorithm;
             secretKeyBuffer = secretKey.secretKey.buffer;
         } else if (secretKey instanceof CoreBuffer) {

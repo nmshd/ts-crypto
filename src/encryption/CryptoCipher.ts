@@ -1,4 +1,4 @@
-import { ISerializable, ISerialized, type } from "@js-soft/ts-serval";
+import { ISerializable, ISerialized, serialize, type, validate } from "@js-soft/ts-serval";
 import { CoreBuffer, IClearable, ICoreBuffer } from "../CoreBuffer";
 import { CryptoError } from "../CryptoError";
 import { CryptoErrorCode } from "../CryptoErrorCode";
@@ -25,96 +25,91 @@ export class CryptoCipher extends CryptoSerializable implements ICryptoCipher, I
     public static MIN_CIPHER_BYTES = 2;
     public static MAX_CIPHER_BYTES = 100 * 1024 * 1024;
 
-    public readonly algorithm: CryptoEncryptionAlgorithm;
-    public readonly cipher: CoreBuffer;
-    public readonly counter?: number;
-    public readonly nonce?: CoreBuffer;
+    @validate()
+    @serialize()
+    public algorithm: CryptoEncryptionAlgorithm;
 
-    public constructor(cipher: CoreBuffer, algorithm: CryptoEncryptionAlgorithm, nonce?: CoreBuffer, counter?: number) {
-        if (!nonce && typeof counter === "undefined") {
-            throw new CryptoError(CryptoErrorCode.EncryptionNoNonceNorCounter, "No nonce nor counter property set.");
-        }
-        if (nonce && typeof counter !== "undefined") {
-            throw new CryptoError(CryptoErrorCode.EncryptionNonceAndCounter, "Nonce and counter properties are set.");
-        }
+    @validate()
+    @serialize()
+    public cipher: CoreBuffer;
 
-        CryptoValidation.checkBuffer(cipher, CryptoCipher.MIN_CIPHER_BYTES, CryptoCipher.MAX_CIPHER_BYTES, "cipher");
-        CryptoValidation.checkEncryptionAlgorithm(algorithm);
+    @validate({ nullable: true })
+    @serialize()
+    public counter?: number;
 
-        if (typeof counter !== "undefined") {
-            CryptoValidation.checkCounter(counter);
-        }
-        if (typeof nonce !== "undefined") {
-            CryptoValidation.checkNonceForAlgorithm(nonce, algorithm);
-        }
+    @validate({ nullable: true })
+    @serialize()
+    public nonce?: CoreBuffer;
 
-        super();
-
-        this.cipher = cipher;
-        this.nonce = nonce;
-        this.counter = counter;
-        this.algorithm = algorithm;
-    }
-
-    public toJSON(verbose = true): ICryptoCipherSerialized {
-        const obj: ICryptoCipherSerialized = {
+    public override toJSON(verbose = true): ICryptoCipherSerialized {
+        return {
             cph: this.cipher.toBase64URL(),
-            alg: this.algorithm
+            alg: this.algorithm,
+            nnc: this.nonce ? this.nonce.toBase64URL() : undefined,
+            cnt: this.counter,
+            "@type": verbose ? "CryptoCipher" : undefined
         };
-        if (this.nonce) {
-            obj.nnc = this.nonce.toBase64URL();
-        }
-        if (typeof this.counter !== "undefined") {
-            obj.cnt = this.counter;
-        }
-        if (verbose) {
-            obj["@type"] = "CryptoCipher";
-        }
-        return obj;
     }
 
     public clear(): void {
         this.cipher.clear();
-        if (this.nonce) this.nonce.clear();
+        this.nonce?.clear();
     }
 
     public static from(value: CryptoCipher | ICryptoCipher): CryptoCipher {
-        return new CryptoCipher(
-            CoreBuffer.from(value.cipher),
-            value.algorithm,
-            CoreBuffer.from(value.nonce),
-            value.counter
-        );
+        return this.fromAny(value);
+    }
+
+    protected static override preFrom(value: any): any {
+        if (value.cph) {
+            value = {
+                cipher: value.cph,
+                algorithm: value.alg,
+                nonce: value.nnc,
+                counter: value.cnt
+            };
+        }
+
+        if (!value.nonce && typeof value.counter === "undefined") {
+            throw new CryptoError(CryptoErrorCode.EncryptionNoNonceNorCounter, "No nonce nor counter property set.");
+        }
+        if (value.nonce && typeof value.counter !== "undefined") {
+            throw new CryptoError(CryptoErrorCode.EncryptionNonceAndCounter, "Nonce and counter properties are set.");
+        }
+
+        if (typeof value.cipher === "string") {
+            CryptoValidation.checkSerializedBuffer(
+                value.cipher,
+                this.MIN_CIPHER_BYTES,
+                this.MAX_CIPHER_BYTES,
+                "cipher"
+            );
+        } else {
+            CryptoValidation.checkBuffer(
+                value.cipher,
+                CryptoCipher.MIN_CIPHER_BYTES,
+                CryptoCipher.MAX_CIPHER_BYTES,
+                "cipher"
+            );
+        }
+
+        CryptoValidation.checkEncryptionAlgorithm(value.algorithm);
+
+        if (value.counter) {
+            CryptoValidation.checkCounter(value.counter);
+        }
+        if (value.nonce) {
+            CryptoValidation.checkNonce(value.nonce, value.algorithm);
+        }
+
+        return value;
     }
 
     public static fromJSON(value: ICryptoCipherSerialized): CryptoCipher {
-        CryptoValidation.checkObject(value);
-        CryptoValidation.checkEncryptionAlgorithm(value.alg);
-
-        let nonceBuffer;
-        let counter;
-        if (typeof value.nnc !== "undefined") {
-            CryptoValidation.checkSerializedBuffer(value.nnc, 12, 32, "nonce");
-            nonceBuffer = CoreBuffer.fromBase64URL(value.nnc);
-        }
-
-        if (typeof value.cnt !== "undefined") {
-            CryptoValidation.checkCounter(value.cnt);
-            counter = value.cnt;
-        }
-
-        CryptoValidation.checkSerializedBuffer(value.cph, this.MIN_CIPHER_BYTES, this.MAX_CIPHER_BYTES, "cipher");
-
-        const cipherBuffer = CoreBuffer.fromBase64URL(value.cph);
-        return new CryptoCipher(cipherBuffer, value.alg as CryptoEncryptionAlgorithm, nonceBuffer, counter);
+        return this.fromAny(value);
     }
 
     public static fromBase64(value: string): CryptoCipher {
         return this.deserialize(CoreBuffer.base64_utf8(value));
-    }
-
-    public static deserialize(value: string): CryptoCipher {
-        const obj = JSON.parse(value);
-        return this.fromJSON(obj);
     }
 }

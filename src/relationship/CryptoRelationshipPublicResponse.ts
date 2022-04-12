@@ -50,28 +50,14 @@ export class CryptoRelationshipPublicResponse
     @serialize()
     public state: CryptoPublicState;
 
-    public constructor(
-        signatureKey: CryptoSignaturePublicKey,
-        exchangeKey: CryptoExchangePublicKey,
-        state: CryptoPublicState
-    ) {
-        super();
-
-        this.signatureKey = signatureKey;
-        this.exchangeKey = exchangeKey;
-        this.state = state;
-    }
-
-    public toJSON(verbose = true): ICryptoRelationshipPublicResponseSerialized {
-        const obj: ICryptoRelationshipPublicResponseSerialized = {
+    public override toJSON(verbose = true): ICryptoRelationshipPublicResponseSerialized {
+        return {
             exc: this.exchangeKey.toJSON(false),
             sig: this.signatureKey.toJSON(false),
-            sta: this.state.toJSON(false)
+            sta: this.state.toJSON(false),
+            id: this.id,
+            "@type": verbose ? "CryptoRelationshipPublicResponse" : undefined
         };
-        if (verbose) {
-            obj["@type"] = "CryptoRelationshipPublicResponse";
-        }
-        return obj;
     }
 
     public clear(): void {
@@ -87,26 +73,27 @@ export class CryptoRelationshipPublicResponse
     public static from(
         value: CryptoRelationshipPublicResponse | ICryptoRelationshipPublicResponse
     ): CryptoRelationshipPublicResponse {
-        const signatureKey = CryptoSignaturePublicKey.from(value.signatureKey);
-        const exchangeKey = CryptoExchangePublicKey.from(value.exchangeKey);
-        const state = CryptoPublicState.from(value.state);
+        return this.fromAny(value);
+    }
 
-        return new CryptoRelationshipPublicResponse(signatureKey, exchangeKey, state);
+    protected static override preFrom(value: any): any {
+        if (value.exc) {
+            value = {
+                exchangeKey: value.exc,
+                signatureKey: value.sig,
+                state: value.sta,
+                id: value.id
+            };
+        }
+
+        return value;
     }
 
     public static fromJSON(value: ICryptoRelationshipPublicResponseSerialized): CryptoRelationshipPublicResponse {
-        const signatureKey = CryptoSignaturePublicKey.fromJSON(value.sig);
-        const exchangeKey = CryptoExchangePublicKey.fromJSON(value.exc);
-        const state = CryptoPublicState.fromJSON(value.sta);
-
-        return new CryptoRelationshipPublicResponse(signatureKey, exchangeKey, state);
+        return this.fromAny(value);
     }
 
     public static fromBase64(value: string): CryptoRelationshipPublicResponse {
         return this.deserialize(CoreBuffer.base64_utf8(value));
-    }
-
-    public static deserialize(value: string): CryptoRelationshipPublicResponse {
-        return this.fromJSON(JSON.parse(value));
     }
 }

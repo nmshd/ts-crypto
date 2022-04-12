@@ -1,5 +1,7 @@
-import { ISerializable, ISerialized, type } from "@js-soft/ts-serval";
+import { ISerializable, ISerialized, serialize, type, validate } from "@js-soft/ts-serval";
 import { CoreBuffer, IClearable } from "../CoreBuffer";
+import { CryptoError } from "../CryptoError";
+import { CryptoErrorCode } from "../CryptoErrorCode";
 import { CryptoSerializable } from "../CryptoSerializable";
 import {
     CryptoSignaturePrivateKey,
@@ -11,7 +13,6 @@ import {
     ICryptoSignaturePublicKey,
     ICryptoSignaturePublicKeySerialized
 } from "./CryptoSignaturePublicKey";
-import { CryptoSignatureValidation } from "./CryptoSignatureValidation";
 
 export interface ICryptoSignatureKeypairSerialized extends ISerialized {
     pub: ICryptoSignaturePublicKeySerialized;
@@ -25,28 +26,20 @@ export interface ICryptoSignatureKeypair extends ISerializable {
 
 @type("CryptoSignatureKeypair")
 export class CryptoSignatureKeypair extends CryptoSerializable implements ICryptoSignatureKeypair, IClearable {
-    public readonly publicKey: CryptoSignaturePublicKey;
-    public readonly privateKey: CryptoSignaturePrivateKey;
+    @validate()
+    @serialize()
+    public publicKey: CryptoSignaturePublicKey;
 
-    public constructor(publicKey: CryptoSignaturePublicKey, privateKey: CryptoSignaturePrivateKey) {
-        const error = CryptoSignatureValidation.checkSignatureKeypair(privateKey, publicKey);
-        if (error) throw error;
+    @validate()
+    @serialize()
+    public privateKey: CryptoSignaturePrivateKey;
 
-        super();
-
-        this.publicKey = publicKey;
-        this.privateKey = privateKey;
-    }
-
-    public toJSON(verbose = true): ICryptoSignatureKeypairSerialized {
-        const obj: ICryptoSignatureKeypairSerialized = {
+    public override toJSON(verbose = true): ICryptoSignatureKeypairSerialized {
+        return {
             pub: this.publicKey.toJSON(false),
-            prv: this.privateKey.toJSON(false)
+            prv: this.privateKey.toJSON(false),
+            "@type": verbose ? "CryptoSignatureKeypair" : undefined
         };
-        if (verbose) {
-            obj["@type"] = "CryptoSignatureKeypair";
-        }
-        return obj;
     }
 
     public clear(): void {
@@ -55,25 +48,32 @@ export class CryptoSignatureKeypair extends CryptoSerializable implements ICrypt
     }
 
     public static from(value: CryptoSignatureKeypair | ICryptoSignatureKeypair): CryptoSignatureKeypair {
-        const privateKey = CryptoSignaturePrivateKey.from(value.privateKey);
-        const publicKey = CryptoSignaturePublicKey.from(value.publicKey);
+        return this.fromAny(value);
+    }
 
-        return new CryptoSignatureKeypair(publicKey, privateKey);
+    protected static override preFrom(value: any): any {
+        if (value.pub) {
+            value = {
+                publicKey: value.pub,
+                privateKey: value.prv
+            };
+        }
+
+        if (value.privateKey.algorithm !== value.publicKey.algorithm) {
+            throw new CryptoError(
+                CryptoErrorCode.SignatureWrongAlgorithm,
+                "Algorithms of private and public key do not match."
+            );
+        }
+
+        return value;
     }
 
     public static fromJSON(value: ICryptoSignatureKeypairSerialized): CryptoSignatureKeypair {
-        const privateKey = CryptoSignaturePrivateKey.fromJSON(value.prv);
-        const publicKey = CryptoSignaturePublicKey.fromJSON(value.pub);
-
-        return new CryptoSignatureKeypair(publicKey, privateKey);
+        return this.fromAny(value);
     }
 
     public static fromBase64(value: string): CryptoSignatureKeypair {
         return this.deserialize(CoreBuffer.base64_utf8(value));
-    }
-
-    public static deserialize(value: string): CryptoSignatureKeypair {
-        const obj = JSON.parse(value);
-        return this.fromJSON(obj);
     }
 }

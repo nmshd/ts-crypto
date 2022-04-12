@@ -1,4 +1,4 @@
-import { ISerializable, ISerialized, type } from "@js-soft/ts-serval";
+import { ISerializable, ISerialized, serialize, type, validate } from "@js-soft/ts-serval";
 import { CoreBuffer, IClearable } from "../CoreBuffer";
 import { CryptoSerializable } from "../CryptoSerializable";
 import { CryptoHashAlgorithm } from "../hash/CryptoHash";
@@ -20,28 +20,23 @@ export interface ICryptoSignature extends ISerializable {
 
 @type("CryptoSignature")
 export class CryptoSignature extends CryptoSerializable implements ICryptoSignature, IClearable {
-    public readonly signature: CoreBuffer;
-    public readonly algorithm: CryptoHashAlgorithm;
-    public readonly keyId?: string;
-    public readonly id?: string;
+    @validate()
+    @serialize()
+    public signature: CoreBuffer;
 
-    public constructor(signature: CoreBuffer, algorithm: CryptoHashAlgorithm, keyId?: string, id?: string) {
-        let error;
-        error = CryptoSignatureValidation.checkHashAlgorithm(algorithm);
-        if (error) throw error;
+    @validate()
+    @serialize()
+    public algorithm: CryptoHashAlgorithm;
 
-        error = CryptoSignatureValidation.checkSignatureAsBuffer(signature);
-        if (error) throw error;
+    @validate({ nullable: true })
+    @serialize()
+    public keyId?: string;
 
-        super();
+    @validate({ nullable: true })
+    @serialize()
+    public id?: string;
 
-        this.signature = signature;
-        this.algorithm = algorithm;
-        this.keyId = keyId;
-        this.id = id;
-    }
-
-    public toJSON(verbose = true): ICryptoSignatureSerialized {
+    public override toJSON(verbose = true): ICryptoSignatureSerialized {
         const obj: ICryptoSignatureSerialized = {
             sig: this.signature.toBase64URL(),
             alg: this.algorithm
@@ -57,26 +52,28 @@ export class CryptoSignature extends CryptoSerializable implements ICryptoSignat
     }
 
     public static from(value: CryptoSignature | ICryptoSignature): CryptoSignature {
-        return new CryptoSignature(value.signature, value.algorithm);
+        return this.fromAny(value);
+    }
+
+    public static override preFrom(value: any): any {
+        if (value.sig) {
+            value = {
+                signature: value.sig,
+                algorithm: value.alg
+            };
+        }
+
+        CryptoSignatureValidation.checkSignature(value.signature);
+        CryptoSignatureValidation.checkHashAlgorithm(value.algorithm);
+
+        return value;
     }
 
     public static fromJSON(value: ICryptoSignatureSerialized): CryptoSignature {
-        let error = CryptoSignatureValidation.checkHashAlgorithm(value.alg);
-        if (error) throw error;
-
-        error = CryptoSignatureValidation.checkSignatureAsString(value.sig);
-        if (error) throw error;
-
-        const buffer = CoreBuffer.fromBase64URL(value.sig);
-        return new CryptoSignature(buffer, value.alg as CryptoHashAlgorithm);
+        return this.fromAny(value);
     }
 
     public static fromBase64(value: string): CryptoSignature {
         return this.deserialize(CoreBuffer.base64_utf8(value));
-    }
-
-    public static deserialize(value: string): CryptoSignature {
-        const obj = JSON.parse(value);
-        return this.fromJSON(obj);
     }
 }

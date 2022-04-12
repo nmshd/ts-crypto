@@ -2,7 +2,7 @@ import { ISerializable, Serializable } from "@js-soft/ts-serval";
 import { CoreBuffer } from "./CoreBuffer";
 
 export abstract class CryptoSerializable extends Serializable implements ISerializable {
-    public serialize(verbose = true): string {
+    public override serialize(verbose = true): string {
         return JSON.stringify(this.toJSON(verbose));
     }
 

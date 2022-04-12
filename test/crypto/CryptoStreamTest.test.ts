@@ -15,11 +15,11 @@ import { expect } from "chai";
 import { from_base64 } from "libsodium-wrappers-sumo";
 
 class TestableCryptoStream extends CryptoStream {
-    public static getState(address: number) {
+    public static override getState(address: number) {
         return super.getState(address);
     }
 
-    public static setState(address: number, state: CoreBuffer): Promise<void> {
+    public static override setState(address: number, state: CoreBuffer): Promise<void> {
         return super.setState(address, state);
     }
 }

@@ -62,11 +62,7 @@ export class CryptoRelationshipRequestSecrets extends CryptoSerializable impleme
     public nonce: CoreBuffer;
 
     public static from(value: ICryptoRelationshipRequestSecrets): CryptoRelationshipRequestSecrets {
-        return super.from(value, CryptoRelationshipRequestSecrets) as CryptoRelationshipRequestSecrets;
-    }
-
-    public static deserialize(value: string): CryptoRelationshipRequestSecrets {
-        return super.deserialize(value, CryptoRelationshipRequestSecrets) as CryptoRelationshipRequestSecrets;
+        return this.fromAny(value);
     }
 
     public async sign(

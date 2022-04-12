@@ -25,6 +25,7 @@ export * from "./relationship/CryptoRelationshipRequestSecrets";
 export * from "./relationship/CryptoRelationshipSecrets";
 export * from "./relationship/CryptoRelationshipType";
 export * from "./signature/CryptoSignature";
+export * from "./signature/CryptoSignatureAlgorithm";
 export * from "./signature/CryptoSignatureKeypair";
 export * from "./signature/CryptoSignaturePrivateKey";
 export * from "./signature/CryptoSignaturePublicKey";

@@ -1,10 +1,8 @@
-import { ISerializable, Serializable, type } from "@js-soft/ts-serval";
+import { ISerializable, Serializable, serialize, type, validate } from "@js-soft/ts-serval";
 import { CoreBuffer, ICoreBuffer } from "../CoreBuffer";
 
 export interface ICryptoStreamHeader extends ISerializable {
-    readonly header: ICoreBuffer;
-    toString(): string;
-    serialize(): string;
+    header: ICoreBuffer;
 }
 
 export interface ICryptoStreamHeaderStatic {
@@ -15,24 +13,20 @@ export interface ICryptoStreamHeaderStatic {
 
 @type("CryptoStreamHeader")
 export class CryptoStreamHeader extends Serializable implements ICryptoStreamHeader {
-    public readonly header: ICoreBuffer;
+    @validate()
+    @serialize()
+    public header: CoreBuffer;
 
-    public constructor(header: ICoreBuffer) {
-        super();
-
-        this.header = header;
-    }
-
-    public toString(): string {
+    public override toString(): string {
         return this.serialize();
     }
 
-    public serialize(): string {
+    public override serialize(): string {
         const obj = this.toJSON();
         return JSON.stringify(obj);
     }
 
-    public toJSON(): Object {
+    public override toJSON(): Object {
         const obj = {
             "@type": "CryptoStreamHeader",
             header: this.header.toBase64()
@@ -44,22 +38,20 @@ export class CryptoStreamHeader extends Serializable implements ICryptoStreamHea
         return this.header.toBase64();
     }
 
-    public static from(obj: any): CryptoStreamHeader {
-        if (!obj.header) {
-            throw new Error("No state or header property set.");
+    protected static override preFrom(value: any): any {
+        if (value instanceof CoreBuffer) {
+            return { header: value };
         }
 
-        const header = CoreBuffer.fromBase64(obj.header);
-        return new CryptoStreamHeader(header);
+        return value;
     }
 
-    public static deserialize(value: string): CryptoStreamHeader {
-        const obj = JSON.parse(value);
-        return this.from(obj);
+    public static from(obj: ICryptoStreamHeader | CoreBuffer): CryptoStreamHeader {
+        return this.fromAny(obj);
     }
 
     public static fromBase64(value: string): CryptoStreamHeader {
         const buffer = CoreBuffer.fromBase64(value);
-        return new CryptoStreamHeader(buffer);
+        return this.from({ header: buffer });
     }
 }

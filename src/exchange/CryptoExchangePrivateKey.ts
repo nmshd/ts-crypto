@@ -1,7 +1,10 @@
-import { ISerializable, ISerialized, type } from "@js-soft/ts-serval";
+import { ISerializable, ISerialized, serialize, type, validate } from "@js-soft/ts-serval";
 import { CoreBuffer, IClearable, ICoreBuffer } from "../CoreBuffer";
+import { CryptoError } from "../CryptoError";
+import { CryptoErrorCode } from "../CryptoErrorCode";
 import { CryptoPrivateKey } from "../CryptoPrivateKey";
-import { CryptoExchange, CryptoExchangeAlgorithm } from "./CryptoExchange";
+import { SodiumWrapper } from "../SodiumWrapper";
+import { CryptoExchangeAlgorithm } from "./CryptoExchange";
 import { CryptoExchangePublicKey } from "./CryptoExchangePublicKey";
 import { CryptoExchangeValidation } from "./CryptoExchangeValidation";
 
@@ -17,67 +20,73 @@ export interface ICryptoExchangePrivateKey extends ISerializable {
 
 @type("CryptoExchangePrivateKey")
 export class CryptoExchangePrivateKey extends CryptoPrivateKey implements ICryptoExchangePrivateKey, IClearable {
-    public readonly algorithm: CryptoExchangeAlgorithm;
-    public readonly privateKey: CoreBuffer;
+    @validate()
+    @serialize()
+    public override algorithm: CryptoExchangeAlgorithm;
 
-    public constructor(algorithm: CryptoExchangeAlgorithm, privateKey: CoreBuffer) {
-        CryptoExchangeValidation.checkExchangeAlgorithm(algorithm);
-        CryptoExchangeValidation.checkExchangePrivateKeyAsBuffer(privateKey, algorithm);
+    @validate()
+    @serialize()
+    public override privateKey: CoreBuffer;
 
-        super(algorithm, privateKey);
-
-        this.algorithm = algorithm;
-        this.privateKey = privateKey;
-    }
-
-    public toJSON(verbose = true): ICryptoExchangePrivateKeySerialized {
-        const obj: ICryptoExchangePrivateKeySerialized = {
+    public override toJSON(verbose = true): ICryptoExchangePrivateKeySerialized {
+        return {
             prv: this.privateKey.toBase64URL(),
-            alg: this.algorithm
+            alg: this.algorithm,
+            "@type": verbose ? "CryptoExchangePrivateKey" : undefined
         };
-        if (verbose) {
-            obj["@type"] = "CryptoExchangePrivateKey";
-        }
-        return obj;
     }
 
     public clear(): void {
         this.privateKey.clear();
     }
 
-    public serialize(verbose = true): string {
-        return JSON.stringify(this.toJSON(verbose));
-    }
-
-    public toBase64(verbose = true): string {
+    public override toBase64(verbose = true): string {
         return CoreBuffer.utf8_base64(this.serialize(verbose));
     }
 
     public async toPublicKey(): Promise<CryptoExchangePublicKey> {
-        return await CryptoExchange.privateKeyToPublicKey(this);
+        let publicKey: Uint8Array;
+        switch (this.algorithm) {
+            case CryptoExchangeAlgorithm.ECDH_X25519:
+                try {
+                    publicKey = (await SodiumWrapper.ready()).crypto_scalarmult_base(this.privateKey.buffer);
+                } catch (e) {
+                    throw new CryptoError(CryptoErrorCode.ExchangeKeyGeneration, `${e}`);
+                }
+                break;
+            default:
+                throw new CryptoError(CryptoErrorCode.NotYetImplemented);
+        }
+
+        return CryptoExchangePublicKey.from({
+            algorithm: this.algorithm,
+            publicKey: CoreBuffer.from(publicKey)
+        });
     }
 
-    public static from(value: CryptoExchangePrivateKey | ICryptoExchangePrivateKey): CryptoExchangePrivateKey {
-        return new CryptoExchangePrivateKey(value.algorithm, CoreBuffer.from(value.privateKey));
+    public static override from(value: CryptoExchangePrivateKey | ICryptoExchangePrivateKey): CryptoExchangePrivateKey {
+        return this.fromAny(value);
+    }
+
+    protected static override preFrom(value: any): any {
+        if (value.alg) {
+            value = {
+                algorithm: value.alg,
+                privateKey: CoreBuffer.fromBase64URL(value.prv)
+            };
+        }
+
+        CryptoExchangeValidation.checkExchangeAlgorithm(value.algorithm);
+        CryptoExchangeValidation.checkExchangePrivateKey(value.privateKey, value.algorithm, "privateKey");
+
+        return value;
     }
 
     public static fromJSON(value: ICryptoExchangePrivateKeySerialized): CryptoExchangePrivateKey {
-        CryptoExchangeValidation.checkExchangeAlgorithm(value.alg);
-        CryptoExchangeValidation.checkExchangePrivateKeyAsNumber(
-            value.prv,
-            value.alg as CryptoExchangeAlgorithm,
-            "privateKey"
-        );
-
-        const buffer = CoreBuffer.fromBase64URL(value.prv);
-        return new CryptoExchangePrivateKey(value.alg as CryptoExchangeAlgorithm, buffer);
+        return this.fromAny(value);
     }
 
-    public static fromBase64(value: string): CryptoExchangePrivateKey {
+    public static override fromBase64(value: string): CryptoExchangePrivateKey {
         return this.deserialize(CoreBuffer.base64_utf8(value));
-    }
-
-    public static deserialize(value: string): CryptoExchangePrivateKey {
-        return this.fromJSON(JSON.parse(value));
     }
 }
