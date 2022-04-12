@@ -45,20 +45,23 @@ export class CryptoExchangePrivateKey extends CryptoPrivateKey implements ICrypt
     }
 
     public async toPublicKey(): Promise<CryptoExchangePublicKey> {
+        let publicKey: Uint8Array;
         switch (this.algorithm) {
             case CryptoExchangeAlgorithm.ECDH_X25519:
                 try {
-                    const publicKey = (await SodiumWrapper.ready()).crypto_scalarmult_base(this.privateKey.buffer);
-                    return CryptoExchangePublicKey.from({
-                        algorithm: this.algorithm,
-                        publicKey: CoreBuffer.from(publicKey)
-                    });
+                    publicKey = (await SodiumWrapper.ready()).crypto_scalarmult_base(this.privateKey.buffer);
                 } catch (e) {
                     throw new CryptoError(CryptoErrorCode.ExchangeKeyGeneration, `${e}`);
                 }
+                break;
             default:
                 throw new CryptoError(CryptoErrorCode.NotYetImplemented);
         }
+
+        return CryptoExchangePublicKey.from({
+            algorithm: this.algorithm,
+            publicKey: CoreBuffer.from(publicKey)
+        });
     }
 
     public static override from(value: CryptoExchangePrivateKey | ICryptoExchangePrivateKey): CryptoExchangePrivateKey {
