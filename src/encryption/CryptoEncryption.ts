@@ -98,7 +98,6 @@ export abstract class CryptoEncryption {
             publicnonce = sodium.randombytes_buf(24);
         }
 
-        let cipherbuffer: CoreBuffer;
         switch (correctAlgorithm) {
             case CryptoEncryptionAlgorithm.XCHACHA20_POLY1305:
                 try {
@@ -109,9 +108,9 @@ export abstract class CryptoEncryption {
                         publicnonce,
                         secretKeyBuffer
                     );
-                    cipherbuffer = new CoreBuffer(cipher);
+
                     return CryptoCipher.from({
-                        cipher: cipherbuffer,
+                        cipher: CoreBuffer.from(cipher),
                         algorithm: correctAlgorithm,
                         nonce: CoreBuffer.from(publicnonce)
                     });

@@ -36,6 +36,10 @@ export class CryptoPrivateKey extends CryptoSerializable implements ICryptoPriva
         return this.privateKey.toString(Encoding.Pem, "PRIVATE KEY");
     }
 
+    public override toString(): string {
+        return this.privateKey.toString(Encoding.Base64_UrlSafe_NoPadding);
+    }
+
     protected static stripPEM(pem: string): string {
         pem = pem.replace(/-----BEGIN [\w ]* KEY-----/, "");
         pem = pem.replace(/-----END [\w ]* KEY-----/, "");
