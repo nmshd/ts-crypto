@@ -11,7 +11,6 @@ import {
     ICryptoExchangePublicKey,
     ICryptoExchangePublicKeySerialized
 } from "./CryptoExchangePublicKey";
-import { CryptoExchangeValidation } from "./CryptoExchangeValidation";
 
 export interface ICryptoExchangeKeypairSerialized extends ISerialized {
     pub: ICryptoExchangePublicKeySerialized;
@@ -58,7 +57,7 @@ export class CryptoExchangeKeypair extends CryptoSerializable implements ICrypto
             };
         }
 
-        CryptoExchangeValidation.checkExchangeKeypair(value.privateKey, value.publicKey);
+        // CryptoExchangeValidation.checkExchangeKeypair(value.privateKey, value.publicKey);
 
         return value;
     }

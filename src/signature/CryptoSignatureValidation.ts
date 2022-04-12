@@ -3,8 +3,6 @@ import { CryptoError } from "../CryptoError";
 import { CryptoErrorCode } from "../CryptoErrorCode";
 import { CryptoValidation } from "../CryptoValidation";
 import { CryptoSignatureAlgorithm } from "./CryptoSignatureAlgorithm";
-import { CryptoSignaturePrivateKey } from "./CryptoSignaturePrivateKey";
-import { CryptoSignaturePublicKey } from "./CryptoSignaturePublicKey";
 
 export class CryptoSignatureValidation extends CryptoValidation {
     public static readonly PRIVATE_KEY_MIN_BYTES = 20;
@@ -60,22 +58,6 @@ export class CryptoSignatureValidation extends CryptoValidation {
         );
     }
 
-    public static checkSignaturePrivateKey(
-        privateKey: CryptoSignaturePrivateKey,
-        throwError = true
-    ): CryptoError | undefined {
-        let error;
-        if (!(privateKey instanceof CryptoSignaturePrivateKey)) {
-            error = new CryptoError(
-                CryptoErrorCode.SignatureWrongPrivateKey,
-                "PrivateKey must be of type CryptoSignaturePrivateKey."
-            );
-        }
-
-        if (error && throwError) throw error;
-        return error;
-    }
-
     public static checkSignaturePublicKeyAsString(
         key: string,
         algorithm: CryptoSignatureAlgorithm,
@@ -104,22 +86,6 @@ export class CryptoSignatureValidation extends CryptoValidation {
             propertyName,
             throwError
         );
-    }
-
-    public static checkSignaturePublicKey(
-        publicKey: CryptoSignaturePublicKey,
-        throwError = true
-    ): CryptoError | undefined {
-        let error;
-        if (!(publicKey instanceof CryptoSignaturePublicKey)) {
-            error = new CryptoError(
-                CryptoErrorCode.SignatureWrongPublicKey,
-                "Public key must be of type CryptoSignaturePublicKey."
-            );
-        }
-
-        if (error && throwError) throw error;
-        return error;
     }
 
     public static checkSignatureAsString(signature: string, throwError = true): CryptoError | undefined {
@@ -166,32 +132,6 @@ export class CryptoSignatureValidation extends CryptoValidation {
         if (!error && id.length > 50) {
             error = new CryptoError(CryptoErrorCode.WrongId, "Signature id must be less than 50 characters.");
         }
-        if (error && throwError) throw error;
-        return error;
-    }
-
-    public static checkSignatureKeypair(
-        privateKey: CryptoSignaturePrivateKey,
-        publicKey: CryptoSignaturePublicKey,
-        throwError = true
-    ): CryptoError | undefined {
-        let error;
-
-        error = this.checkSignaturePublicKey(publicKey, throwError);
-        if (error && throwError) throw error;
-        else if (error) return error;
-
-        error = this.checkSignaturePrivateKey(privateKey, throwError);
-        if (error && throwError) throw error;
-        else if (error) return error;
-
-        if (privateKey.algorithm !== publicKey.algorithm) {
-            error = new CryptoError(
-                CryptoErrorCode.SignatureWrongAlgorithm,
-                "Algorithms of private and public key do not match."
-            );
-        }
-
         if (error && throwError) throw error;
         return error;
     }

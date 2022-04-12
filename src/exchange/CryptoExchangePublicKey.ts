@@ -2,7 +2,6 @@ import { ISerialized, serialize, type, validate } from "@js-soft/ts-serval";
 import { CoreBuffer, IClearable } from "../CoreBuffer";
 import { CryptoPublicKey } from "../CryptoPublicKey";
 import { CryptoExchangeAlgorithm } from "./CryptoExchange";
-import { CryptoExchangeValidation } from "./CryptoExchangeValidation";
 
 export interface ICryptoExchangePublicKeySerialized extends ISerialized {
     alg: number;
@@ -44,12 +43,14 @@ export class CryptoExchangePublicKey extends CryptoPublicKey implements ICryptoE
             };
         }
 
-        CryptoExchangeValidation.checkExchangeAlgorithm(value.alg);
-        CryptoExchangeValidation.checkExchangePrivateKeyAsNumber(
-            value.publicKey,
-            value.algorithm as CryptoExchangeAlgorithm,
-            "publicKey"
-        );
+        // CryptoExchangeValidation.checkExchangeAlgorithm(value.algorithm);
+        // CryptoExchangeValidation.checkExchangePrivateKeyAsNumber(
+        //     value.publicKey,
+        //     value.algorithm as CryptoExchangeAlgorithm,
+        //     "publicKey"
+        // );
+
+        return value;
     }
 
     public static override from(value: CryptoExchangePublicKey | ICryptoExchangePublicKey): CryptoExchangePublicKey {

@@ -55,14 +55,14 @@ export class CryptoPrivateStateTransmit extends CryptoPrivateState {
     protected static override preFrom(value: any): any {
         value = super.preFrom(value);
 
-        CryptoValidation.checkSerializedBuffer(value.nonce, 0, 24, "nonce");
-        CryptoValidation.checkSerializedSecretKeyForAlgorithm(
-            value.secretKey,
-            value.algorithm as CryptoEncryptionAlgorithm
-        );
+        // CryptoValidation.checkSerializedBuffer(value.nonce, 0, 24, "nonce");
+        // CryptoValidation.checkSerializedSecretKeyForAlgorithm(
+        //     value.secretKey,
+        //     value.algorithm as CryptoEncryptionAlgorithm
+        // );
 
         if (value.stateType) {
-            CryptoValidation.checkStateType(value.stateType);
+            // CryptoValidation.checkStateType(value.stateType);
         }
 
         return value;

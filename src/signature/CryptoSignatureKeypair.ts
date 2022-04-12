@@ -1,5 +1,7 @@
 import { ISerializable, ISerialized, serialize, type, validate } from "@js-soft/ts-serval";
 import { CoreBuffer, IClearable } from "../CoreBuffer";
+import { CryptoError } from "../CryptoError";
+import { CryptoErrorCode } from "../CryptoErrorCode";
 import { CryptoSerializable } from "../CryptoSerializable";
 import {
     CryptoSignaturePrivateKey,
@@ -11,7 +13,6 @@ import {
     ICryptoSignaturePublicKey,
     ICryptoSignaturePublicKeySerialized
 } from "./CryptoSignaturePublicKey";
-import { CryptoSignatureValidation } from "./CryptoSignatureValidation";
 
 export interface ICryptoSignatureKeypairSerialized extends ISerialized {
     pub: ICryptoSignaturePublicKeySerialized;
@@ -58,7 +59,12 @@ export class CryptoSignatureKeypair extends CryptoSerializable implements ICrypt
             };
         }
 
-        CryptoSignatureValidation.checkSignatureKeypair(value.privateKey, value.publicKey);
+        if (value.privateKey.algorithm !== value.publicKey.algorithm) {
+            throw new CryptoError(
+                CryptoErrorCode.SignatureWrongAlgorithm,
+                "Algorithms of private and public key do not match."
+            );
+        }
 
         return value;
     }

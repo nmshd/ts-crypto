@@ -77,7 +77,7 @@ export class CryptoSignatures {
             const signatureArray = (await SodiumWrapper.ready()).crypto_sign_detached(content.buffer, privateKeyBuffer);
 
             const signatureBuffer: CoreBuffer = new CoreBuffer(signatureArray);
-            const signature = new CryptoSignature(signatureBuffer, algorithm, keyId, id);
+            const signature = CryptoSignature.from({ signature: signatureBuffer, algorithm, keyId, id });
             return signature;
         } catch (e) {
             const error = new CryptoError(CryptoErrorCode.SignatureSign, `${e}`);

@@ -4,7 +4,6 @@ import { CryptoPrivateKey } from "../CryptoPrivateKey";
 import { CryptoSignatureAlgorithm } from "./CryptoSignatureAlgorithm";
 import { CryptoSignaturePublicKey } from "./CryptoSignaturePublicKey";
 import { CryptoSignatures } from "./CryptoSignatures";
-import { CryptoSignatureValidation } from "./CryptoSignatureValidation";
 
 export interface ICryptoSignaturePrivateKeySerialized extends ISerialized {
     alg: number;
@@ -21,7 +20,7 @@ export interface ICryptoSignaturePrivateKey extends ISerializable {
 export class CryptoSignaturePrivateKey extends CryptoPrivateKey implements ICryptoSignaturePrivateKey, IClearable {
     public override algorithm: CryptoSignatureAlgorithm;
 
-    @validate()
+    @validate({ nullable: true })
     @serialize()
     public id?: string;
 
@@ -59,11 +58,8 @@ export class CryptoSignaturePrivateKey extends CryptoPrivateKey implements ICryp
             };
         }
 
-        let error = CryptoSignatureValidation.checkSignatureAlgorithm(value.algorithm);
-        if (error) throw error;
-
-        error = CryptoSignatureValidation.checkSignaturePrivateKeyAsString(value.privateKey, "privateKey");
-        if (error) throw error;
+        // CryptoSignatureValidation.checkSignatureAlgorithm(value.algorithm);
+        // CryptoSignatureValidation.checkSignaturePrivateKeyAsString(value.privateKey, "privateKey");
 
         return value;
     }
