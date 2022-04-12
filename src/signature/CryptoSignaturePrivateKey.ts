@@ -29,6 +29,7 @@ export class CryptoSignaturePrivateKey extends CryptoPrivateKey implements ICryp
         return {
             prv: this.privateKey.toBase64URL(),
             alg: this.algorithm,
+            id: this.id,
             "@type": verbose ? "CryptoSignaturePrivateKey" : undefined
         };
     }
@@ -55,7 +56,8 @@ export class CryptoSignaturePrivateKey extends CryptoPrivateKey implements ICryp
         if (value.prv) {
             value = {
                 algorithm: value.alg,
-                privateKey: value.prv
+                privateKey: value.prv,
+                id: value.id
             };
         }
 
