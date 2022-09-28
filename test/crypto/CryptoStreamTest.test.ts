@@ -1,4 +1,3 @@
-// TODO: (JSSNMSHDD-2530) make tests run and remove the comment below
 /* eslint-disable jest/expect-expect */
 import {
     CoreBuffer,

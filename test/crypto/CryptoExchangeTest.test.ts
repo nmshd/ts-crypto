@@ -225,10 +225,6 @@ export class CryptoExchangeTest {
                     await testIt(secret1, "8chars!!", 4, "K7Sd9iFy-lfHfxJ62WtVC9Kg-Z1osVgg4ycS-w4H33Q", 10);
                 });
             });
-
-            describe("Execute deriveSecret() with ECDH_X25519", function () {
-                // TODO: JSSNMSHDD-2513 (we should either test this or remove the functionality from the public api - otherwise potentially untested functionality could be used)
-            });
         });
     }
 }
