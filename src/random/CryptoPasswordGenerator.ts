@@ -174,12 +174,12 @@ export class CryptoPasswordGenerator {
      * @param minLength
      * @param maxLength
      */
-    public static async createStrongPassword(minLength = 10, maxLength = 20): Promise<string> {
+    public static async createStrongPassword(minLength = 14, maxLength = 20): Promise<string> {
         if (minLength > maxLength) maxLength = minLength;
-        if (minLength < 8) {
+        if (minLength < 14) {
             throw new CryptoError(
                 CryptoErrorCode.PasswordInsecure,
-                "The minimum password length should at least be 8 characters."
+                "The minimum password length should at least be 14 characters."
             );
         }
 
