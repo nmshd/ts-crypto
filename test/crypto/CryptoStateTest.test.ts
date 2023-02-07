@@ -148,8 +148,12 @@ export class CryptoStateTest {
             it("should clear the secret key out of all states", function () {
                 sharedKey.clear();
                 expect(CryptoTestUtil.isCleared(sharedKey)).to.be.true;
-                expect(CryptoTestUtil.isCleared(stateRx.secretKey)).to.be.false;
-                expect(CryptoTestUtil.isCleared(stateTx.secretKey)).to.be.false;
+
+                stateRx.clear();
+                expect(CryptoTestUtil.isCleared(stateRx.secretKey)).to.be.true;
+
+                stateTx.clear();
+                expect(CryptoTestUtil.isCleared(stateTx.secretKey)).to.be.true;
             });
 
             it("should deserialize the states (1)", function () {
