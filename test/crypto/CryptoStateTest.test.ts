@@ -40,7 +40,7 @@ export class CryptoStateTest {
                 expect(stateTx.secretKey).to.exist;
                 expect(stateTx.secretKey.buffer.byteLength).to.be.equal(32);
                 expect(stateTx.secretKey.toBase64URL()).to.equal(sharedKey.toBase64URL());
-                expect(stateTx.secretKey.buffer).to.equal(sharedKey.buffer);
+                expect(stateTx.secretKey.buffer.toString()).to.equal(sharedKey.buffer.toString());
             });
 
             it("should create public state out of private transmit state", function () {
@@ -69,7 +69,7 @@ export class CryptoStateTest {
                 expect(stateRx.secretKey).to.exist;
                 expect(stateRx.secretKey.buffer.byteLength).to.be.equal(32);
                 expect(stateRx.secretKey.toBase64URL()).to.equal(sharedKey.toBase64URL());
-                expect(stateRx.secretKey).to.equal(sharedKey);
+                expect(stateRx.secretKey.toString()).to.equal(sharedKey.toString());
             });
 
             it("should still have the correct states even if publicState is cleared", function () {
@@ -148,7 +148,11 @@ export class CryptoStateTest {
             it("should clear the secret key out of all states", function () {
                 sharedKey.clear();
                 expect(CryptoTestUtil.isCleared(sharedKey)).to.be.true;
+
+                stateRx.clear();
                 expect(CryptoTestUtil.isCleared(stateRx.secretKey)).to.be.true;
+
+                stateTx.clear();
                 expect(CryptoTestUtil.isCleared(stateTx.secretKey)).to.be.true;
             });
 
