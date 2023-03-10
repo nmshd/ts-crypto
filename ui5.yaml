@@ -4,6 +4,6 @@ type: module
 resources:
   configuration:
     paths:
-      /resources/nmshd.crypto: ./lib-web
+      /resources/nmshd.crypto/: ./lib-web
 metadata:
   name: nmshd.crypto
