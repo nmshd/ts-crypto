@@ -67,6 +67,7 @@
         "webpack-cli": "^5.0.1"
     },
     "publishConfig": {
-        "access": "public"
+        "access": "public",
+        "provenance": true
     }
 }
