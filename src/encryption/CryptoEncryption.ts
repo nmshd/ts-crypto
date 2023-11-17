@@ -203,7 +203,7 @@ export abstract class CryptoEncryption {
         if (typeof nonce !== "undefined") {
             CryptoValidation.checkNonceForAlgorithm(nonce, correctAlgorithm);
             publicnonce = nonce.buffer;
-        } else if (typeof cipher !== "undefined" && typeof cipher.nonce !== "undefined") {
+        } else if (typeof cipher.nonce !== "undefined") {
             publicnonce = cipher.nonce.buffer;
         } else {
             throw new CryptoError(
