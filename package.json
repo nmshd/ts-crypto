@@ -3,7 +3,7 @@
     "version": "2.0.5",
     "description": "The Enmeshed crypto library.",
     "homepage": "https://enmeshed.eu",
-    "repository": "github:nmshd/cns-crypto",
+    "repository": "github:nmshd/ts-crypto",
     "license": "MIT",
     "author": "j&s-soft GmbH",
     "main": "dist/index.js",
