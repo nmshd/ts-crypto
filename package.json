@@ -40,8 +40,8 @@
         "test:web:debug": "browsertest-runner --debug"
     },
     "dependencies": {
-        "libsodium-wrappers-sumo": "0.7.13",
-        "uuid": "9.0.1"
+        "libsodium-wrappers-sumo": "0.7.15",
+        "uuid": "10.0.0"
     },
     "devDependencies": {
         "@js-soft/eslint-config-ts": "^1.6.8",
@@ -52,12 +52,12 @@
         "@types/mocha": "^10.0.7",
         "@types/node": "^20.14.8",
         "@types/uuid": "^9.0.8",
-        "bt-runner": "^4.0.3",
+        "bt-runner": "^4.0.4",
         "chai": "^4.4.1",
         "copy-webpack-plugin": "^11.0.0",
         "eslint": "8.57.0",
         "madge": "^6.1.0",
-        "mocha": "^10.5.1",
+        "mocha": "10.5.1",
         "prettier": "^3.3.2",
         "terser-webpack-plugin": "^5.3.10",
         "ts-node": "^10.9.2",
