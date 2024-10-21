@@ -20,7 +20,7 @@ export interface ICryptoDerivationStatic {
         masterKey: ICoreBuffer,
         salt: ICoreBuffer,
         keyAlgorithm: CryptoEncryptionAlgorithm,
-        derivationAlgorithm:CryptoDerivationAlgorithm,
+        derivationAlgorithm: CryptoDerivationAlgorithm,
         iterations: number,
         memlimit: number
     ): Promise<CryptoSecretKey>;
@@ -37,28 +37,26 @@ export class CryptoDerivation implements ICryptoDerivation {
         password: ICoreBuffer,
         salt: ICoreBuffer,
         keyAlgorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.XCHACHA20_POLY1305,
-        derivationAlgorithm:CryptoDerivationAlgorithm = CryptoDerivationAlgorithm.ARGON2ID,
+        derivationAlgorithm: CryptoDerivationAlgorithm = CryptoDerivationAlgorithm.ARGON2ID,
         opslimit: number = 100000,
         memlimit: number = 8192
     ): Promise<CryptoSecretKey> {
-        const sodium:any = await SodiumWrapper.ready() as any
+        const sodium: any = (await SodiumWrapper.ready()) as any;
         if (salt.buffer.byteLength !== 16) {
             throw new Error(`The salt must be exactly ${sodium.crypto_pwhash_SALTBYTES} bytes long!`);
         }
         if (opslimit < sodium.crypto_pwhash_OPSLIMIT_MIN) {
-            throw new Error(`The opslimit must be higher than ${sodium.crypto_pwhash_OPSLIMIT_MIN}.`)
+            throw new Error(`The opslimit must be higher than ${sodium.crypto_pwhash_OPSLIMIT_MIN}.`);
         }
         if (sodium.crypto_pwhash_OPSLIMIT_MAX > 0 && opslimit > sodium.crypto_pwhash_OPSLIMIT_MAX) {
-            throw new Error(`The opslimit must be lower than ${sodium.crypto_pwhash_OPSLIMIT_MAX}.`)
+            throw new Error(`The opslimit must be lower than ${sodium.crypto_pwhash_OPSLIMIT_MAX}.`);
         }
         if (memlimit < sodium.crypto_pwhash_MEMLIMIT_MIN) {
-            throw new Error(`The memlimit must be higher than ${sodium.crypto_pwhash_MEMLIMIT_MIN}.`)
+            throw new Error(`The memlimit must be higher than ${sodium.crypto_pwhash_MEMLIMIT_MIN}.`);
         }
         if (sodium.crypto_pwhash_MEMLIMIT_MAX > 0 && memlimit > sodium.crypto_pwhash_MEMLIMIT_MAX) {
-            throw new Error(`The memlimit must be lower than ${sodium.crypto_pwhash_MEMLIMIT_MAX}.`)
+            throw new Error(`The memlimit must be lower than ${sodium.crypto_pwhash_MEMLIMIT_MAX}.`);
         }
-
-        
 
         let keyLength;
         switch (keyAlgorithm) {
@@ -73,7 +71,7 @@ export class CryptoDerivation implements ICryptoDerivation {
                 throw new Error("KeyAlgorithm not supported.");
         }
 
-        let derivationAlgorithmAsNumber:number;
+        let derivationAlgorithmAsNumber: number;
         switch (derivationAlgorithm) {
             case CryptoDerivationAlgorithm.ARGON2I:
                 derivationAlgorithmAsNumber = 1;
@@ -85,7 +83,14 @@ export class CryptoDerivation implements ICryptoDerivation {
                 throw new Error("DerivationAlgorithm not supported.");
         }
 
-        const pwhash = (await SodiumWrapper.ready()).crypto_pwhash(keyLength, password.buffer, salt.buffer, opslimit, memlimit, derivationAlgorithmAsNumber);
+        const pwhash = (await SodiumWrapper.ready()).crypto_pwhash(
+            keyLength,
+            password.buffer,
+            salt.buffer,
+            opslimit,
+            memlimit,
+            derivationAlgorithmAsNumber
+        );
         const hashBuffer = CoreBuffer.from(pwhash);
         return CryptoSecretKey.from({ secretKey: hashBuffer, algorithm: keyAlgorithm });
     }

@@ -34,10 +34,9 @@ Afterwards, open your browser and enter
 
 To start the test, type "mocha.run()" into the browser's console.
 
-
 # Updates
 
 ts-crypto so far depends on following packages, which cannot be updated:
 
-- @js-soft/ts-serval 2.0.11 does not export lib-web libraries
-- chai ^5.1.1 results in an *.ts error
+-   @js-soft/ts-serval 2.0.11 does not export lib-web libraries
+-   chai ^5.1.1 results in an \*.ts error
