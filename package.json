@@ -55,7 +55,7 @@
         "bt-runner": "^4.0.4",
         "chai": "^4.4.1",
         "copy-webpack-plugin": "^12.0.2",
-        "eslint": "8.57.0",
+        "eslint": "9.13.0",
         "madge": "^8.0.0",
         "mocha": "^10.7.3",
         "prettier": "^3.3.3",
