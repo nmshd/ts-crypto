@@ -122,7 +122,7 @@ export class CryptoDerivationTest {
                         "eyJrZXkiOiI5ck1uY2NOODlsRVpXNVJuQWdpWWk4Tm9xY21vOWIyMmFYQmpuMTlRV0ZRIiwiYWxnIjozLCJAdHlwZSI6IkNyeXB0b1NlY3JldEtleSJ9"
                     );
 
-                    const derivedComparison = await await CryptoDerivation.deriveKeyFromPassword(
+                    const derivedComparison = await CryptoDerivation.deriveKeyFromPassword(
                         master,
                         salt,
                         CryptoEncryptionAlgorithm.XCHACHA20_POLY1305,
@@ -138,7 +138,7 @@ export class CryptoDerivationTest {
                 });
 
                 it("should derive different keys of different input (master)", async function () {
-                    const derived = await await CryptoDerivation.deriveKeyFromPassword(
+                    const derived = await CryptoDerivation.deriveKeyFromPassword(
                         master,
                         salt,
                         CryptoEncryptionAlgorithm.XCHACHA20_POLY1305,
@@ -244,7 +244,7 @@ export class CryptoDerivationTest {
                         "eyJrZXkiOiI4OE1XZWItdXlQRkhkOWJRZENJY05iSHlpbXFhUUo2TXdfekxxemdBTjQwIiwiYWxnIjozLCJAdHlwZSI6IkNyeXB0b1NlY3JldEtleSJ9"
                     );
 
-                    //Careful here - increasing memlimit too little does not change the derived key
+                    // Careful here - increasing memlimit too little does not change the derived key
                     const derivedComparison = await CryptoDerivation.deriveKeyFromPassword(
                         master,
                         salt,

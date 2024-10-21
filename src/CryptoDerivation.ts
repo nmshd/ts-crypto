@@ -38,8 +38,8 @@ export class CryptoDerivation implements ICryptoDerivation {
         salt: ICoreBuffer,
         keyAlgorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.XCHACHA20_POLY1305,
         derivationAlgorithm: CryptoDerivationAlgorithm = CryptoDerivationAlgorithm.ARGON2ID,
-        opslimit: number = 100000,
-        memlimit: number = 8192
+        opslimit = 100000,
+        memlimit = 8192
     ): Promise<CryptoSecretKey> {
         const sodium: any = (await SodiumWrapper.ready()) as any;
         if (salt.buffer.byteLength !== 16) {

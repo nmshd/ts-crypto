@@ -46,12 +46,21 @@ export class CryptoValidation {
         let error;
         if (buffer instanceof CoreBuffer) {
             if (buffer.buffer.byteLength < minBytes) {
-                error = new CryptoError(CryptoErrorCode.WrongBuffer, `Buffer has a minimum of ${minBytes} bytes.`);
+                error = new CryptoError(
+                    CryptoErrorCode.WrongBuffer,
+                    `Buffer within property ${propertyName} has a minimum of ${minBytes} bytes.`
+                );
             } else if (buffer.buffer.byteLength > maxBytes) {
-                error = new CryptoError(CryptoErrorCode.WrongBuffer, `Buffer has a maximum of ${maxBytes} bytes.`);
+                error = new CryptoError(
+                    CryptoErrorCode.WrongBuffer,
+                    `Buffer within property ${propertyName} has a maximum of ${maxBytes} bytes.`
+                );
             }
         } else {
-            error = new CryptoError(CryptoErrorCode.WrongBuffer, "Buffer must be of instance CoreBuffer.");
+            error = new CryptoError(
+                CryptoErrorCode.WrongBuffer,
+                `Buffer within property ${propertyName} must be of instance CoreBuffer.`
+            );
         }
 
         if (error && throwError) throw error;
@@ -253,7 +262,7 @@ export class CryptoValidation {
 
     public static checkNonceAsString(
         nonce: string,
-        algorithm: CryptoEncryptionAlgorithm,
+        _algorithm: CryptoEncryptionAlgorithm,
         propertyName = "nonce",
         throwError = true
     ): CryptoError | undefined {
@@ -262,7 +271,7 @@ export class CryptoValidation {
 
     public static checkNonceAsBuffer(
         nonce: CoreBuffer,
-        algorithm: CryptoEncryptionAlgorithm,
+        _algorithm: CryptoEncryptionAlgorithm,
         propertyName = "nonce",
         throwError = true
     ): CryptoError | undefined {
