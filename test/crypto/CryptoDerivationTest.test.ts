@@ -6,7 +6,6 @@ import {
     CryptoHash,
     CryptoHashAlgorithm,
     CryptoSecretKey,
-    Encoding,
     ICoreBuffer
 } from "@nmshd/crypto";
 import { expect } from "chai";
@@ -19,7 +18,7 @@ export class CryptoDerivationTest {
                 before(async function () {
                     // Create 256bit entropy
                     keybuffer = await CryptoHash.hash(
-                        CoreBuffer.fromString("test", Encoding.Utf8),
+                        CoreBuffer.fromUtf8("test"),
                         CryptoHashAlgorithm.SHA256
                     );
                 });
@@ -48,7 +47,7 @@ export class CryptoDerivationTest {
                     );
 
                     const keybuffer2 = await CryptoHash.hash(
-                        CoreBuffer.fromString("test2", Encoding.Utf8),
+                        CoreBuffer.fromUtf8("test2"),
                         CryptoHashAlgorithm.SHA256
                     );
                     const derivedComparison = await CryptoDerivation.deriveKeyFromBase(keybuffer2, 0, "12345678");
@@ -102,7 +101,7 @@ export class CryptoDerivationTest {
                     salt = CoreBuffer.from(
                         (
                             await CryptoHash.hash(
-                                CoreBuffer.fromString("test", Encoding.Utf8),
+                                CoreBuffer.fromUtf8("test"),
                                 CryptoHashAlgorithm.SHA256
                             )
                         ).buffer.subarray(0, 16)
@@ -150,7 +149,7 @@ export class CryptoDerivationTest {
                         "eyJrZXkiOiI5ck1uY2NOODlsRVpXNVJuQWdpWWk4Tm9xY21vOWIyMmFYQmpuMTlRV0ZRIiwiYWxnIjozLCJAdHlwZSI6IkNyeXB0b1NlY3JldEtleSJ9"
                     );
 
-                    const master2 = CoreBuffer.fromString("test2", Encoding.Utf8);
+                    const master2 = CoreBuffer.fromUtf8("test2");
                     const derivedComparison = await CryptoDerivation.deriveKeyFromPassword(
                         master2,
                         salt,
@@ -182,7 +181,7 @@ export class CryptoDerivationTest {
                     const salt2 = CoreBuffer.from(
                         (
                             await CryptoHash.hash(
-                                CoreBuffer.fromString("test2", Encoding.Utf8),
+                                CoreBuffer.fromUtf8("test2"),
                                 CryptoHashAlgorithm.SHA256
                             )
                         ).buffer.subarray(0, 16)

@@ -42,18 +42,22 @@ export class CryptoDerivation implements ICryptoDerivation {
         memlimit = 8192
     ): Promise<CryptoSecretKey> {
         const sodium: any = (await SodiumWrapper.ready()) as any;
-        if (salt.buffer.byteLength !== 16) {
+        if (salt.buffer.byteLength !== sodium.crypto_pwhash_SALTBYTES) {
             throw new Error(`The salt must be exactly ${sodium.crypto_pwhash_SALTBYTES} bytes long!`);
         }
+
         if (opslimit < sodium.crypto_pwhash_OPSLIMIT_MIN) {
             throw new Error(`The opslimit must be higher than ${sodium.crypto_pwhash_OPSLIMIT_MIN}.`);
         }
+        
         if (sodium.crypto_pwhash_OPSLIMIT_MAX > 0 && opslimit > sodium.crypto_pwhash_OPSLIMIT_MAX) {
             throw new Error(`The opslimit must be lower than ${sodium.crypto_pwhash_OPSLIMIT_MAX}.`);
         }
+
         if (memlimit < sodium.crypto_pwhash_MEMLIMIT_MIN) {
             throw new Error(`The memlimit must be higher than ${sodium.crypto_pwhash_MEMLIMIT_MIN}.`);
         }
+        
         if (sodium.crypto_pwhash_MEMLIMIT_MAX > 0 && memlimit > sodium.crypto_pwhash_MEMLIMIT_MAX) {
             throw new Error(`The memlimit must be lower than ${sodium.crypto_pwhash_MEMLIMIT_MAX}.`);
         }
