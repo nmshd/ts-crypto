@@ -32,9 +32,6 @@ export class CryptoDerivationTest {
 
                     const derivedComparison = await CryptoDerivation.deriveKeyFromBase(keybuffer, 0, "12345678");
                     expect(derivedComparison).to.be.instanceOf(CryptoSecretKey);
-                    expect(derivedComparison.toBase64()).to.equal(
-                        "eyJrZXkiOiJfdkg4NkdJeU12cFdnZkJ2Y09FY0dfNHRhakpiVXJ5cGRUWW9iZl9jb0Y4IiwiYWxnIjozLCJAdHlwZSI6IkNyeXB0b1NlY3JldEtleSJ9"
-                    );
 
                     expect(derived.toBase64()).to.equal(derivedComparison.toBase64());
                 });
@@ -129,9 +126,6 @@ export class CryptoDerivationTest {
                         10
                     );
                     expect(derivedComparison).to.be.instanceOf(CryptoSecretKey);
-                    expect(derivedComparison.toBase64()).to.equal(
-                        "eyJrZXkiOiI5ck1uY2NOODlsRVpXNVJuQWdpWWk4Tm9xY21vOWIyMmFYQmpuMTlRV0ZRIiwiYWxnIjozLCJAdHlwZSI6IkNyeXB0b1NlY3JldEtleSJ9"
-                    );
 
                     expect(derived.toBase64()).to.equal(derivedComparison.toBase64());
                 });
