@@ -30,7 +30,7 @@ export class CryptoExchangeValidation extends CryptoValidation {
 
     public static checkExchangePrivateKeyAsString(
         privateKey: string,
-        algorithm: CryptoExchangeAlgorithm,
+        _algorithm: CryptoExchangeAlgorithm,
         propertyName = "privateKey",
         throwError = true
     ): CryptoError | undefined {
@@ -45,7 +45,7 @@ export class CryptoExchangeValidation extends CryptoValidation {
 
     public static checkExchangePrivateKeyAsBuffer(
         privateKey: CoreBuffer,
-        algorithm: CryptoExchangeAlgorithm,
+        _algorithm: CryptoExchangeAlgorithm,
         propertyName = "privateKey",
         throwError = true
     ): CryptoError | undefined {
@@ -73,7 +73,7 @@ export class CryptoExchangeValidation extends CryptoValidation {
 
     public static checkExchangePublicKeyAsString(
         publicKey: string,
-        algorithm: CryptoExchangeAlgorithm,
+        _algorithm: CryptoExchangeAlgorithm,
         propertyName = "publicKey",
         throwError = true
     ): CryptoError | undefined {
@@ -88,7 +88,7 @@ export class CryptoExchangeValidation extends CryptoValidation {
 
     public static checkExchangePublicKeyAsBuffer(
         publicKey: CoreBuffer,
-        algorithm: CryptoExchangeAlgorithm,
+        _algorithm: CryptoExchangeAlgorithm,
         propertyName = "publicKey",
         throwError = true
     ): CryptoError | undefined {

@@ -1,5 +1,6 @@
 import { SodiumWrapper } from "@nmshd/crypto";
 import { BufferTest } from "./BufferTest.test";
+import { CryptoDerivationTest } from "./crypto/CryptoDerivationTest.test";
 import { CryptoEncryptionTest } from "./crypto/CryptoEncryptionTest.test";
 import { CryptoExchangeTest } from "./crypto/CryptoExchangeTest.test";
 import { CryptoHashTest } from "./crypto/CryptoHashTest.test";
@@ -17,6 +18,7 @@ import { SodiumWrapperTest } from "./crypto/SodiumWrapperTest.test";
 SodiumWrapper.ready()
     .then(() => {
         SodiumWrapperTest.run();
+        CryptoDerivationTest.run();
         CryptoReflectionTest.run();
         CryptoRelationshipTest.run();
         CryptoEncryptionTest.run();

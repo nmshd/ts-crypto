@@ -72,7 +72,7 @@ export class CryptoSignatureValidation extends CryptoValidation {
 
     public static checkSignaturePublicKeyAsString(
         key: string,
-        algorithm: CryptoSignatureAlgorithm,
+        _algorithm: CryptoSignatureAlgorithm,
         propertyName = "publicKey",
         throwError = true
     ): CryptoError | undefined {
@@ -87,7 +87,7 @@ export class CryptoSignatureValidation extends CryptoValidation {
 
     public static checkSignaturePublicKeyAsBuffer(
         buffer: CoreBuffer,
-        algorithm: CryptoSignatureAlgorithm,
+        _algorithm: CryptoSignatureAlgorithm,
         propertyName = "publicKey",
         throwError = true
     ): CryptoError | undefined {
