@@ -17,10 +17,7 @@ export class CryptoDerivationTest {
                 let keybuffer: ICoreBuffer;
                 before(async function () {
                     // Create 256bit entropy
-                    keybuffer = await CryptoHash.hash(
-                        CoreBuffer.fromUtf8("test"),
-                        CryptoHashAlgorithm.SHA256
-                    );
+                    keybuffer = await CryptoHash.hash(CoreBuffer.fromUtf8("test"), CryptoHashAlgorithm.SHA256);
                 });
 
                 it("should derive the same key of same input", async function () {
@@ -43,10 +40,7 @@ export class CryptoDerivationTest {
                         "eyJrZXkiOiJfdkg4NkdJeU12cFdnZkJ2Y09FY0dfNHRhakpiVXJ5cGRUWW9iZl9jb0Y4IiwiYWxnIjozLCJAdHlwZSI6IkNyeXB0b1NlY3JldEtleSJ9"
                     );
 
-                    const keybuffer2 = await CryptoHash.hash(
-                        CoreBuffer.fromUtf8("test2"),
-                        CryptoHashAlgorithm.SHA256
-                    );
+                    const keybuffer2 = await CryptoHash.hash(CoreBuffer.fromUtf8("test2"), CryptoHashAlgorithm.SHA256);
                     const derivedComparison = await CryptoDerivation.deriveKeyFromBase(keybuffer2, 0, "12345678");
                     expect(derivedComparison).to.be.instanceOf(CryptoSecretKey);
                     expect(derivedComparison.toBase64()).to.equal(
@@ -97,10 +91,7 @@ export class CryptoDerivationTest {
                     master = CoreBuffer.fromUtf8("test");
                     salt = CoreBuffer.from(
                         (
-                            await CryptoHash.hash(
-                                CoreBuffer.fromUtf8("test"),
-                                CryptoHashAlgorithm.SHA256
-                            )
+                            await CryptoHash.hash(CoreBuffer.fromUtf8("test"), CryptoHashAlgorithm.SHA256)
                         ).buffer.subarray(0, 16)
                     );
                 });
@@ -174,10 +165,7 @@ export class CryptoDerivationTest {
 
                     const salt2 = CoreBuffer.from(
                         (
-                            await CryptoHash.hash(
-                                CoreBuffer.fromUtf8("test2"),
-                                CryptoHashAlgorithm.SHA256
-                            )
+                            await CryptoHash.hash(CoreBuffer.fromUtf8("test2"), CryptoHashAlgorithm.SHA256)
                         ).buffer.subarray(0, 16)
                     );
                     const derivedComparison = await CryptoDerivation.deriveKeyFromPassword(

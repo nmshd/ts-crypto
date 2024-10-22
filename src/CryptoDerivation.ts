@@ -49,7 +49,7 @@ export class CryptoDerivation implements ICryptoDerivation {
         if (opslimit < sodium.crypto_pwhash_OPSLIMIT_MIN) {
             throw new Error(`The opslimit must be higher than ${sodium.crypto_pwhash_OPSLIMIT_MIN}.`);
         }
-        
+
         if (sodium.crypto_pwhash_OPSLIMIT_MAX > 0 && opslimit > sodium.crypto_pwhash_OPSLIMIT_MAX) {
             throw new Error(`The opslimit must be lower than ${sodium.crypto_pwhash_OPSLIMIT_MAX}.`);
         }
@@ -57,7 +57,7 @@ export class CryptoDerivation implements ICryptoDerivation {
         if (memlimit < sodium.crypto_pwhash_MEMLIMIT_MIN) {
             throw new Error(`The memlimit must be higher than ${sodium.crypto_pwhash_MEMLIMIT_MIN}.`);
         }
-        
+
         if (sodium.crypto_pwhash_MEMLIMIT_MAX > 0 && memlimit > sodium.crypto_pwhash_MEMLIMIT_MAX) {
             throw new Error(`The memlimit must be lower than ${sodium.crypto_pwhash_MEMLIMIT_MAX}.`);
         }
