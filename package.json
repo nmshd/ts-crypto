@@ -40,6 +40,7 @@
         "test:web:debug": "browsertest-runner --debug"
     },
     "dependencies": {
+        "crypto-layer-ts-types": "https://gitpkg.vercel.app/nmshd/rust-crypto/ts-types?main",
         "libsodium-wrappers-sumo": "0.7.15",
         "uuid": "10.0.0"
     },

@@ -1,11 +1,15 @@
 import { serialize, type, validate } from "@js-soft/ts-serval";
+import { KeyPairHandle } from "crypto-layer-ts-types";
 import { CoreBuffer, Encoding, ICoreBuffer } from "./CoreBuffer";
+import { CryptoError } from "./CryptoError";
+import { CryptoErrorCode } from "./CryptoErrorCode";
+import { CryptoLayerKeyPair } from "./CryptoLayerKeyPair";
 import { CryptoSerializable } from "./CryptoSerializable";
 import { CryptoExchangeAlgorithm } from "./exchange/CryptoExchange";
 import { CryptoSignatureAlgorithm } from "./signature/CryptoSignatureAlgorithm";
 
 export interface ICryptoPrivateKey {
-    privateKey: ICoreBuffer;
+    privateKey: ICoreBuffer | KeyPairHandle;
     algorithm: CryptoExchangeAlgorithm | CryptoSignatureAlgorithm;
     toString(): string;
     toPEM(): string;
@@ -31,13 +35,25 @@ export class CryptoPrivateKey extends CryptoSerializable implements ICryptoPriva
     @validate()
     @serialize()
     public privateKey: CoreBuffer;
+    
+    @validate()
+    @serialize()
+    protected calKeyPair?: CryptoLayerKeyPair;
 
     public toPEM(): string {
-        return this.privateKey.toString(Encoding.Pem, "PRIVATE KEY");
+        if (!this.calKeyPair) {
+            return this.privateKey.toString(Encoding.Pem, "PRIVATE KEY");
+        } else {
+            throw new CryptoError(CryptoErrorCode.NotYetImplemented, "Extraction is in the trait but not the structs implementation.")
+        }
     }
 
     public override toString(): string {
-        return this.privateKey.toString(Encoding.Base64_UrlSafe_NoPadding);
+        if (!this.calKeyPair) {
+            return this.privateKey.toString(Encoding.Base64_UrlSafe_NoPadding);
+        } else {
+            throw new CryptoError(CryptoErrorCode.NotYetImplemented, "Extraction is in the trait but not the structs implementation.")
+        }
     }
 
     protected static stripPEM(pem: string): string {
@@ -52,7 +68,8 @@ export class CryptoPrivateKey extends CryptoSerializable implements ICryptoPriva
     public static fromString(
         value: string,
         algorithm: CryptoExchangeAlgorithm | CryptoSignatureAlgorithm,
-        encoding: Encoding = Encoding.Base64_UrlSafe_NoPadding
+        encoding: Encoding = Encoding.Base64_UrlSafe_NoPadding,
+        //cryptoLayerProvider?: Provider
     ): CryptoPrivateKey {
         const buffer: CoreBuffer = CoreBuffer.fromString(value, encoding);
         return this.fromAny({ algorithm, privateKey: buffer });

@@ -4,6 +4,8 @@ export * from "./CoreBuffer";
 export * from "./CryptoDerivation";
 export * from "./CryptoError";
 export * from "./CryptoErrorCode";
+export * from "./CryptoLayerConfig";
+//export * from "./CryptoLayerProviders";
 export * from "./CryptoPrivateKey";
 export * from "./CryptoPublicKey";
 export * from "./CryptoValidation";
@@ -40,3 +42,4 @@ export * from "./state/CryptoStateType";
 export * from "./stream/CryptoStream";
 export * from "./stream/CryptoStreamAddress";
 export * from "./stream/CryptoStreamState";
+
