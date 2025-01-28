@@ -1,5 +1,4 @@
 import { serialize, type, validate } from "@js-soft/ts-serval";
-import { KeyPairHandle } from "crypto-layer-ts-types";
 import { CoreBuffer, Encoding, ICoreBuffer } from "./CoreBuffer";
 import { CryptoError } from "./CryptoError";
 import { CryptoErrorCode } from "./CryptoErrorCode";
@@ -9,7 +8,7 @@ import { CryptoExchangeAlgorithm } from "./exchange/CryptoExchange";
 import { CryptoSignatureAlgorithm } from "./signature/CryptoSignatureAlgorithm";
 
 export interface ICryptoPrivateKey {
-    privateKey: ICoreBuffer | KeyPairHandle;
+    privateKey: ICoreBuffer | CryptoLayerKeyPair;
     algorithm: CryptoExchangeAlgorithm | CryptoSignatureAlgorithm;
     toString(): string;
     toPEM(): string;
@@ -34,14 +33,11 @@ export class CryptoPrivateKey extends CryptoSerializable implements ICryptoPriva
 
     @validate()
     @serialize()
-    public privateKey: CoreBuffer;
+    public privateKey: CoreBuffer | CryptoLayerKeyPair;
     
-    @validate()
-    @serialize()
-    protected calKeyPair?: CryptoLayerKeyPair;
 
     public toPEM(): string {
-        if (!this.calKeyPair) {
+        if (this.privateKey instanceof CoreBuffer) {
             return this.privateKey.toString(Encoding.Pem, "PRIVATE KEY");
         } else {
             throw new CryptoError(CryptoErrorCode.NotYetImplemented, "Extraction is in the trait but not the structs implementation.")
@@ -49,7 +45,7 @@ export class CryptoPrivateKey extends CryptoSerializable implements ICryptoPriva
     }
 
     public override toString(): string {
-        if (!this.calKeyPair) {
+        if (this.privateKey instanceof CoreBuffer) {
             return this.privateKey.toString(Encoding.Base64_UrlSafe_NoPadding);
         } else {
             throw new CryptoError(CryptoErrorCode.NotYetImplemented, "Extraction is in the trait but not the structs implementation.")
