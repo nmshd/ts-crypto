@@ -3,7 +3,7 @@ import { Provider } from "crypto-layer-ts-types";
 import { CoreBuffer, Encoding, ICoreBuffer } from "./CoreBuffer";
 import { CryptoError } from "./CryptoError";
 import { CryptoErrorCode } from "./CryptoErrorCode";
-import { CryptoLayerKeyPair } from "./CryptoLayerKeyPair";
+import { asymSpecFromCryptoAlgorithm, CryptoLayerKeyPair, DEFAULT_KEY_PAIR_SPEC } from "./CryptoLayerKeyPair";
 import { CryptoSerializable } from "./CryptoSerializable";
 import { CryptoExchangeAlgorithm } from "./exchange/CryptoExchange";
 import { CryptoSignatureAlgorithm } from "./signature/CryptoSignatureAlgorithm";
@@ -66,13 +66,16 @@ export class CryptoPrivateKey extends CryptoSerializable implements ICryptoPriva
         value: string,
         algorithm: CryptoExchangeAlgorithm | CryptoSignatureAlgorithm,
         encoding: Encoding = Encoding.Base64_UrlSafe_NoPadding,
-        provider?: Provider = undefined,
+        provider?: Provider,
     ): CryptoPrivateKey {
         const buffer: CoreBuffer = CoreBuffer.fromString(value, encoding);
-        if (provider) {
-            return this.fromAny({ algorithm,  })
+        if (!provider) {
+            return this.fromAny({ algorithm, privateKey: buffer });
         }
-        return this.fromAny({ algorithm, privateKey: buffer });
+        let spec = {...DEFAULT_KEY_PAIR_SPEC};
+        spec.asym_spec = asymSpecFromCryptoAlgorithm(algorithm);
+        let keyPair = provider.createKeyPair(spec);
+        return this.fromAny({ algorithm,  privateKey: new CryptoLayerKeyPair(provider, keyPair) })
     }
 
     public static fromObject(

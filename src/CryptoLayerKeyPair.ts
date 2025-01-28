@@ -7,7 +7,7 @@ import { CryptoExchangeAlgorithm } from "./exchange/CryptoExchange";
 import { CryptoHashAlgorithm } from "./hash/CryptoHash";
 import { CryptoSignatureAlgorithm } from "./signature/CryptoSignatureAlgorithm";
 
-const DEFAULT_KEY_PAIR_SPEC: KeyPairSpec = {
+export const DEFAULT_KEY_PAIR_SPEC: KeyPairSpec = {
     asym_spec: "P256",
     cipher: "AesGcm256",
     signing_hash: "Sha2_512",
