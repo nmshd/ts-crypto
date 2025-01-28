@@ -1,6 +1,7 @@
 import { Serializable, serialize, type, validate } from "@js-soft/ts-serval";
-import { assert } from "console";
 import { AsymmetricKeySpec, CryptoHash, KeyPairHandle, KeyPairSpec, Provider } from "crypto-layer-ts-types";
+import { defaults } from "lodash";
+import { CoreBuffer } from "./CoreBuffer";
 import { CryptoError } from "./CryptoError";
 import { CryptoErrorCode } from "./CryptoErrorCode";
 import { CryptoExchangeAlgorithm } from "./exchange/CryptoExchange";
@@ -15,7 +16,9 @@ export const DEFAULT_KEY_PAIR_SPEC: KeyPairSpec = {
     non_exportable: false
 };
 
-export function asymSpecFromCryptoAlgorithm(algorithm: CryptoExchangeAlgorithm | CryptoSignatureAlgorithm): AsymmetricKeySpec {
+export function asymSpecFromCryptoAlgorithm(
+    algorithm: CryptoExchangeAlgorithm | CryptoSignatureAlgorithm
+): AsymmetricKeySpec {
     switch (algorithm) {
         case CryptoExchangeAlgorithm.ECDH_P256:
             return "P256";
@@ -48,7 +51,7 @@ export class CryptoLayerKeyPair extends Serializable {
     @validate()
     @serialize()
     public readonly id: string;
-    
+
     @validate()
     @serialize()
     public readonly providerName: string;
@@ -64,9 +67,39 @@ export class CryptoLayerKeyPair extends Serializable {
         this.providerName = provider.providerName();
     }
 
+    /**
+     * Loads the key with the provider.
+     *
+     * @param provider Provider which is used to load the key pair and populate `CryptoLayerKeyPair`.
+     */
     public init(provider: Provider): void {
-        assert(provider.providerName() == this.providerName);
+        if (provider.providerName() != this.providerName) {
+            throw new CryptoError(
+                CryptoErrorCode.CalWrongProvider,
+                `A key must always be loaded with the provider is was created with! You supplied: ${provider.providerName()}. Expected provider: ${this.providerName}`
+            );
+        }
         this.provider = provider;
         this.keyPairHandle = provider.loadKeyPair(this.id);
+    }
+
+    /**
+     * Imports a buffer with the given provider as KeyPair.
+     *
+     * `specOverride` can be used to change the algorithm of the `KeyPairSpec` which is used to configure the key pair during import.
+     *
+     * @param provider A crypto layer provider.
+     * @param buffer A buffer with the private key which is to be imported.
+     * @param specOverride An object which is used to override the default key pair spec.
+     * @returns The finished key pair handle.
+     */
+    public static fromCoreBufferWithDefaultSpecAndOverride(
+        provider: Provider,
+        buffer: CoreBuffer,
+        specOverride: Partial<KeyPairSpec>
+    ): CryptoLayerKeyPair {
+        let spec = defaults(specOverride, DEFAULT_KEY_PAIR_SPEC);
+        let keyPair = provider.importKeyPair(spec, new Uint8Array(0), buffer.buffer);
+        return new CryptoLayerKeyPair(provider, keyPair);
     }
 }
