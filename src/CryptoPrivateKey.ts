@@ -1,4 +1,5 @@
 import { serialize, type, validate } from "@js-soft/ts-serval";
+import { Provider } from "crypto-layer-ts-types";
 import { CoreBuffer, Encoding, ICoreBuffer } from "./CoreBuffer";
 import { CryptoError } from "./CryptoError";
 import { CryptoErrorCode } from "./CryptoErrorCode";
@@ -65,9 +66,12 @@ export class CryptoPrivateKey extends CryptoSerializable implements ICryptoPriva
         value: string,
         algorithm: CryptoExchangeAlgorithm | CryptoSignatureAlgorithm,
         encoding: Encoding = Encoding.Base64_UrlSafe_NoPadding,
-        //cryptoLayerProvider?: Provider
+        provider?: Provider = undefined,
     ): CryptoPrivateKey {
         const buffer: CoreBuffer = CoreBuffer.fromString(value, encoding);
+        if (provider) {
+            return this.fromAny({ algorithm,  })
+        }
         return this.fromAny({ algorithm, privateKey: buffer });
     }
 

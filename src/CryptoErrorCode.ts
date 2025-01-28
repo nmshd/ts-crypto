@@ -49,4 +49,5 @@ export enum CryptoErrorCode {
     StateWrongType = "error.crypto.state.wrongType",
 
     CalNonExtractable = "error.crypto.cal.nonExtractable",
+    CalUnsupportedAlgorithm = "error.crypto.cal.unsupportedAlgorithm",
 }
