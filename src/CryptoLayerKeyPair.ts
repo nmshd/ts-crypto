@@ -84,22 +84,45 @@ export class CryptoLayerKeyPair extends Serializable {
     }
 
     /**
-     * Imports a buffer with the given provider as KeyPair.
+     * Imports buffers with the given provider as KeyPair.
      *
      * `specOverride` can be used to change the algorithm of the `KeyPairSpec` which is used to configure the key pair during import.
      *
      * @param provider A crypto layer provider.
-     * @param buffer A buffer with the private key which is to be imported.
+     * @param publicKeyBuffer A buffer with the public key which is to be imported.
+     * @param privateKeyBuffer A buffer with the private key which is to be imported.
      * @param specOverride An object which is used to override the default key pair spec.
      * @returns The finished key pair handle.
      */
-    public static fromCoreBufferWithDefaultSpecAndOverride(
+    public static fromBuffers(
         provider: Provider,
-        buffer: CoreBuffer,
+        publicKeyBuffer: CoreBuffer,
+        privateKeyBuffer: CoreBuffer,
         specOverride: Partial<KeyPairSpec>
     ): CryptoLayerKeyPair {
         let spec = defaults(specOverride, DEFAULT_KEY_PAIR_SPEC);
-        let keyPair = provider.importKeyPair(spec, new Uint8Array(0), buffer.buffer);
+        let keyPair;
+        if (privateKeyBuffer.length > 0) {
+            keyPair = provider.importKeyPair(spec, publicKeyBuffer.buffer, privateKeyBuffer.buffer);
+        } else {
+            keyPair = provider.importPublicKey(spec, publicKeyBuffer.buffer);
+        }
         return new CryptoLayerKeyPair(provider, keyPair);
+    }
+
+    public static fromPrivateBuffer(
+        provider: Provider,
+        privateKeyBuffer: CoreBuffer,
+        specOverride: Partial<KeyPairSpec>
+    ): CryptoLayerKeyPair {
+        return this.fromBuffers(provider, new CoreBuffer(), privateKeyBuffer, specOverride);
+    }
+
+    public static fromPublicBuffer(
+        provider: Provider,
+        publicKeyBuffer: CoreBuffer,
+        specOverride: Partial<KeyPairSpec>
+    ): CryptoLayerKeyPair {
+        return this.fromBuffers(provider, publicKeyBuffer, new CoreBuffer(), specOverride);
     }
 }

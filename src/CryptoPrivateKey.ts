@@ -79,7 +79,7 @@ export class CryptoPrivateKey extends CryptoSerializable implements ICryptoPriva
         }
         return this.fromAny({
             algorithm,
-            privateKey: CryptoLayerKeyPair.fromCoreBufferWithDefaultSpecAndOverride(provider, buffer, {
+            privateKey: CryptoLayerKeyPair.fromPrivateBuffer(provider, buffer, {
                 asym_spec: asymSpecFromCryptoAlgorithm(algorithm)
             })
         });
@@ -96,7 +96,7 @@ export class CryptoPrivateKey extends CryptoSerializable implements ICryptoPriva
         }
         return this.fromAny({
             algorithm,
-            privateKey: CryptoLayerKeyPair.fromCoreBufferWithDefaultSpecAndOverride(provider, buffer, {
+            privateKey: CryptoLayerKeyPair.fromPrivateBuffer(provider, buffer, {
                 asym_spec: asymSpecFromCryptoAlgorithm(algorithm)
             })
         });
