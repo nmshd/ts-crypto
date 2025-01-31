@@ -14,6 +14,13 @@ export class CryptoSignatures {
     public static async privateKeyToPublicKey(
         privateKey: CryptoSignaturePrivateKey
     ): Promise<CryptoSignaturePublicKey> {
+        if (!(privateKey.privateKey instanceof CoreBuffer)) {
+            throw new CryptoError(
+                CryptoErrorCode.NotYetImplemented,
+                "privateKeyToPublicKey is currently implemented in CryptoSignaturePrivateKey.toPublicKey"
+            );
+        }
+
         switch (privateKey.algorithm) {
             case CryptoSignatureAlgorithm.ECDSA_ED25519:
                 try {
@@ -88,7 +95,17 @@ export class CryptoSignatures {
     private static getArrayOfPrivateKey(privateKey: CryptoSignaturePrivateKey | CoreBuffer): Uint8Array {
         let buffer: CoreBuffer;
         if (privateKey instanceof CryptoSignaturePrivateKey) {
-            buffer = privateKey.privateKey;
+            if (privateKey.privateKey instanceof CoreBuffer) {
+                buffer = privateKey.privateKey;
+            } else {
+                if (!privateKey.privateKey.keyPairHandle) {
+                    throw new CryptoError(
+                        CryptoErrorCode.CalUninitializedKey,
+                        "The key pair does not hold a key pair handle. It needs to be loaded from a provider via the init method."
+                    );
+                }
+                buffer = new CoreBuffer(privateKey.privateKey.keyPairHandle.extractKey());
+            }
         } else if (privateKey instanceof CoreBuffer) {
             buffer = privateKey;
         } else {
@@ -128,7 +145,17 @@ export class CryptoSignatures {
     private static getArrayOfPublicKey(publicKey: CryptoSignaturePublicKey | CoreBuffer): Uint8Array {
         let buffer: CoreBuffer;
         if (publicKey instanceof CryptoSignaturePublicKey) {
-            buffer = publicKey.publicKey;
+            if (publicKey.publicKey instanceof CoreBuffer) {
+                buffer = publicKey.publicKey;
+            } else {
+                if (!publicKey.publicKey.keyPairHandle) {
+                    throw new CryptoError(
+                        CryptoErrorCode.CalUninitializedKey,
+                        "The key pair does not hold a key pair handle. It needs to be loaded from a provider via the init method."
+                    );
+                }
+                buffer = new CoreBuffer(publicKey.publicKey.keyPairHandle.extractKey());
+            }
         } else if (publicKey instanceof CoreBuffer) {
             buffer = publicKey;
         } else {
