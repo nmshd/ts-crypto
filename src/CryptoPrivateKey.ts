@@ -3,7 +3,7 @@ import { Provider } from "crypto-layer-ts-types";
 import { CoreBuffer, Encoding, ICoreBuffer } from "./CoreBuffer";
 import { CryptoError } from "./CryptoError";
 import { CryptoErrorCode } from "./CryptoErrorCode";
-import { asymSpecFromCryptoAlgorithm, CryptoLayerKeyPair } from "./CryptoLayerKeyPair";
+import { CryptoLayerKeyPair } from "./CryptoLayerKeyPair";
 import { CryptoSerializable } from "./CryptoSerializable";
 import { CryptoExchangeAlgorithm } from "./exchange/CryptoExchange";
 import { CryptoSignatureAlgorithm } from "./signature/CryptoSignatureAlgorithm";
@@ -79,9 +79,7 @@ export class CryptoPrivateKey extends CryptoSerializable implements ICryptoPriva
         }
         return this.fromAny({
             algorithm,
-            privateKey: CryptoLayerKeyPair.fromPrivateBuffer(provider, buffer, {
-                asym_spec: asymSpecFromCryptoAlgorithm(algorithm)
-            })
+            privateKey: CryptoLayerKeyPair.fromPrivateBufferWithAlgorithm(provider, buffer, algorithm)
         });
     }
 
@@ -96,9 +94,7 @@ export class CryptoPrivateKey extends CryptoSerializable implements ICryptoPriva
         }
         return this.fromAny({
             algorithm,
-            privateKey: CryptoLayerKeyPair.fromPrivateBuffer(provider, buffer, {
-                asym_spec: asymSpecFromCryptoAlgorithm(algorithm)
-            })
+            privateKey: CryptoLayerKeyPair.fromPrivateBufferWithAlgorithm(provider, buffer, algorithm)
         });
     }
 

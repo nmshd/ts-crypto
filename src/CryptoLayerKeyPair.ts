@@ -35,7 +35,7 @@ export function asymSpecFromCryptoAlgorithm(
     }
 }
 
-export function CryptoHashFromCryptoHashAlgorithm(algorithm: CryptoHashAlgorithm): CryptoHash {
+export function cryptoHashFromCryptoHashAlgorithm(algorithm: CryptoHashAlgorithm): CryptoHash {
     switch (algorithm) {
         case CryptoHashAlgorithm.SHA256:
             return "Sha2_256";
@@ -84,45 +84,51 @@ export class CryptoLayerKeyPair extends Serializable {
     }
 
     /**
-     * Imports buffers with the given provider as KeyPair.
+     * Constructs a CryptoLayerKeyPair with default key spec from raw private key.
      *
-     * `specOverride` can be used to change the algorithm of the `KeyPairSpec` which is used to configure the key pair during import.
-     *
-     * @param provider A crypto layer provider.
-     * @param publicKeyBuffer A buffer with the public key which is to be imported.
-     * @param privateKeyBuffer A buffer with the private key which is to be imported.
-     * @param specOverride An object which is used to override the default key pair spec.
-     * @returns The finished key pair handle.
+     * @param provider A crypto layer provider that is capable of importing a key pair.
+     * @param privateKeyBuffer The raw private key.
+     * @param specOverride Override default key pair spec.
+     * @returns New CryptoLayerKeyPair with handle to key pair.
      */
-    public static fromBuffers(
-        provider: Provider,
-        publicKeyBuffer: CoreBuffer,
-        privateKeyBuffer: CoreBuffer,
-        specOverride: Partial<KeyPairSpec>
-    ): CryptoLayerKeyPair {
-        let spec = defaults(specOverride, DEFAULT_KEY_PAIR_SPEC);
-        let keyPair;
-        if (privateKeyBuffer.length > 0) {
-            keyPair = provider.importKeyPair(spec, publicKeyBuffer.buffer, privateKeyBuffer.buffer);
-        } else {
-            keyPair = provider.importPublicKey(spec, publicKeyBuffer.buffer);
-        }
-        return new CryptoLayerKeyPair(provider, keyPair);
-    }
-
     public static fromPrivateBuffer(
         provider: Provider,
         privateKeyBuffer: CoreBuffer,
         specOverride: Partial<KeyPairSpec>
     ): CryptoLayerKeyPair {
-        return this.fromBuffers(provider, new CoreBuffer(), privateKeyBuffer, specOverride);
+        let spec = defaults(specOverride, DEFAULT_KEY_PAIR_SPEC);
+        let keyPair = provider.importKeyPair(spec, new Uint8Array(0), privateKeyBuffer.buffer);
+        return new CryptoLayerKeyPair(provider, keyPair);
     }
 
+    public static fromPrivateBufferWithAlgorithm(
+        provider: Provider,
+        privateKeyBuffer: CoreBuffer,
+        asymmetricAlgorithm?: CryptoExchangeAlgorithm | CryptoSignatureAlgorithm,
+        hashAlgorithm?: CryptoHashAlgorithm
+    ): CryptoLayerKeyPair {
+        let override: Partial<KeyPairSpec> = {
+            asym_spec: asymmetricAlgorithm ? asymSpecFromCryptoAlgorithm(asymmetricAlgorithm) : undefined,
+            signing_hash: hashAlgorithm ? cryptoHashFromCryptoHashAlgorithm(hashAlgorithm) : undefined
+        };
+        return this.fromPrivateBuffer(provider, privateKeyBuffer, override);
+    }
+
+    /**
+     * Constructs a CryptoLayerKeyPair with default key spec from raw public key.
+     *
+     * @param provider A crypto layer provider that is capable of importing a key pair.
+     * @param privateKeyBuffer The raw public key.
+     * @param specOverride Override default key pair spec.
+     * @returns New CryptoLayerKeyPair with handle to key pair.
+     */
     public static fromPublicBuffer(
         provider: Provider,
         publicKeyBuffer: CoreBuffer,
         specOverride: Partial<KeyPairSpec>
     ): CryptoLayerKeyPair {
-        return this.fromBuffers(provider, publicKeyBuffer, new CoreBuffer(), specOverride);
+        let spec = defaults(specOverride, DEFAULT_KEY_PAIR_SPEC);
+        let keyPair = provider.importPublicKey(spec, publicKeyBuffer.buffer);
+        return new CryptoLayerKeyPair(provider, keyPair);
     }
 }
