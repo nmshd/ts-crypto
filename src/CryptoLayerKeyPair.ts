@@ -131,4 +131,17 @@ export class CryptoLayerKeyPair extends Serializable {
         let keyPair = provider.importPublicKey(spec, publicKeyBuffer.buffer);
         return new CryptoLayerKeyPair(provider, keyPair);
     }
+
+    public static fromPublicBufferWithAlgorithm(
+        provider: Provider,
+        privateKeyBuffer: CoreBuffer,
+        asymmetricAlgorithm?: CryptoExchangeAlgorithm | CryptoSignatureAlgorithm,
+        hashAlgorithm?: CryptoHashAlgorithm
+    ): CryptoLayerKeyPair {
+        let override: Partial<KeyPairSpec> = {
+            asym_spec: asymmetricAlgorithm ? asymSpecFromCryptoAlgorithm(asymmetricAlgorithm) : undefined,
+            signing_hash: hashAlgorithm ? cryptoHashFromCryptoHashAlgorithm(hashAlgorithm) : undefined
+        };
+        return this.fromPublicBuffer(provider, privateKeyBuffer, override);
+    }
 }
