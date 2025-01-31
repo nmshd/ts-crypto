@@ -51,4 +51,5 @@ export enum CryptoErrorCode {
     CalNonExtractable = "error.crypto.cal.nonExtractable",
     CalUnsupportedAlgorithm = "error.crypto.cal.unsupportedAlgorithm",
     CalWrongProvider = "error.crypto.cal.wrongProvider",
+    CalUninitializedKey = "error.crypto.cal.uninitializedKey"
 }

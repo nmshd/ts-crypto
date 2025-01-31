@@ -40,10 +40,14 @@ export class CryptoPrivateKey extends CryptoSerializable implements ICryptoPriva
         if (this.privateKey instanceof CoreBuffer) {
             return this.privateKey.toString(Encoding.Pem, "PRIVATE KEY");
         } else {
-            throw new CryptoError(
-                CryptoErrorCode.NotYetImplemented,
-                "Extraction is in the trait but not the structs implementation."
-            );
+            if (!this.privateKey.keyPairHandle) {
+                throw new CryptoError(
+                    CryptoErrorCode.CalUninitializedKey,
+                    "The key pair does not hold a key pair handle. It needs to be loaded from a provider via the init method."
+                );
+            }
+            let privateRawKey = this.privateKey.keyPairHandle.extractKey();
+            return new CoreBuffer(privateRawKey).toString(Encoding.Pem, "PRIVATE KEY");
         }
     }
 
@@ -51,10 +55,14 @@ export class CryptoPrivateKey extends CryptoSerializable implements ICryptoPriva
         if (this.privateKey instanceof CoreBuffer) {
             return this.privateKey.toString(Encoding.Base64_UrlSafe_NoPadding);
         } else {
-            throw new CryptoError(
-                CryptoErrorCode.NotYetImplemented,
-                "Extraction is in the trait but not the structs implementation."
-            );
+            if (!this.privateKey.keyPairHandle) {
+                throw new CryptoError(
+                    CryptoErrorCode.CalUninitializedKey,
+                    "The key pair does not hold a key pair handle. It needs to be loaded from a provider via the init method."
+                );
+            }
+            let privateRawKey = this.privateKey.keyPairHandle.extractKey();
+            return new CoreBuffer(privateRawKey).toString(Encoding.Base64_UrlSafe_NoPadding);
         }
     }
 
