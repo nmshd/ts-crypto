@@ -1,11 +1,13 @@
 import { serialize, type, validate } from "@js-soft/ts-serval";
-import { Provider } from "crypto-layer-ts-types";
+import { Provider, SecurityLevel } from "crypto-layer-ts-types";
 import { CoreBuffer, Encoding, ICoreBuffer } from "./CoreBuffer";
 import { CryptoError } from "./CryptoError";
 import { CryptoErrorCode } from "./CryptoErrorCode";
 import { CryptoLayerKeyPair } from "./CryptoLayerKeyPair";
+import { getProvider } from "./CryptoLayerProviders";
 import { CryptoSerializable } from "./CryptoSerializable";
 import { CryptoExchangeAlgorithm } from "./exchange/CryptoExchange";
+import { CryptoHashAlgorithm } from "./hash/CryptoHash";
 import { CryptoSignatureAlgorithm } from "./signature/CryptoSignatureAlgorithm";
 
 export interface ICryptoPrivateKey {
@@ -79,15 +81,25 @@ export class CryptoPrivateKey extends CryptoSerializable implements ICryptoPriva
         value: string,
         algorithm: CryptoExchangeAlgorithm | CryptoSignatureAlgorithm,
         encoding: Encoding = Encoding.Base64_UrlSafe_NoPadding,
-        provider?: Provider
+        provider: string | SecurityLevel | undefined = "Software",
+        hashAlgorithm?: CryptoHashAlgorithm
     ): CryptoPrivateKey {
         const buffer: CoreBuffer = CoreBuffer.fromString(value, encoding);
-        if (!provider) {
+        let providerInitalized = getProvider(provider);
+        if (!providerInitalized) {
             return this.fromAny({ algorithm, privateKey: buffer });
         }
+
+        // provider load from global with config
+
         return this.fromAny({
             algorithm,
-            privateKey: CryptoLayerKeyPair.fromPrivateBufferWithAlgorithm(provider, buffer, algorithm)
+            privateKey: CryptoLayerKeyPair.fromPrivateBufferWithAlgorithm(
+                providerInitalized,
+                buffer,
+                algorithm,
+                hashAlgorithm
+            )
         });
     }
 

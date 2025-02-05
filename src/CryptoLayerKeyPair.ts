@@ -59,12 +59,23 @@ export class CryptoLayerKeyPair extends Serializable {
     public provider?: Provider;
     public keyPairHandle?: KeyPairHandle;
 
-    constructor(provider: Provider, keyPairHandle: KeyPairHandle) {
+    constructor(id: string, providerName: string, provider?: Provider, keyPairHandle?: KeyPairHandle) {
         super();
         this.provider = provider;
         this.keyPairHandle = keyPairHandle;
-        this.id = keyPairHandle.id();
-        this.providerName = provider.providerName();
+        this.id = id;
+        this.providerName = providerName;
+    }
+
+    /**
+     * Creates a new `CryptoLayerKeyPair` object.
+     *
+     * @param provider Provider which the key pair was created with.
+     * @param keyPairHandle Key pair handle holding private and public keys.
+     * @returns `CryptoLayerKeyPair` on success.
+     */
+    public static async new(provider: Provider, keyPairHandle: KeyPairHandle): Promise<CryptoLayerKeyPair> {
+        return new CryptoLayerKeyPair(await keyPairHandle.id(), await provider.providerName(), provider, keyPairHandle);
     }
 
     /**
@@ -72,15 +83,15 @@ export class CryptoLayerKeyPair extends Serializable {
      *
      * @param provider Provider which is used to load the key pair and populate `CryptoLayerKeyPair`.
      */
-    public init(provider: Provider): void {
-        if (provider.providerName() != this.providerName) {
+    public async init(provider: Provider): Promise<void> {
+        if ((await provider.providerName()) != this.providerName) {
             throw new CryptoError(
                 CryptoErrorCode.CalWrongProvider,
                 `A key must always be loaded with the provider is was created with! You supplied: ${provider.providerName()}. Expected provider: ${this.providerName}`
             );
         }
         this.provider = provider;
-        this.keyPairHandle = provider.loadKeyPair(this.id);
+        this.keyPairHandle = await provider.loadKeyPair(this.id);
     }
 
     /**
@@ -91,22 +102,22 @@ export class CryptoLayerKeyPair extends Serializable {
      * @param specOverride Override default key pair spec.
      * @returns New CryptoLayerKeyPair with handle to key pair.
      */
-    public static fromPrivateBuffer(
+    public static async fromPrivateBuffer(
         provider: Provider,
         privateKeyBuffer: CoreBuffer,
         specOverride: Partial<KeyPairSpec>
-    ): CryptoLayerKeyPair {
+    ): Promise<CryptoLayerKeyPair> {
         let spec = defaults(specOverride, DEFAULT_KEY_PAIR_SPEC);
-        let keyPair = provider.importKeyPair(spec, new Uint8Array(0), privateKeyBuffer.buffer);
-        return new CryptoLayerKeyPair(provider, keyPair);
+        let keyPair = await provider.importKeyPair(spec, new Uint8Array(0), privateKeyBuffer.buffer);
+        return CryptoLayerKeyPair.new(provider, keyPair);
     }
 
-    public static fromPrivateBufferWithAlgorithm(
+    public static async fromPrivateBufferWithAlgorithm(
         provider: Provider,
         privateKeyBuffer: CoreBuffer,
         asymmetricAlgorithm?: CryptoExchangeAlgorithm | CryptoSignatureAlgorithm,
         hashAlgorithm?: CryptoHashAlgorithm
-    ): CryptoLayerKeyPair {
+    ): Promise<CryptoLayerKeyPair> {
         let override: Partial<KeyPairSpec> = {
             asym_spec: asymmetricAlgorithm ? asymSpecFromCryptoAlgorithm(asymmetricAlgorithm) : undefined,
             signing_hash: hashAlgorithm ? cryptoHashFromCryptoHashAlgorithm(hashAlgorithm) : undefined
@@ -122,22 +133,22 @@ export class CryptoLayerKeyPair extends Serializable {
      * @param specOverride Override default key pair spec.
      * @returns New CryptoLayerKeyPair with handle to key pair.
      */
-    public static fromPublicBuffer(
+    public static async fromPublicBuffer(
         provider: Provider,
         publicKeyBuffer: CoreBuffer,
         specOverride: Partial<KeyPairSpec>
-    ): CryptoLayerKeyPair {
+    ): Promise<CryptoLayerKeyPair> {
         let spec = defaults(specOverride, DEFAULT_KEY_PAIR_SPEC);
-        let keyPair = provider.importPublicKey(spec, publicKeyBuffer.buffer);
-        return new CryptoLayerKeyPair(provider, keyPair);
+        let keyPair = await provider.importPublicKey(spec, publicKeyBuffer.buffer);
+        return CryptoLayerKeyPair.new(provider, keyPair);
     }
 
-    public static fromPublicBufferWithAlgorithm(
+    public static async fromPublicBufferWithAlgorithm(
         provider: Provider,
         privateKeyBuffer: CoreBuffer,
         asymmetricAlgorithm?: CryptoExchangeAlgorithm | CryptoSignatureAlgorithm,
         hashAlgorithm?: CryptoHashAlgorithm
-    ): CryptoLayerKeyPair {
+    ): Promise<CryptoLayerKeyPair> {
         let override: Partial<KeyPairSpec> = {
             asym_spec: asymmetricAlgorithm ? asymSpecFromCryptoAlgorithm(asymmetricAlgorithm) : undefined,
             signing_hash: hashAlgorithm ? cryptoHashFromCryptoHashAlgorithm(hashAlgorithm) : undefined
