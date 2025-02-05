@@ -41,7 +41,7 @@
     },
     "dependencies": {
         "@types/lodash": "^4.17.15",
-        "crypto-layer-ts-types": "https://gitpkg.vercel.app/nmshd/rust-crypto/ts-types?main",
+        "crypto-layer-ts-types": "https://gitpkg.vercel.app/nmshd/rust-crypto/ts-types?main&scripts.postinstall=npm%20i%20--ignore-scripts%20%26%26%20npm%20run%20build",
         "libsodium-wrappers-sumo": "0.7.15",
         "lodash": "^4.17.21",
         "uuid": "10.0.0"
