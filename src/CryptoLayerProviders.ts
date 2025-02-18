@@ -1,9 +1,16 @@
-import { Provider, ProviderConfig, ProviderImplConfig, SecurityLevel } from "@nmshd/rs-crypto-types";
+/* eslint-disable @typescript-eslint/naming-convention */
+import {
+    Provider,
+    ProviderConfig,
+    ProviderFactoryFunctions,
+    ProviderImplConfig,
+    SecurityLevel
+} from "@nmshd/rs-crypto-types";
 
 import { defaults } from "lodash";
 import { CryptoError } from "./CryptoError";
 import { CryptoErrorCode } from "./CryptoErrorCode";
-import { CryptoLayerConfig } from "./CryptoLayerConfig";
+import { CryptoLayerConfig, CryptoLayerProviderFilter } from "./CryptoLayerConfig";
 
 let PROVIDERS_BY_SECURITY: Map<SecurityLevel, Provider[]> | undefined = undefined;
 let PROVIDERS_BY_NAME: Map<string, Provider> | undefined = undefined;
@@ -15,6 +22,56 @@ const DEFAULT_PROVIDER_CONFIG: ProviderConfig = {
     supported_ciphers: ["AesCbc256", "AesGcm256"],
     supported_hashes: ["Sha2_256", "Sha2_512"]
 };
+
+async function providerBySecurityMapFromProviderByNameMap(
+    providersByName: Map<string, Provider>
+): Promise<Map<SecurityLevel, Provider[]>> {
+    const providersBySecurity = new Map();
+    for (const [_key, value] of providersByName) {
+        const caps = await value.getCapabilities();
+        if (!caps?.min_security_level) {
+            continue;
+        }
+        const securityLevel = caps.min_security_level;
+
+        if (!providersBySecurity.has(securityLevel)) {
+            providersBySecurity.set(securityLevel, []);
+        }
+
+        providersBySecurity.get(securityLevel)!.push(value);
+    }
+    return providersBySecurity;
+}
+
+/**
+ * Creates a provider if possible with the given provider filter. This means, that the provider created must adhere to the filter.
+ *
+ * If a `SecurityLevel` is given, the default provider config (`DEFAULT_PROVIDER_CONFIG`) will be used to fill in the rest for the selection.
+ */
+async function createProviderFromProviderFilter(
+    providerToBeInitialized: CryptoLayerProviderFilter,
+    factoryFunctions: ProviderFactoryFunctions,
+    providerImplConfig: ProviderImplConfig
+): Promise<Provider | undefined> {
+    if ("providerName" in providerToBeInitialized) {
+        return await factoryFunctions.createProviderFromName(providerToBeInitialized.providerName, providerImplConfig);
+    }
+    if ("securityLevel" in providerToBeInitialized) {
+        const providerConfig: ProviderConfig = defaults(
+            {
+                max_security_level: providerToBeInitialized.securityLevel,
+                min_security_level: providerToBeInitialized.securityLevel
+            },
+            DEFAULT_PROVIDER_CONFIG
+        );
+        return await factoryFunctions.createProvider(providerConfig, providerImplConfig);
+    }
+    if ("providerConfig" in providerToBeInitialized) {
+        return await factoryFunctions.createProvider(providerToBeInitialized.providerConfig, providerImplConfig);
+    }
+
+    throw new CryptoError(CryptoErrorCode.WrongParameters);
+}
 
 /**
  * Intializes global providers with the given configuration.
@@ -28,37 +85,19 @@ export async function initCryptoLayerProviders(config: CryptoLayerConfig): Promi
         return;
     }
 
-    let providerImplConfig: ProviderImplConfig = { additional_config: [config.keyMetadataStoreConfig] };
+    const providerImplConfig: ProviderImplConfig = { additional_config: [config.keyMetadataStoreConfig] };
     if (config.keyMetadataStoreAuth) {
         providerImplConfig.additional_config.push(config.keyMetadataStoreAuth);
     }
 
-    let providers: Map<string, Provider> = new Map();
+    const providers: Map<string, Provider> = new Map();
 
-    for (const providerInitalizationConfig of config.providers) {
-        let provider: Provider | undefined;
-        if ("providerName" in providerInitalizationConfig) {
-            provider = await config.factoryFunctions.createProviderFromName(
-                providerInitalizationConfig.providerName,
-                providerImplConfig
-            );
-        } else if ("securityLevel" in providerInitalizationConfig) {
-            let providerConfig: ProviderConfig = defaults(
-                {
-                    max_security_level: providerInitalizationConfig.securityLevel,
-                    min_security_level: providerInitalizationConfig.securityLevel
-                },
-                DEFAULT_PROVIDER_CONFIG
-            );
-            provider = await config.factoryFunctions.createProvider(providerConfig, providerImplConfig);
-        } else if ("providerConfig" in providerInitalizationConfig) {
-            provider = await config.factoryFunctions.createProvider(
-                providerInitalizationConfig.providerConfig,
-                providerImplConfig
-            );
-        } else {
-            throw new CryptoError(CryptoErrorCode.WrongParameters);
-        }
+    for (const providerFilter of config.providersToBeInitialized) {
+        const provider = await createProviderFromProviderFilter(
+            providerFilter,
+            config.factoryFunctions,
+            providerImplConfig
+        );
 
         if (!provider) {
             throw new CryptoError(CryptoErrorCode.CalFailedLoadingProvider, `Failed loading provider.`);
@@ -68,23 +107,7 @@ export async function initCryptoLayerProviders(config: CryptoLayerConfig): Promi
     }
 
     PROVIDERS_BY_NAME = providers;
-
-    let providers_by_security = new Map();
-    for (const [key, value] of providers) {
-        let caps = await value.getCapabilities();
-        if (!caps?.min_security_level) {
-            continue;
-        }
-        let securityLevel = caps.min_security_level;
-
-        if (!providers_by_security.has(securityLevel)) {
-            providers_by_security.set(securityLevel, []);
-        }
-
-        providers_by_security.get(securityLevel)!.push(value);
-    }
-
-    PROVIDERS_BY_SECURITY = providers_by_security;
+    PROVIDERS_BY_SECURITY = await providerBySecurityMapFromProviderByNameMap(PROVIDERS_BY_NAME);
 }
 
 function isSecurityLevel(value: string): value is SecurityLevel {
@@ -113,7 +136,7 @@ export function getProvider(key: string | SecurityLevel | undefined): Provider |
         return undefined;
     }
 
-    let provider = isSecurityLevel(key) ? PROVIDERS_BY_SECURITY.get(key)?.[0] : PROVIDERS_BY_NAME.get(key);
+    const provider = isSecurityLevel(key) ? PROVIDERS_BY_SECURITY.get(key)?.[0] : PROVIDERS_BY_NAME.get(key);
 
     if (!provider) {
         throw new CryptoError(CryptoErrorCode.WrongParameters, `No such provider with name or security level: ${key}`);
