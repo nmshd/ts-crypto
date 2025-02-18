@@ -1,4 +1,4 @@
-import { Provider, ProviderConfig, ProviderImplConfig, SecurityLevel } from "crypto-layer-ts-types";
+import { Provider, ProviderConfig, ProviderImplConfig, SecurityLevel } from "@nmshd/rs-crypto-types";
 
 import { defaults } from "lodash";
 import { CryptoError } from "./CryptoError";

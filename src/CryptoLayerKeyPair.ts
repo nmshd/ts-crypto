@@ -1,5 +1,5 @@
 import { Serializable, serialize, type, validate } from "@js-soft/ts-serval";
-import { AsymmetricKeySpec, CryptoHash, KeyPairHandle, KeyPairSpec, Provider } from "crypto-layer-ts-types";
+import { AsymmetricKeySpec, CryptoHash, KeyPairHandle, KeyPairSpec, Provider } from "@nmshd/rs-crypto-types";
 import { defaults } from "lodash";
 import { CoreBuffer } from "./CoreBuffer";
 import { CryptoError } from "./CryptoError";

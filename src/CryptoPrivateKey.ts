@@ -1,5 +1,5 @@
 import { serialize, type, validate } from "@js-soft/ts-serval";
-import { Provider, SecurityLevel } from "crypto-layer-ts-types";
+import { Provider, SecurityLevel } from "@nmshd/rs-crypto-types";
 import { CoreBuffer, Encoding, ICoreBuffer } from "./CoreBuffer";
 import { CryptoError } from "./CryptoError";
 import { CryptoErrorCode } from "./CryptoErrorCode";

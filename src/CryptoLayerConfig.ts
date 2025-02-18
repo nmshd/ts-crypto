@@ -1,4 +1,4 @@
-import { AdditionalConfig, ProviderConfig, ProviderFactoryFunctions, SecurityLevel } from "crypto-layer-ts-types";
+import { AdditionalConfig, ProviderConfig, ProviderFactoryFunctions, SecurityLevel } from "@nmshd/rs-crypto-types";
 
 /**
  * Type holding functions for listing and creating providers and configuration for initializing the key meta data store.
