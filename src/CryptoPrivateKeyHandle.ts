@@ -1,91 +1,54 @@
 import { serialize, type, validate } from "@js-soft/ts-serval";
-import { CoreBuffer, Encoding, ICoreBuffer } from "./CoreBuffer";
+import { KeyPairHandle, KeyPairSpec, Provider } from "@nmshd/rs-crypto-types";
+import { CryptoError } from "./CryptoError";
+import { CryptoErrorCode } from "./CryptoErrorCode";
+import { getProvider } from "./CryptoLayerProviders";
 import { CryptoSerializable } from "./CryptoSerializable";
-import { CryptoExchangeAlgorithm } from "./exchange/CryptoExchange";
-import { CryptoSignatureAlgorithm } from "./signature/CryptoSignatureAlgorithm";
 
 export interface ICryptoPrivateKeyHandle {
-    privateKey: ICoreBuffer;
-    algorithm: CryptoExchangeAlgorithm | CryptoSignatureAlgorithm;
-    toString(): string;
-    toPEM(): string;
+    keyPairHandle: KeyPairHandle;
+    spec: KeyPairSpec;
 }
 
 export interface ICryptoPrivateKeyHandleStatic {
     new (): ICryptoPrivateKeyHandle;
-    fromPEM(
-        pem: string,
-        algorithm: CryptoExchangeAlgorithm | CryptoSignatureAlgorithm
-    ): Promise<ICryptoPrivateKeyHandle>;
-    fromString(
-        value: string,
-        algorithm: CryptoExchangeAlgorithm | CryptoSignatureAlgorithm,
-        encoding: Encoding
-    ): Promise<ICryptoPrivateKeyHandle>;
-    fromNativeKey(
-        key: any,
-        algorithm: CryptoExchangeAlgorithm | CryptoSignatureAlgorithm
-    ): Promise<ICryptoPrivateKeyHandle>;
+    fromNativeKey(key: any, spec: KeyPairSpec): Promise<ICryptoPrivateKeyHandle>;
 }
 
 @type("CryptoPrivateKeyHandle")
 export class CryptoPrivateKeyHandle extends CryptoSerializable implements ICryptoPrivateKeyHandle {
     @validate()
     @serialize()
-    public algorithm: CryptoExchangeAlgorithm | CryptoSignatureAlgorithm;
+    public spec: KeyPairSpec;
 
     @validate()
     @serialize()
-    public privateKey: CoreBuffer;
+    public id: string;
 
-    public toPEM(): string {
-        return this.privateKey.toString(Encoding.Pem, "PRIVATE KEY");
-    }
+    @validate()
+    @serialize()
+    public providerName: string;
 
-    public override toString(): string {
-        return this.privateKey.toString(Encoding.Base64_UrlSafe_NoPadding);
-    }
+    public provider: Provider;
 
-    protected static stripPEM(pem: string): string {
-        pem = pem.replace(/-----BEGIN [\w ]* KEY-----/, "");
-        pem = pem.replace(/-----END [\w ]* KEY-----/, "");
-        pem = pem.replace(/----- BEGIN [\w ]* KEY -----/, "");
-        pem = pem.replace(/----- END [\w ]* KEY -----/, "");
-        pem = pem.replace(/(?:\r\n|\r|\n)/g, "");
-        return pem;
-    }
-
-    public static fromString(
-        value: string,
-        algorithm: CryptoExchangeAlgorithm | CryptoSignatureAlgorithm,
-        encoding: Encoding = Encoding.Base64_UrlSafe_NoPadding
-    ): CryptoPrivateKeyHandle {
-        const buffer: CoreBuffer = CoreBuffer.fromString(value, encoding);
-        return this.fromAny({ algorithm, privateKey: buffer });
-    }
-
-    public static fromObject(
-        value: any,
-        algorithm: CryptoExchangeAlgorithm | CryptoSignatureAlgorithm
-    ): CryptoPrivateKeyHandle {
-        const buffer: ICoreBuffer = CoreBuffer.fromObject(value);
-
-        return this.fromAny({ algorithm, privateKey: buffer });
-    }
-
-    public static fromPEM(
-        pem: string,
-        algorithm: CryptoExchangeAlgorithm | CryptoSignatureAlgorithm
-    ): CryptoPrivateKeyHandle {
-        const value = this.stripPEM(pem);
-        return this.fromString(value, algorithm, Encoding.Base64);
-    }
+    public keyPairHandle: KeyPairHandle;
 
     public static from(value: any): CryptoPrivateKeyHandle {
         return this.fromAny(value);
     }
 
-    public static fromBase64(value: string): CryptoPrivateKeyHandle {
-        return this.deserialize(CoreBuffer.base64_utf8(value));
+    public static override async postFrom(value: CryptoPrivateKeyHandle): Promise<CryptoPrivateKeyHandle> {
+        const provider = getProvider(value.providerName);
+        if (!provider) {
+            throw new CryptoError(
+                CryptoErrorCode.CalFailedLoadingProvider,
+                `Failed loading provider ${value.providerName}`
+            );
+        }
+        const keyHandle = await provider.loadKeyPair(value.id);
+
+        value.keyPairHandle = keyHandle;
+        value.provider = provider;
+        return value;
     }
 }
