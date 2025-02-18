@@ -1,15 +1,11 @@
 import { serialize, type, validate } from "@js-soft/ts-serval";
-import { Provider } from "@nmshd/rs-crypto-types";
 import { CoreBuffer, Encoding, ICoreBuffer } from "./CoreBuffer";
-import { CryptoError } from "./CryptoError";
-import { CryptoErrorCode } from "./CryptoErrorCode";
-import { CryptoLayerKeyPair } from "./CryptoLayerKeyPair";
 import { CryptoSerializable } from "./CryptoSerializable";
 import { CryptoExchangeAlgorithm } from "./exchange/CryptoExchange";
 import { CryptoSignatureAlgorithm } from "./signature/CryptoSignatureAlgorithm";
 
 export interface ICryptoPublicKey {
-    publicKey: ICoreBuffer | CryptoLayerKeyPair;
+    publicKey: ICoreBuffer;
     algorithm: CryptoExchangeAlgorithm | CryptoSignatureAlgorithm;
     toString(): string;
     toPEM(): string;
@@ -35,36 +31,14 @@ export class CryptoPublicKey extends CryptoSerializable implements ICryptoPublic
 
     @validate()
     @serialize()
-    public publicKey: CoreBuffer | CryptoLayerKeyPair;
+    public publicKey: CoreBuffer;
 
     public override toString(): string {
-        if (this.publicKey instanceof CoreBuffer) {
-            return this.publicKey.toString(Encoding.Base64_UrlSafe_NoPadding);
-        }
-
-        if (!this.publicKey.keyPairHandle) {
-            throw new CryptoError(
-                CryptoErrorCode.CalUninitializedKey,
-                "The key pair does not hold a key pair handle. It needs to be loaded from a provider via the init method."
-            );
-        }
-        let privateRawKey = this.publicKey.keyPairHandle.extractKey();
-        return new CoreBuffer(privateRawKey).toString(Encoding.Base64_UrlSafe_NoPadding);
+        return this.publicKey.toString(Encoding.Base64_UrlSafe_NoPadding);
     }
 
     public toPEM(): string {
-        if (this.publicKey instanceof CoreBuffer) {
-            return this.publicKey.toString(Encoding.Pem, "PUBLIC KEY");
-        }
-
-        if (!this.publicKey.keyPairHandle) {
-            throw new CryptoError(
-                CryptoErrorCode.CalUninitializedKey,
-                "The key pair does not hold a key pair handle. It needs to be loaded from a provider via the init method."
-            );
-        }
-        let privateRawKey = this.publicKey.keyPairHandle.extractKey();
-        return new CoreBuffer(privateRawKey).toString(Encoding.Pem, "PUBLIC KEY");
+        return this.publicKey.toString(Encoding.Pem, "PUBLIC KEY");
     }
 
     protected static stripPEM(pem: string): string {
@@ -76,55 +50,34 @@ export class CryptoPublicKey extends CryptoSerializable implements ICryptoPublic
         return pem;
     }
 
-    public static fromPEM(
-        pem: string,
-        algorithm: CryptoExchangeAlgorithm | CryptoSignatureAlgorithm,
-        provider?: Provider
-    ): CryptoPublicKey {
+    public static fromPEM(pem: string, algorithm: CryptoExchangeAlgorithm | CryptoSignatureAlgorithm): CryptoPublicKey {
         const value = this.stripPEM(pem);
-        return this.fromString(value, algorithm, Encoding.Base64, provider);
+        return this.fromString(value, algorithm, Encoding.Base64);
     }
 
     public static fromString(
         value: string,
         algorithm: CryptoExchangeAlgorithm | CryptoSignatureAlgorithm,
-        encoding: Encoding = Encoding.Base64_UrlSafe_NoPadding,
-        provider?: Provider
+        encoding: Encoding = Encoding.Base64_UrlSafe_NoPadding
     ): CryptoPublicKey {
-        const buffer = CoreBuffer.fromString(value, encoding);
-        if (!provider) {
-            return this.fromAny({ algorithm, publicKey: buffer });
-        }
-        return this.fromAny({
-            algorithm,
-            privateKey: CryptoLayerKeyPair.fromPublicBufferWithAlgorithm(provider, buffer, algorithm)
-        });
+        const buffer: ICoreBuffer = CoreBuffer.fromString(value, encoding);
+
+        return this.fromAny({ algorithm, publicKey: buffer });
     }
 
     public static fromObject(
         value: any,
-        algorithm: CryptoExchangeAlgorithm | CryptoSignatureAlgorithm,
-        provider?: Provider
+        algorithm: CryptoExchangeAlgorithm | CryptoSignatureAlgorithm
     ): CryptoPublicKey {
         const buffer = CoreBuffer.fromObject(value);
-        if (!provider) {
-            return this.fromAny({ algorithm, publicKey: buffer });
-        }
-        return this.fromAny({
-            algorithm,
-            privateKey: CryptoLayerKeyPair.fromPublicBufferWithAlgorithm(provider, buffer, algorithm)
-        });
+        return this.fromAny({ algorithm, publicKey: buffer });
     }
 
     public static from(value: any): CryptoPublicKey {
         return this.fromAny(value);
     }
 
-    public static fromBase64(value: string, provider?: Provider): CryptoPublicKey {
-        let publicKey = this.deserialize(CoreBuffer.base64_utf8(value));
-        if (provider && publicKey.publicKey instanceof CryptoLayerKeyPair) {
-            publicKey.publicKey.init(provider);
-        }
-        return publicKey;
+    public static fromBase64(value: string): CryptoPublicKey {
+        return this.deserialize(CoreBuffer.base64_utf8(value));
     }
 }
