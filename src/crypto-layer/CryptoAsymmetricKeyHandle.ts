@@ -23,6 +23,41 @@ export class CryptoAsymmetricKeyHandle extends CryptoSerializableAsync {
 
     public keyPairHandle: KeyPairHandle;
 
+    protected static async newFromProviderAndKeyPairHandle<T extends CryptoAsymmetricKeyHandle>(
+        this: new () => T,
+        provider: Provider,
+        keyPairHandle: KeyPairHandle,
+        other?: {
+            providerName?: string;
+            keyId?: string;
+            keySpec?: KeyPairSpec;
+        }
+    ): Promise<T> {
+        const result = new this();
+
+        if (other?.providerName) {
+            result.providerName = other.providerName;
+        } else {
+            result.providerName = await provider.providerName();
+        }
+
+        if (other?.keyId) {
+            result.id = other.keyId;
+        } else {
+            result.id = await keyPairHandle.id();
+        }
+
+        if (other?.keySpec) {
+            result.spec = other.keySpec;
+        } else {
+            result.spec = await keyPairHandle.spec();
+        }
+
+        result.provider = provider;
+        result.keyPairHandle = keyPairHandle;
+        return result;
+    }
+
     public static async from(value: any): Promise<CryptoAsymmetricKeyHandle> {
         return await this.fromAny(value);
     }
