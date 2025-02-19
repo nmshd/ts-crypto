@@ -13,11 +13,11 @@ export interface ICryptoPrivateKeyHandle {
 
 export interface ICryptoPrivateKeyHandleStatic {
     new (): ICryptoPrivateKeyHandle;
-    fromPEM(providerIdent: ProviderIdentifier, pem: string, config: KeyPairSpec): Promise<ICryptoPrivateKeyHandle>;
+    fromPEM(providerIdent: ProviderIdentifier, pem: string, spec: KeyPairSpec): Promise<ICryptoPrivateKeyHandle>;
     fromString(
         providerIdent: ProviderIdentifier,
         value: string,
-        config: KeyPairSpec,
+        spec: KeyPairSpec,
         encoding: Encoding
     ): Promise<ICryptoPrivateKeyHandle>;
     // fromNativeKey(providerIdent: ProviderIdentifier, key: any, config: KeyPairSpec): Promise<ICryptoPrivateKeyHandle>;
@@ -38,23 +38,23 @@ export class CryptoPrivateKeyHandle extends CryptoAsymmetricKeyHandle implements
     public static async fromString(
         providerIdent: ProviderIdentifier,
         value: string,
-        config: KeyPairSpec,
+        spec: KeyPairSpec,
         encoding: Encoding
     ): Promise<CryptoPrivateKeyHandle> {
         const raw = CoreBuffer.fromString(value, encoding).buffer;
         const provider = getProviderOrThrow(providerIdent);
-        const keyPairHandle = await provider.importKeyPair(config, new Uint8Array(0), raw);
+        const keyPairHandle = await provider.importKeyPair(spec, new Uint8Array(0), raw);
         return await CryptoPrivateKeyHandle.newFromProviderAndKeyPairHandle(provider, keyPairHandle, {
-            keySpec: config
+            keySpec: spec
         });
     }
 
     public static async fromPEM(
         providerIdent: ProviderIdentifier,
         pem: string,
-        config: KeyPairSpec
+        spec: KeyPairSpec
     ): Promise<CryptoPrivateKeyHandle> {
-        return await CryptoPrivateKeyHandle.fromString(providerIdent, pem, config, Encoding.Pem);
+        return await CryptoPrivateKeyHandle.fromString(providerIdent, pem, spec, Encoding.Pem);
     }
 }
 
