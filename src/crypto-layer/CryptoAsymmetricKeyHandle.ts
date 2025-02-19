@@ -35,23 +35,9 @@ export class CryptoAsymmetricKeyHandle extends CryptoSerializableAsync {
     ): Promise<T> {
         const result = new this();
 
-        if (other?.providerName) {
-            result.providerName = other.providerName;
-        } else {
-            result.providerName = await provider.providerName();
-        }
-
-        if (other?.keyId) {
-            result.id = other.keyId;
-        } else {
-            result.id = await keyPairHandle.id();
-        }
-
-        if (other?.keySpec) {
-            result.spec = other.keySpec;
-        } else {
-            result.spec = await keyPairHandle.spec();
-        }
+        result.providerName = other?.providerName ?? (await provider.providerName());
+        result.id = other?.keyId ?? (await keyPairHandle.id());
+        result.spec = other?.keySpec ?? (await keyPairHandle.spec());
 
         result.provider = provider;
         result.keyPairHandle = keyPairHandle;
