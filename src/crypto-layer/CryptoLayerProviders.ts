@@ -8,8 +8,8 @@ import {
 } from "@nmshd/rs-crypto-types";
 
 import { defaults } from "lodash";
-import { CryptoError } from "./CryptoError";
-import { CryptoErrorCode } from "./CryptoErrorCode";
+import { CryptoError } from "../CryptoError";
+import { CryptoErrorCode } from "../CryptoErrorCode";
 import { CryptoLayerConfig, CryptoLayerProviderFilter } from "./CryptoLayerConfig";
 
 let PROVIDERS_BY_SECURITY: Map<SecurityLevel, Provider[]> | undefined = undefined;
@@ -110,37 +110,35 @@ export async function initCryptoLayerProviders(config: CryptoLayerConfig): Promi
     PROVIDERS_BY_SECURITY = await providerBySecurityMapFromProviderByNameMap(PROVIDERS_BY_NAME);
 }
 
-function isSecurityLevel(value: string): value is SecurityLevel {
-    const securityLevels = ["Hardware", "Network", "Software", "Unsafe"];
-    return securityLevels.includes(value);
-}
+export type ProviderIdentifier = Exclude<CryptoLayerProviderFilter, { providerConfig: any }>;
 
 /**
  * Returns an initialized provider with the given name or security level if possible.
  *
- * This function is structured in a way that if `initCryptoLayerProviders()` was never called it always returns undefined.
- *
- * @param key Name of a provider or security level.
- * @returns `Provider` with security level or name if providers are initialized (with `initCryptoLayerProviders`).
- *              `undefined` if providers where not initialized or if key is undefined.
- *
- * @throws `CryptoError` with `CryptoErrorCode.WrongParameters` if provider name or security level could not be matched to any provider
- *              if providers have been initialized.
+ * Returns `undefined` if providers are not initialized or provider asked for was not initialized by `initCryptoLayerProviders`.
  */
-export function getProvider(key: string | SecurityLevel | undefined): Provider | undefined {
-    if (!key) {
-        return undefined;
-    }
-
+export function getProvider(identifier: ProviderIdentifier): Provider | undefined {
     if (!PROVIDERS_BY_NAME || !PROVIDERS_BY_SECURITY) {
         return undefined;
     }
 
-    const provider = isSecurityLevel(key) ? PROVIDERS_BY_SECURITY.get(key)?.[0] : PROVIDERS_BY_NAME.get(key);
-
-    if (!provider) {
-        throw new CryptoError(CryptoErrorCode.WrongParameters, `No such provider with name or security level: ${key}`);
+    if ("providerName" in identifier) {
+        return PROVIDERS_BY_NAME.get(identifier.providerName);
+    }
+    if ("securityLevel" in identifier) {
+        return PROVIDERS_BY_SECURITY.get(identifier.securityLevel)?.[0];
     }
 
+    throw new CryptoError(CryptoErrorCode.WrongParameters);
+}
+
+export function getProviderOrThrow(identifier: ProviderIdentifier): Provider {
+    const provider = getProvider(identifier);
+    if (!provider) {
+        throw new CryptoError(
+            CryptoErrorCode.WrongParameters,
+            `Failed finding provider with name or security level ${identifier}`
+        );
+    }
     return provider;
 }

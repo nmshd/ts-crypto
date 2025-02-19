@@ -1,22 +1,12 @@
 import { serialize, type, validate } from "@js-soft/ts-serval";
 import { KeyPairHandle, KeyPairSpec, Provider } from "@nmshd/rs-crypto-types";
-import { CryptoError } from "./CryptoError";
-import { CryptoErrorCode } from "./CryptoErrorCode";
+import { CryptoError } from "../CryptoError";
+import { CryptoErrorCode } from "../CryptoErrorCode";
+import { CryptoSerializable } from "../CryptoSerializable";
 import { getProvider } from "./CryptoLayerProviders";
-import { CryptoSerializable } from "./CryptoSerializable";
 
-export interface ICryptoPrivateKeyHandle {
-    keyPairHandle: KeyPairHandle;
-    spec: KeyPairSpec;
-}
-
-export interface ICryptoPrivateKeyHandleStatic {
-    new (): ICryptoPrivateKeyHandle;
-    fromNativeKey(key: any, spec: KeyPairSpec): Promise<ICryptoPrivateKeyHandle>;
-}
-
-@type("CryptoPrivateKeyHandle")
-export class CryptoPrivateKeyHandle extends CryptoSerializable implements ICryptoPrivateKeyHandle {
+@type("CryptoAsymmetricKeyHandle")
+export class CryptoAsymmetricKeyHandle extends CryptoSerializable {
     @validate()
     @serialize()
     public spec: KeyPairSpec;
@@ -33,11 +23,11 @@ export class CryptoPrivateKeyHandle extends CryptoSerializable implements ICrypt
 
     public keyPairHandle: KeyPairHandle;
 
-    public static from(value: any): CryptoPrivateKeyHandle {
+    public static from(value: any): CryptoAsymmetricKeyHandle {
         return this.fromAny(value);
     }
 
-    public static override async postFrom(value: CryptoPrivateKeyHandle): Promise<CryptoPrivateKeyHandle> {
+    public static override async postFrom(value: CryptoAsymmetricKeyHandle): Promise<CryptoAsymmetricKeyHandle> {
         const provider = getProvider(value.providerName);
         if (!provider) {
             throw new CryptoError(
