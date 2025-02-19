@@ -1,9 +1,17 @@
 import { SerializableAsync, serialize, type, validate } from "@js-soft/ts-serval";
 import { KeyPairHandle, KeyPairSpec, Provider } from "@nmshd/rs-crypto-types";
+import { CoreBuffer } from "src/CoreBuffer";
 import { CryptoError } from "../CryptoError";
 import { CryptoErrorCode } from "../CryptoErrorCode";
 import { CryptoSerializableAsync } from "../CryptoSerializable";
 import { getProvider } from "./CryptoLayerProviders";
+
+/**
+ * Loose check if `value` can be initialized as if it was a `CryptoAsymmetricKeyHandle`.
+ */
+function isCryptoAsymmetricKeyHandle(value: any): value is CryptoAsymmetricKeyHandle {
+    return typeof value["providerName"] === "string" && typeof value["id"] === "string";
+}
 
 @type("CryptoAsymmetricKeyHandle")
 export class CryptoAsymmetricKeyHandle extends CryptoSerializableAsync {
@@ -48,8 +56,12 @@ export class CryptoAsymmetricKeyHandle extends CryptoSerializableAsync {
         return await this.fromAny(value);
     }
 
+    public static async fromBase64(value: string): Promise<CryptoAsymmetricKeyHandle> {
+        return await this.deserialize(CoreBuffer.base64_utf8(value));
+    }
+
     public static override async postFrom<T extends SerializableAsync>(value: T): Promise<T> {
-        if (!(value instanceof CryptoAsymmetricKeyHandle)) {
+        if (!isCryptoAsymmetricKeyHandle(value)) {
             throw new CryptoError(CryptoErrorCode.WrongParameters, `Expected 'CryptoAsymmetricKeyHandle'.`);
         }
         const provider = getProvider({ providerName: value.providerName });
