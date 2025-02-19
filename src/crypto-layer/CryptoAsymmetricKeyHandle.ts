@@ -1,12 +1,12 @@
-import { serialize, type, validate } from "@js-soft/ts-serval";
+import { SerializableAsync, serialize, type, validate } from "@js-soft/ts-serval";
 import { KeyPairHandle, KeyPairSpec, Provider } from "@nmshd/rs-crypto-types";
 import { CryptoError } from "../CryptoError";
 import { CryptoErrorCode } from "../CryptoErrorCode";
-import { CryptoSerializable } from "../CryptoSerializable";
+import { CryptoSerializableAsync } from "../CryptoSerializable";
 import { getProvider } from "./CryptoLayerProviders";
 
 @type("CryptoAsymmetricKeyHandle")
-export class CryptoAsymmetricKeyHandle extends CryptoSerializable {
+export class CryptoAsymmetricKeyHandle extends CryptoSerializableAsync {
     @validate()
     @serialize()
     public spec: KeyPairSpec;
@@ -23,12 +23,15 @@ export class CryptoAsymmetricKeyHandle extends CryptoSerializable {
 
     public keyPairHandle: KeyPairHandle;
 
-    public static from(value: any): CryptoAsymmetricKeyHandle {
-        return this.fromAny(value);
+    public static async from(value: any): Promise<CryptoAsymmetricKeyHandle> {
+        return await this.fromAny(value);
     }
 
-    public static override async postFrom(value: CryptoAsymmetricKeyHandle): Promise<CryptoAsymmetricKeyHandle> {
-        const provider = getProvider(value.providerName);
+    public static override async postFrom<T extends SerializableAsync>(value: T): Promise<T> {
+        if (!(value instanceof CryptoAsymmetricKeyHandle)) {
+            throw new CryptoError(CryptoErrorCode.WrongParameters, `Expected 'CryptoAsymmetricKeyHandle'.`);
+        }
+        const provider = getProvider({ providerName: value.providerName });
         if (!provider) {
             throw new CryptoError(
                 CryptoErrorCode.CalFailedLoadingProvider,
