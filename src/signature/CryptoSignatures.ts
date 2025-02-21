@@ -1,3 +1,10 @@
+import { KeyPairSpec } from "@nmshd/rs-crypto-types";
+import { ProviderIdentifier } from "src/crypto-layer/CryptoLayerProviders";
+import { cryptoHashFromCryptoHashAlgorithm } from "src/crypto-layer/CryptoLayerUtils";
+import { CryptoSignatureKeypairHandle } from "src/crypto-layer/signature/CryptoSignatureKeypair";
+import { CryptoSignaturePrivateKeyHandle } from "src/crypto-layer/signature/CryptoSignaturePrivateKeyHandle";
+import { CryptoSignaturePublicKeyHandle } from "src/crypto-layer/signature/CryptoSignaturePublicKeyHandle";
+import { CryptoSignaturesWithCryptoLayer } from "src/crypto-layer/signature/CryptoSignatures";
 import { CoreBuffer } from "../CoreBuffer";
 import { CryptoError } from "../CryptoError";
 import { CryptoErrorCode } from "../CryptoErrorCode";
@@ -10,7 +17,7 @@ import { CryptoSignaturePrivateKey } from "./CryptoSignaturePrivateKey";
 import { CryptoSignaturePublicKey } from "./CryptoSignaturePublicKey";
 import { CryptoSignatureValidation } from "./CryptoSignatureValidation";
 
-export class CryptoSignatures {
+export class CryptoSignaturesWithLibsodium {
     public static async privateKeyToPublicKey(
         privateKey: CryptoSignaturePrivateKey
     ): Promise<CryptoSignaturePublicKey> {
@@ -140,5 +147,51 @@ export class CryptoSignatures {
         CryptoSignatureValidation.checkBuffer(buffer);
 
         return buffer.buffer;
+    }
+}
+
+export class CryptoSignatures extends CryptoSignaturesWithLibsodium {
+    public static async privateKeyHandleToPublicKeyHandle(
+        privateKey: CryptoSignaturePrivateKeyHandle
+    ): Promise<CryptoSignaturePublicKeyHandle> {
+        return await CryptoSignaturesWithCryptoLayer.privateKeyToPublicKey(privateKey);
+    }
+
+    public static async generateKeypairHandle(
+        providerIdent: ProviderIdentifier,
+        spec: KeyPairSpec
+    ): Promise<CryptoSignatureKeypairHandle> {
+        return await CryptoSignaturesWithCryptoLayer.generateKeypair(providerIdent, spec);
+    }
+
+    public static override async sign(
+        content: CoreBuffer,
+        privateKey: CryptoSignaturePrivateKey | CoreBuffer | CryptoSignaturePrivateKeyHandle,
+        algorithm: CryptoHashAlgorithm = CryptoHashAlgorithm.SHA512,
+        keyId?: string,
+        id?: string
+    ): Promise<CryptoSignature> {
+        if (privateKey instanceof CryptoSignaturePrivateKeyHandle) {
+            if (cryptoHashFromCryptoHashAlgorithm(algorithm) !== privateKey.spec.signing_hash) {
+                throw new CryptoError(
+                    CryptoErrorCode.SignatureWrongAlgorithm,
+                    `Algorithm ${algorithm} != the algorithm the private key was initialized with.`
+                );
+            }
+            return await CryptoSignaturesWithCryptoLayer.sign(content, privateKey, id);
+        }
+
+        return await super.sign(content, privateKey, algorithm, keyId, id);
+    }
+
+    public static override async verify(
+        content: CoreBuffer,
+        signature: CryptoSignature,
+        publicKey: CryptoSignaturePublicKey | CoreBuffer | CryptoSignaturePublicKeyHandle
+    ): Promise<boolean> {
+        if (publicKey instanceof CryptoSignaturePublicKeyHandle) {
+            return await CryptoSignaturesWithCryptoLayer.verify(content, signature, publicKey);
+        }
+        return await super.verify(content, signature, publicKey);
     }
 }

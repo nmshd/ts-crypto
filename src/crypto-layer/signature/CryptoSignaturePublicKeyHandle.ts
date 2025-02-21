@@ -2,27 +2,26 @@ import { ISerializable, ISerialized, type } from "@js-soft/ts-serval";
 import { KeyPairSpec } from "@nmshd/rs-crypto-types";
 import { CoreBuffer } from "src/CoreBuffer";
 import { CryptoPrivateKeyHandle } from "../CryptoPrivateKeyHandle";
-import { CryptoSignaturePublicKeyHandle } from "./CryptoSignaturePublicKeyHandle";
 
-export interface ICryptoSignaturePrivateKeyHandleSerialized extends ISerialized {
+export interface ICryptoSignaturePublicKeyHandleSerialized extends ISerialized {
     spc: KeyPairSpec; // Specification/Config of key pair stored.
     cid: string; // Crypto layer key pair id used for loading key from a provider.
     pnm: string; // Provider name
 }
-export interface ICryptoSignaturePrivateKeyHandle extends ISerializable {
+export interface ICryptoSignaturePublicKeyHandle extends ISerializable {
     spec: KeyPairSpec;
     id: string;
     providerName: string;
 }
 
-@type("CryptoSignaturePrivateKeyHandle")
-export class CryptoSignaturePrivateKeyHandle extends CryptoPrivateKeyHandle {
-    public override toJSON(verbose = true): ICryptoSignaturePrivateKeyHandleSerialized {
+@type("CryptoSignaturePublicKeyHandle")
+export class CryptoSignaturePublicKeyHandle extends CryptoPrivateKeyHandle {
+    public override toJSON(verbose = true): ICryptoSignaturePublicKeyHandleSerialized {
         return {
             spc: this.spec,
             cid: this.id,
             pnm: this.providerName,
-            "@type": verbose ? "CryptoSignaturePrivateKeyHandle" : undefined
+            "@type": verbose ? "CryptoSignaturePublicKeyHandle" : undefined
         };
     }
 
@@ -30,17 +29,9 @@ export class CryptoSignaturePrivateKeyHandle extends CryptoPrivateKeyHandle {
         return CoreBuffer.utf8_base64(this.serialize(verbose));
     }
 
-    public async toPublicKey(): Promise<CryptoSignaturePublicKeyHandle> {
-        return await CryptoSignaturePublicKeyHandle.newFromProviderAndKeyPairHandle(this.provider, this.keyPairHandle, {
-            providerName: this.providerName,
-            keyId: this.id,
-            keySpec: this.spec
-        });
-    }
-
     public static override async from(
-        value: CryptoSignaturePrivateKeyHandle | ICryptoSignaturePrivateKeyHandle
-    ): Promise<CryptoSignaturePrivateKeyHandle> {
+        value: CryptoSignaturePublicKeyHandle | ICryptoSignaturePublicKeyHandle
+    ): Promise<CryptoSignaturePublicKeyHandle> {
         return await this.fromAny(value);
     }
 
@@ -57,12 +48,12 @@ export class CryptoSignaturePrivateKeyHandle extends CryptoPrivateKeyHandle {
     }
 
     public static async fromJSON(
-        value: ICryptoSignaturePrivateKeyHandleSerialized
-    ): Promise<CryptoSignaturePrivateKeyHandle> {
+        value: ICryptoSignaturePublicKeyHandleSerialized
+    ): Promise<CryptoSignaturePublicKeyHandle> {
         return await this.fromAny(value);
     }
 
-    public static override async fromBase64(value: string): Promise<CryptoSignaturePrivateKeyHandle> {
+    public static override async fromBase64(value: string): Promise<CryptoSignaturePublicKeyHandle> {
         return await this.deserialize(CoreBuffer.base64_utf8(value));
     }
 }

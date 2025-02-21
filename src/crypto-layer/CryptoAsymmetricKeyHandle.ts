@@ -31,7 +31,7 @@ export class CryptoAsymmetricKeyHandle extends CryptoSerializableAsync {
 
     public keyPairHandle: KeyPairHandle;
 
-    protected static async newFromProviderAndKeyPairHandle<T extends CryptoAsymmetricKeyHandle>(
+    public static async newFromProviderAndKeyPairHandle<T extends CryptoAsymmetricKeyHandle>(
         this: new () => T,
         provider: Provider,
         keyPairHandle: KeyPairHandle,

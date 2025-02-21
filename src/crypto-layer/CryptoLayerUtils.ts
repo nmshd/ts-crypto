@@ -36,6 +36,20 @@ export function asymSpecFromCryptoAlgorithm(
     }
 }
 
+export function cryptoHashAlgorithmFromAsymSpec(hashFunction: CryptoHash): CryptoHashAlgorithm {
+    switch (hashFunction) {
+        case "Sha2_256":
+            return CryptoHashAlgorithm.SHA256;
+        case "Sha2_512":
+            return CryptoHashAlgorithm.SHA512;
+        default:
+            throw new CryptoError(
+                CryptoErrorCode.CalUnsupportedAlgorithm,
+                `Hash function ${hashFunction} is not supported by ts crypto.`
+            );
+    }
+}
+
 export function cryptoHashFromCryptoHashAlgorithm(algorithm: CryptoHashAlgorithm): CryptoHash {
     switch (algorithm) {
         case CryptoHashAlgorithm.SHA256:
@@ -114,5 +128,9 @@ export class CryptoLayerUtils {
             signing_hash: hashAlgorithm ? cryptoHashFromCryptoHashAlgorithm(hashAlgorithm) : undefined
         };
         return await this.providerAndKeyPairFromPublicBuffer(providerIdent, privateKeyBuffer, override);
+    }
+
+    public static getHashAlgorithm<T extends { spec: KeyPairSpec }>(key: T): CryptoHashAlgorithm {
+        return cryptoHashAlgorithmFromAsymSpec(key.spec.signing_hash);
     }
 }
