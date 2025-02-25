@@ -1,4 +1,4 @@
-import { Cipher, KeySpec, Provider } from "crypto-layer-ts-types";
+import { Cipher, KeySpec, Provider } from "@nmshd/rs-crypto-types";
 import { CoreBuffer } from "../CoreBuffer";
 import { CryptoError } from "../CryptoError";
 import { CryptoErrorCode } from "../CryptoErrorCode";

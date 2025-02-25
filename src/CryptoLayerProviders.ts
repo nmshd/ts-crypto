@@ -1,9 +1,9 @@
-import { Provider, ProviderConfig, ProviderImplConfig, SecurityLevel } from "crypto-layer-ts-types";
+import { Provider, ProviderConfig, ProviderImplConfig, SecurityLevel } from "@nmshd/rs-crypto-types";
 
 import { defaults } from "lodash";
+import { CryptoLayerConfig } from "./crypto-layer/CryptoLayerConfig";
 import { CryptoError } from "./CryptoError";
 import { CryptoErrorCode } from "./CryptoErrorCode";
-import { CryptoLayerConfig } from "./CryptoLayerConfig";
 
 let PROVIDERS_BY_SECURITY: Map<SecurityLevel, Provider[]> | undefined = undefined;
 let PROVIDERS_BY_NAME: Map<string, Provider> | undefined = undefined;
@@ -35,7 +35,7 @@ export async function initCryptoLayerProviders(config: CryptoLayerConfig): Promi
 
     let providers: Map<string, Provider> = new Map();
 
-    for (const providerInitalizationConfig of config.providers) {
+    for (const providerInitalizationConfig of config.providersToBeInitialized) {
         let provider: Provider | undefined;
         if ("providerName" in providerInitalizationConfig) {
             provider = await config.factoryFunctions.createProviderFromName(

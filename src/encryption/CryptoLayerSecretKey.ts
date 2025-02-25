@@ -1,5 +1,5 @@
 import { ISerialized, serialize, type, validate } from "@js-soft/ts-serval";
-import { KeyHandle } from "crypto-layer-ts-types";
+import { KeyHandle } from "@nmshd/rs-crypto-types";
 import { getProvider } from "src/CryptoLayerProviders";
 import { CryptoSerializableAsync } from "src/CryptoSerializable";
 import { CryptoValidation } from "../CryptoValidation";
