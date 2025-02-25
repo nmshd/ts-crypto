@@ -1,4 +1,4 @@
-import { ISerializable, Serializable, SerializableAsync } from "@js-soft/ts-serval";
+import { ISerializable, ISerializableAsync, Serializable, SerializableAsync } from "@js-soft/ts-serval";
 import { CoreBuffer } from "./CoreBuffer";
 
 export abstract class CryptoSerializable extends Serializable implements ISerializable {
@@ -11,7 +11,7 @@ export abstract class CryptoSerializable extends Serializable implements ISerial
     }
 }
 
-export abstract class CryptoSerializableAsync extends SerializableAsync implements ISerializable {
+export abstract class CryptoSerializableAsync extends SerializableAsync implements ISerializableAsync {
     public override serialize(verbose = true): string {
         return JSON.stringify(this.toJSON(verbose));
     }

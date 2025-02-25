@@ -1,11 +1,12 @@
+import { Cipher, KeySpec, Provider } from "crypto-layer-ts-types";
 import { CoreBuffer } from "../CoreBuffer";
 import { CryptoError } from "../CryptoError";
 import { CryptoErrorCode } from "../CryptoErrorCode";
 import { CryptoValidation } from "../CryptoValidation";
 import { SodiumWrapper } from "../SodiumWrapper";
 import { CryptoCipher } from "./CryptoCipher";
+import { CryptoLayerSecretKey } from "./CryptoLayerSecretKey";
 import { CryptoSecretKey } from "./CryptoSecretKey";
-
 /**
  * The symmetric encryption algorithm to use.
  */
@@ -25,14 +26,51 @@ export const enum CryptoEncryptionAlgorithm {
     // eslint-disable-next-line @typescript-eslint/naming-convention
     AES256_GCM = 2,
     // eslint-disable-next-line @typescript-eslint/naming-convention
-    XCHACHA20_POLY1305 = 3
+    XCHACHA20_POLY1305 = 3,
+}
+
+export class CryptoEncryptionAlgorithmUtil {
+    public static toCalCipher(alg: CryptoEncryptionAlgorithm): Cipher {
+        switch (alg) {
+            case CryptoEncryptionAlgorithm.AES128_GCM:
+                return "AesGcm128";
+            case CryptoEncryptionAlgorithm.AES256_GCM:
+                return "AesGcm256";
+            case CryptoEncryptionAlgorithm.XCHACHA20_POLY1305:
+                return "XChaCha20Poly1305";
+        }
+    }
+
+    public static fromCalCipher(cipher: Cipher): CryptoEncryptionAlgorithm {
+        switch (cipher) {
+            case "AesGcm128":
+                return CryptoEncryptionAlgorithm.AES128_GCM;
+            case "AesGcm256":
+                return CryptoEncryptionAlgorithm.AES256_GCM;
+            case "XChaCha20Poly1305":
+                return CryptoEncryptionAlgorithm.XCHACHA20_POLY1305;
+            default:
+                throw new CryptoError(CryptoErrorCode.NotYetImplemented);
+        }
+    }
 }
 
 export abstract class CryptoEncryption {
     public static async generateKey(
-        algorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.XCHACHA20_POLY1305
-    ): Promise<CryptoSecretKey> {
+        algorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.XCHACHA20_POLY1305,
+        provider?: Provider,
+    ): Promise<CryptoSecretKey | CryptoLayerSecretKey> {
         CryptoValidation.checkEncryptionAlgorithm(algorithm);
+
+        if (provider) {
+            let spec: KeySpec = {
+                ephemeral: false,
+                signing_hash: "Sha2_256",
+                cipher: CryptoEncryptionAlgorithmUtil.toCalCipher(algorithm),
+            }
+            let key = await provider.createKey(spec);
+            return CryptoLayerSecretKey.getFromHandle(await provider.providerName(), await key.id());
+        }
 
         let buffer: CoreBuffer;
         switch (algorithm) {
@@ -63,10 +101,28 @@ export abstract class CryptoEncryption {
      */
     public static async encrypt(
         plaintext: CoreBuffer,
-        secretKey: CryptoSecretKey | CoreBuffer,
+        secretKey: CryptoSecretKey | CoreBuffer | CryptoLayerSecretKey,
         nonce?: CoreBuffer,
         algorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.XCHACHA20_POLY1305
     ): Promise<CryptoCipher> {
+
+        // CryptoLayerSecretKey uses its KeyHandle encryption method
+        if (secretKey instanceof CryptoLayerSecretKey) {
+            if (algorithm !== secretKey.algorithm) {
+                throw new CryptoError(
+                    CryptoErrorCode.EncryptionWrongAlgorithm,
+                    "The algorithm of the secret key does not match the given algorithm."
+                );
+            }
+            let buffer = plaintext.buffer;
+            let [secretbuffer, iv] = await secretKey.keyHandle.encryptData(buffer);
+            return CryptoCipher.from({
+                cipher: CoreBuffer.from(secretbuffer),
+                algorithm: secretKey.algorithm,
+                nonce: CoreBuffer.from(iv)
+            });
+        }
+
         let correctAlgorithm;
         let secretKeyBuffer;
 
@@ -176,10 +232,32 @@ export abstract class CryptoEncryption {
 
     public static async decrypt(
         cipher: CryptoCipher,
-        secretKey: CryptoSecretKey | CoreBuffer,
+        secretKey: CryptoSecretKey | CoreBuffer | CryptoLayerSecretKey,
         nonce?: CoreBuffer,
         algorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.XCHACHA20_POLY1305
     ): Promise<CoreBuffer> {
+
+        if (secretKey instanceof CryptoLayerSecretKey) {
+            if (algorithm !== secretKey.algorithm) {
+                throw new CryptoError(
+                    CryptoErrorCode.EncryptionWrongAlgorithm,
+                    "The algorithm of the secret key does not match the given algorithm."
+                );
+            }
+            if (!nonce && !cipher.nonce) {
+                throw new CryptoError(
+                    CryptoErrorCode.EncryptionWrongNonce,
+                    "Cipher does not contain a nonce and no nonce is given."
+                );
+            }
+
+
+            let buffer = cipher.cipher.buffer;
+            let iv = nonce ? nonce.buffer : (cipher.nonce as CoreBuffer).buffer;
+            let plaintext = await secretKey.keyHandle.decryptData(buffer, iv);
+            return CoreBuffer.from(plaintext);
+        }
+        
         let correctAlgorithm;
         let secretKeyBuffer;
 
