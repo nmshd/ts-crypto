@@ -1,6 +1,6 @@
 import { ISerialized, serialize, type, validate } from "@js-soft/ts-serval";
 import { KeyHandle } from "@nmshd/rs-crypto-types";
-import { getProvider } from "src/CryptoLayerProviders";
+import { getProviderOrThrow } from "src/crypto-layer/CryptoLayerProviders";
 import { CryptoSerializableAsync } from "src/CryptoSerializable";
 import { CryptoValidation } from "../CryptoValidation";
 import { CryptoEncryptionAlgorithm, CryptoEncryptionAlgorithmUtil } from "./CryptoEncryption";
@@ -16,7 +16,7 @@ export class CryptoLayerSecretKey extends CryptoSerializableAsync {
     @validate()
     @serialize()
     public algorithm: CryptoEncryptionAlgorithm;
-    
+
     @validate()
     @serialize()
     public id: string;
@@ -25,15 +25,15 @@ export class CryptoLayerSecretKey extends CryptoSerializableAsync {
     @serialize()
     public providername: string;
 
-    keyHandle: KeyHandle;
+    public keyHandle: KeyHandle;
 
-    public static async getFromHandle(providername: string, id: string) {
+    public static async getFromHandle(providername: string, id: string): Promise<CryptoLayerSecretKey> {
         // load keyHandle from the id
-        const provider = getProvider(providername);
+        const provider = getProviderOrThrow({ providerName: providername });
 
         const key = await provider.loadKey(id);
-        const alg = CryptoEncryptionAlgorithmUtil.fromCalCipher((await key.spec()).cipher)
-        return this.fromAny({algorithm: alg, id, providername});
+        const alg = CryptoEncryptionAlgorithmUtil.fromCalCipher((await key.spec()).cipher);
+        return await this.fromAny({ algorithm: alg, id, providername });
     }
 
     public constructor(algorithm: CryptoEncryptionAlgorithm, id: string, providername: string) {
@@ -54,11 +54,10 @@ export class CryptoLayerSecretKey extends CryptoSerializableAsync {
     }
 
     protected static override async postFrom(value: any): Promise<any> {
-
         CryptoValidation.checkEncryptionAlgorithm(value.algorithm);
 
         // load keyHandle from the id
-        const provider = getProvider(value.providername);
+        const provider = getProviderOrThrow(value.providername);
 
         const key = await provider.loadKey(value.id);
 
