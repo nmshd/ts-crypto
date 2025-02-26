@@ -1,5 +1,12 @@
-import { SodiumWrapper } from "@nmshd/crypto";
+import { initCryptoLayerProviders, SodiumWrapper } from "@nmshd/crypto";
+import {
+    createProvider,
+    createProviderFromName,
+    getAllProviders,
+    getProviderCapabilities
+} from "@nmshd/rs-crypto-node";
 import { BufferTest } from "./BufferTest.test";
+import { CryptoLayerProviderTest } from "./crypto-layer/CryptoLayerProviderTest.test";
 import { CryptoDerivationTest } from "./crypto/CryptoDerivationTest.test";
 import { CryptoEncryptionTest } from "./crypto/CryptoEncryptionTest.test";
 import { CryptoExchangeTest } from "./crypto/CryptoExchangeTest.test";
@@ -32,5 +39,18 @@ SodiumWrapper.ready()
         CryptoSignatureTest.run();
         CryptoStateTest.run();
         BufferTest.run();
+    })
+    .catch((e) => console.log(e));
+
+initCryptoLayerProviders({
+    factoryFunctions: { getAllProviders, createProvider, createProviderFromName, getProviderCapabilities },
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    keyMetadataStoreConfig: { FileStoreConfig: { db_dir: "./test_cal_db" } },
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    keyMetadataStoreAuth: { StorageConfigPass: "12345678" },
+    providersToBeInitialized: [{ providerName: "SoftwareProvider" }]
+})
+    .then(() => {
+        CryptoLayerProviderTest.run();
     })
     .catch((e) => console.log(e));
