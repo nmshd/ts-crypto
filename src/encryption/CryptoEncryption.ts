@@ -1,4 +1,5 @@
-import { Cipher, KeySpec, Provider } from "@nmshd/rs-crypto-types";
+import { Cipher, KeySpec } from "@nmshd/rs-crypto-types";
+import { getProviderOrThrow, ProviderIdentifier } from "src/crypto-layer/CryptoLayerProviders";
 import { CoreBuffer } from "../CoreBuffer";
 import { CryptoError } from "../CryptoError";
 import { CryptoErrorCode } from "../CryptoErrorCode";
@@ -56,7 +57,7 @@ export class CryptoEncryptionAlgorithmUtil {
 }
 
 export abstract class CryptoEncryption {
-    public static async generateKey(
+    /* public static async generateKey(
         algorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.XCHACHA20_POLY1305,
         provider?: Provider
     ): Promise<CryptoSecretKey | CryptoLayerSecretKey> {
@@ -88,6 +89,37 @@ export abstract class CryptoEncryption {
         }
 
         return CryptoSecretKey.from({ secretKey: buffer, algorithm });
+    } */
+
+    public static async generateKey(
+        algorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.XCHACHA20_POLY1305
+    ): Promise<CryptoSecretKey> {
+        CryptoValidation.checkEncryptionAlgorithm(algorithm);
+
+        let buffer: CoreBuffer;
+        switch (algorithm) {
+            case CryptoEncryptionAlgorithm.XCHACHA20_POLY1305:
+                try {
+                    buffer = new CoreBuffer((await SodiumWrapper.ready()).crypto_aead_xchacha20poly1305_ietf_keygen());
+                } catch (e) {
+                    throw new CryptoError(CryptoErrorCode.EncryptionKeyGeneration, `${e}`);
+                }
+
+                break;
+            default:
+                throw new CryptoError(CryptoErrorCode.NotYetImplemented);
+        }
+
+        return CryptoSecretKey.from({ secretKey: buffer, algorithm });
+    }
+
+    public static async generateKeyHandle(
+        spec: KeySpec,
+        providerIdent: ProviderIdentifier
+    ): Promise<CryptoLayerSecretKey> {
+        const provider = getProviderOrThrow(providerIdent);
+        const key = await provider.createKey(spec);
+        return await CryptoLayerSecretKey.getFromHandle(await provider.providerName(), await key.id());
     }
 
     /**
