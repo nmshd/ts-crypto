@@ -7,6 +7,7 @@ import {
 } from "@nmshd/rs-crypto-node";
 import { BufferTest } from "./BufferTest.test";
 import { CryptoLayerProviderTest } from "./crypto-layer/CryptoLayerProviderTest.test";
+import { CryptoSignatureKeypairHandleTest } from "./crypto-layer/CryptoSignatureKeypairHandle.test";
 import { CryptoDerivationTest } from "./crypto/CryptoDerivationTest.test";
 import { CryptoEncryptionTest } from "./crypto/CryptoEncryptionTest.test";
 import { CryptoExchangeTest } from "./crypto/CryptoExchangeTest.test";
@@ -35,6 +36,7 @@ import { SodiumWrapperTest } from "./crypto/SodiumWrapperTest.test";
         providersToBeInitialized: [{ providerName: "SoftwareProvider" }]
     });
     CryptoLayerProviderTest.run();
+    CryptoSignatureKeypairHandleTest.run();
 
     // === Other ===
     await SodiumWrapper.ready();
