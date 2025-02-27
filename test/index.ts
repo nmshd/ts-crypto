@@ -22,35 +22,37 @@ import { CryptoSignatureTest } from "./crypto/CryptoSignature.test";
 import { CryptoStateTest } from "./crypto/CryptoStateTest.test";
 import { SodiumWrapperTest } from "./crypto/SodiumWrapperTest.test";
 
-SodiumWrapper.ready()
-    .then(() => {
-        SodiumWrapperTest.run();
-        CryptoDerivationTest.run();
-        CryptoReflectionTest.run();
-        CryptoRelationshipTest.run();
-        CryptoEncryptionTest.run();
-        CryptoHashTest.run();
-        CryptoExchangeTest.run();
-        CryptoPrivateKeyTest.run();
-        CryptoPublicKeyTest.run();
-        CryptoRandomTest.run();
-        CryptoPasswordGeneratorTest.run();
-        CryptoSecretKeyTest.run();
-        CryptoSignatureTest.run();
-        CryptoStateTest.run();
-        BufferTest.run();
-    })
-    .catch((e) => console.log(e));
+// This is valid: https://mochajs.org/#delayed-root-suite
+// eslint-disable-next-line @typescript-eslint/no-floating-promises
+(async function () {
+    // === CAL ===
+    await initCryptoLayerProviders({
+        factoryFunctions: { getAllProviders, createProvider, createProviderFromName, getProviderCapabilities },
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        keyMetadataStoreConfig: { FileStoreConfig: { db_dir: "./test_cal_db" } },
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        keyMetadataStoreAuth: { StorageConfigPass: "12345678" },
+        providersToBeInitialized: [{ providerName: "SoftwareProvider" }]
+    });
+    CryptoLayerProviderTest.run();
 
-initCryptoLayerProviders({
-    factoryFunctions: { getAllProviders, createProvider, createProviderFromName, getProviderCapabilities },
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    keyMetadataStoreConfig: { FileStoreConfig: { db_dir: "./test_cal_db" } },
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    keyMetadataStoreAuth: { StorageConfigPass: "12345678" },
-    providersToBeInitialized: [{ providerName: "SoftwareProvider" }]
-})
-    .then(() => {
-        CryptoLayerProviderTest.run();
-    })
-    .catch((e) => console.log(e));
+    // === Other ===
+    await SodiumWrapper.ready();
+    SodiumWrapperTest.run();
+    CryptoDerivationTest.run();
+    CryptoReflectionTest.run();
+    CryptoRelationshipTest.run();
+    CryptoEncryptionTest.run();
+    CryptoHashTest.run();
+    CryptoExchangeTest.run();
+    CryptoPrivateKeyTest.run();
+    CryptoPublicKeyTest.run();
+    CryptoRandomTest.run();
+    CryptoPasswordGeneratorTest.run();
+    CryptoSecretKeyTest.run();
+    CryptoSignatureTest.run();
+    CryptoStateTest.run();
+    BufferTest.run();
+
+    run();
+})();
