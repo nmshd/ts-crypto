@@ -1,7 +1,9 @@
 import { ISerialized, serialize, type, validate } from "@js-soft/ts-serval";
 import { CoreBuffer, IClearable } from "../CoreBuffer";
+import { CryptoExchangePublicKeyHandle } from "../crypto-layer/exchange/CryptoExchangePublicKeyHandle";
 import { CryptoPublicKey } from "../CryptoPublicKey";
 import { CryptoExchangeAlgorithm } from "./CryptoExchange";
+import { CryptoExchangeAlgorithmUtil } from "./CryptoExchangeAlgorithmUtil";
 import { CryptoExchangeValidation } from "./CryptoExchangeValidation";
 
 export interface ICryptoExchangePublicKeySerialized extends ISerialized {
@@ -53,7 +55,12 @@ export class CryptoExchangePublicKey extends CryptoPublicKey implements ICryptoE
     public static override from(value: CryptoExchangePublicKey | ICryptoExchangePublicKey): CryptoExchangePublicKey {
         return this.fromAny(value);
     }
-
+    public static async fromHandle(handle: CryptoExchangePublicKeyHandle): Promise<CryptoExchangePublicKey> {
+        return CryptoExchangePublicKey.from({
+            algorithm: CryptoExchangeAlgorithmUtil.fromCalAsymSpec(handle.spec.asym_spec),
+            publicKey: CoreBuffer.from(await handle.toSerializedString()) // or getRawPublicKey?
+        });
+    }
     public static fromJSON(value: ICryptoExchangePublicKeySerialized): CryptoExchangePublicKey {
         return this.fromAny(value);
     }

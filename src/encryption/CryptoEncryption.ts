@@ -1,4 +1,10 @@
+import { KeySpec } from "@nmshd/rs-crypto-types";
+import { defaults } from "lodash";
 import { CoreBuffer } from "../CoreBuffer";
+import { getProvider, ProviderIdentifier } from "../crypto-layer/CryptoLayerProviders";
+import { DEFAULT_KEY_PAIR_SPEC } from "../crypto-layer/CryptoLayerUtils";
+import { CryptoEncryptionWithCryptoLayer } from "../crypto-layer/encryption/CryptoEncryptionWithCryptoLayer";
+import { CryptoSecretKeyHandle } from "../crypto-layer/encryption/CryptoSecretKeyHandle";
 import { CryptoError } from "../CryptoError";
 import { CryptoErrorCode } from "../CryptoErrorCode";
 import { CryptoValidation } from "../CryptoValidation";
@@ -10,28 +16,18 @@ import { CryptoSecretKey } from "./CryptoSecretKey";
  * The symmetric encryption algorithm to use.
  */
 export const enum CryptoEncryptionAlgorithm {
-    /**
-     * AES 128-bit encryption with Galois-Counter-Mode
-     * 12-byte Initialization Vector is prepended to cipher
-     * 16-byte Authentication Tag is appended to cipher
-     */
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     AES128_GCM = 1,
-    /**
-     * AES 256-bit encryption with Galois-Counter-Mode
-     * 12-byte Initialization Vector is prepended to cipher
-     * 16-byte Authentication Tag is appended to cipher
-     */
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     AES256_GCM = 2,
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     XCHACHA20_POLY1305 = 3
 }
 
-export abstract class CryptoEncryption {
+export abstract class CryptoEncryptionWithLibsodium {
+    // Original Libsodium implementation
+    // **CRITICAL CHANGE:  Return type here must be the union**
     public static async generateKey(
         algorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.XCHACHA20_POLY1305
-    ): Promise<CryptoSecretKey> {
+    ): Promise<CryptoSecretKey | CryptoSecretKeyHandle> {
+        // Corrected return type
         CryptoValidation.checkEncryptionAlgorithm(algorithm);
 
         let buffer: CoreBuffer;
@@ -51,19 +47,9 @@ export abstract class CryptoEncryption {
         return CryptoSecretKey.from({ secretKey: buffer, algorithm });
     }
 
-    /**
-     * Encrypts a given plaintext [[CoreBuffer]] object with the given secretKey. If a nonce is set,
-     * please be advised that this nonce MUST be uniquely used for this secretKey. The nonce MUST be
-     * a high entropy (best random) [[CoreBuffer]] object.
-     *
-     * @param plaintext
-     * @param secretKey
-     * @param nonce
-     * @param algorithm
-     */
     public static async encrypt(
         plaintext: CoreBuffer,
-        secretKey: CryptoSecretKey | CoreBuffer,
+        secretKey: CryptoSecretKey | CoreBuffer | CryptoSecretKeyHandle,
         nonce?: CoreBuffer,
         algorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.XCHACHA20_POLY1305
     ): Promise<CryptoCipher> {
@@ -126,7 +112,7 @@ export abstract class CryptoEncryption {
 
     public static async encryptWithCounter(
         plaintext: CoreBuffer,
-        secretKey: CryptoSecretKey | CoreBuffer,
+        secretKey: CryptoSecretKey | CoreBuffer | CryptoSecretKeyHandle,
         nonce: CoreBuffer,
         counter: number,
         algorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.XCHACHA20_POLY1305
@@ -176,7 +162,7 @@ export abstract class CryptoEncryption {
 
     public static async decrypt(
         cipher: CryptoCipher,
-        secretKey: CryptoSecretKey | CoreBuffer,
+        secretKey: CryptoSecretKey | CoreBuffer | CryptoSecretKeyHandle,
         nonce?: CoreBuffer,
         algorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.XCHACHA20_POLY1305
     ): Promise<CoreBuffer> {
@@ -236,7 +222,7 @@ export abstract class CryptoEncryption {
 
     public static async decryptWithCounter(
         cipher: CryptoCipher,
-        secretKey: CryptoSecretKey | CoreBuffer,
+        secretKey: CryptoSecretKey | CoreBuffer | CryptoSecretKeyHandle,
         nonce: CoreBuffer,
         counter: number,
         algorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.XCHACHA20_POLY1305
@@ -299,5 +285,82 @@ export abstract class CryptoEncryption {
         const clone = buffer.clone().add(counter);
 
         return clone;
+    }
+}
+
+let providerInitialized = false;
+
+export function initCryptoEncryption(providerIdent: ProviderIdentifier): void {
+    if (getProvider(providerIdent)) {
+        providerInitialized = true;
+    }
+}
+
+export class CryptoEncryption extends CryptoEncryptionWithLibsodium {
+    public static override async generateKey(
+        algorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.XCHACHA20_POLY1305,
+        providerIdent?: ProviderIdentifier,
+        spec?: KeySpec
+    ): Promise<CryptoSecretKey | CryptoSecretKeyHandle> {
+        if (providerInitialized) {
+            if (!providerIdent) {
+                throw new CryptoError(CryptoErrorCode.CalWrongProvider, "Provider not defined.");
+            }
+            return await CryptoEncryptionWithCryptoLayer.generateKey(
+                providerIdent,
+                defaults({ cipher: algorithm }, spec, DEFAULT_KEY_PAIR_SPEC)
+            );
+        }
+        return await super.generateKey(algorithm);
+    }
+
+    public static override async encrypt(
+        plaintext: CoreBuffer,
+        secretKey: CryptoSecretKey | CoreBuffer | CryptoSecretKeyHandle,
+        nonce?: CoreBuffer,
+        algorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.XCHACHA20_POLY1305
+    ): Promise<CryptoCipher> {
+        if (providerInitialized && secretKey instanceof CryptoSecretKeyHandle) {
+            return await CryptoEncryptionWithCryptoLayer.encrypt(plaintext, secretKey, nonce);
+        }
+        return await super.encrypt(plaintext, secretKey, nonce, algorithm);
+    }
+
+    public static override async encryptWithCounter(
+        plaintext: CoreBuffer,
+        secretKey: CryptoSecretKey | CoreBuffer | CryptoSecretKeyHandle,
+        nonce: CoreBuffer,
+        counter: number,
+        algorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.XCHACHA20_POLY1305
+    ): Promise<CryptoCipher> {
+        if (providerInitialized && secretKey instanceof CryptoSecretKeyHandle) {
+            return await CryptoEncryptionWithCryptoLayer.encryptWithCounter(plaintext, secretKey, nonce, counter);
+        }
+        return await super.encryptWithCounter(plaintext, secretKey, nonce, counter, algorithm);
+    }
+
+    public static override async decrypt(
+        cipher: CryptoCipher,
+        secretKey: CryptoSecretKey | CoreBuffer | CryptoSecretKeyHandle,
+        nonce?: CoreBuffer,
+        algorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.XCHACHA20_POLY1305
+    ): Promise<CoreBuffer> {
+        if (providerInitialized && secretKey instanceof CryptoSecretKeyHandle) {
+            return await CryptoEncryptionWithCryptoLayer.decrypt(cipher, secretKey, nonce);
+        }
+        return await super.decrypt(cipher, secretKey, nonce, algorithm);
+    }
+
+    public static override async decryptWithCounter(
+        cipher: CryptoCipher,
+        secretKey: CryptoSecretKey | CoreBuffer | CryptoSecretKeyHandle,
+        nonce: CoreBuffer,
+        counter: number,
+        algorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.XCHACHA20_POLY1305
+    ): Promise<CoreBuffer> {
+        if (providerInitialized && secretKey instanceof CryptoSecretKeyHandle) {
+            return await CryptoEncryptionWithCryptoLayer.decryptWithCounter(cipher, secretKey, nonce, counter);
+        }
+        return await super.decryptWithCounter(cipher, secretKey, nonce, counter, algorithm);
     }
 }

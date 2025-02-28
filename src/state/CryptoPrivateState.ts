@@ -1,5 +1,6 @@
 import { ISerializable, ISerialized, Serializable, serialize, validate } from "@js-soft/ts-serval";
 import { CoreBuffer, IClearable, ICoreBuffer } from "../CoreBuffer";
+import { CryptoSecretKeyHandle } from "../crypto-layer/encryption/CryptoSecretKeyHandle";
 import { CryptoValidation } from "../CryptoValidation";
 import { CryptoEncryptionAlgorithm } from "../encryption/CryptoEncryption";
 import { CryptoPublicState } from "./CryptoPublicState";
@@ -15,7 +16,7 @@ export interface ICryptoPrivateStateSerialized extends ISerialized {
 }
 
 export interface ICryptoPrivateState extends ISerializable {
-    secretKey: ICoreBuffer;
+    secretKey: CoreBuffer | CryptoSecretKeyHandle;
     nonce: ICoreBuffer;
     counter: number;
     algorithm: CryptoEncryptionAlgorithm;
@@ -38,7 +39,7 @@ export class CryptoPrivateState extends Serializable implements ICryptoPrivateSt
 
     @validate()
     @serialize()
-    public secretKey: CoreBuffer;
+    public secretKey: CoreBuffer | CryptoSecretKeyHandle;
 
     @validate()
     @serialize()
@@ -53,7 +54,9 @@ export class CryptoPrivateState extends Serializable implements ICryptoPrivateSt
     }
 
     public clear(): void {
-        this.secretKey.clear();
+        if (this.secretKey instanceof CoreBuffer) {
+            this.secretKey.clear();
+        }
         this.nonce.clear();
     }
 
@@ -70,11 +73,26 @@ export class CryptoPrivateState extends Serializable implements ICryptoPrivateSt
         });
     }
 
-    public override toJSON(verbose = true): ICryptoPrivateStateSerialized {
+    /**
+     * Determines if this state is using the crypto-layer implementation
+     * @returns True if using CAL, false if using libsodium
+     */
+    public isUsingCryptoLayer(): boolean {
+        return this.secretKey instanceof CryptoSecretKeyHandle;
+    }
+
+    public override async toJSON(verbose = true): Promise<ICryptoPrivateStateSerialized> {
+        let keyValue: string;
+        if (this.secretKey instanceof CryptoSecretKeyHandle) {
+            keyValue = await this.secretKey.toSerializedString();
+        } else {
+            keyValue = this.secretKey.toBase64URL();
+        }
+
         return {
             nnc: this.nonce.toBase64URL(),
             cnt: this.counter,
-            key: this.secretKey.toBase64URL(),
+            key: keyValue,
             alg: this.algorithm,
             typ: this.stateType,
             id: this.id,
@@ -97,7 +115,12 @@ export class CryptoPrivateState extends Serializable implements ICryptoPrivateSt
         CryptoValidation.checkEncryptionAlgorithm(value.algorithm);
         CryptoValidation.checkCounter(value.counter);
         CryptoValidation.checkNonce(value.nonce, value.algorithm);
-        CryptoValidation.checkSecretKeyForAlgorithm(value.secretKey, value.algorithm);
+
+        // Only validate secretKey if it's not a handle
+        if (!(value.secretKey instanceof CryptoSecretKeyHandle)) {
+            CryptoValidation.checkSecretKeyForAlgorithm(value.secretKey, value.algorithm);
+        }
+
         CryptoValidation.checkStateType(value.stateType);
 
         if (value.id) {
@@ -114,4 +137,8 @@ export class CryptoPrivateState extends Serializable implements ICryptoPrivateSt
     public static fromJSON(value: ICryptoPrivateStateSerialized): CryptoPrivateState {
         return this.fromAny(value);
     }
+}
+
+export function isCryptoPrivateState(obj: any): obj is CryptoPrivateState {
+    return obj instanceof CryptoPrivateState;
 }
