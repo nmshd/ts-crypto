@@ -48,6 +48,16 @@ export class CryptoSignatureKeypairHandle extends CryptoSerializableAsync implem
         return await this.fromAny(value);
     }
 
+    public static fromPublicAndPrivateKeys(
+        publicKey: CryptoSignaturePublicKeyHandle,
+        privateKey: CryptoSignaturePrivateKeyHandle
+    ): CryptoSignatureKeypairHandle {
+        const keyPair = new this();
+        keyPair.privateKey = privateKey;
+        keyPair.publicKey = publicKey;
+        return keyPair;
+    }
+
     protected static override preFrom(value: any): any {
         if (value.pub) {
             value = {

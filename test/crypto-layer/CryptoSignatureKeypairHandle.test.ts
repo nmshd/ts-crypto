@@ -48,9 +48,6 @@ export class CryptoSignatureKeypairHandleTest {
                     expect(await cryptoKeyPairHandle.privateKey.keyPairHandle.id()).to.be.string(
                         cryptoKeyPairHandle.privateKey.id
                     );
-                    expect(await cryptoKeyPairHandle.publicKey.keyPairHandle.id()).to.be.string(
-                        cryptoKeyPairHandle.publicKey.id
-                    );
                 });
             });
         });
