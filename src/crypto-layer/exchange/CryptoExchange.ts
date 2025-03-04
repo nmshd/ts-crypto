@@ -1,4 +1,5 @@
 import { KeyPairSpec } from "@nmshd/rs-crypto-types";
+import { defaults } from "lodash";
 import { CoreBuffer } from "../../CoreBuffer";
 import { CryptoError } from "../../CryptoError";
 import { CryptoErrorCode } from "../../CryptoErrorCode";
@@ -6,7 +7,7 @@ import { CryptoEncryptionAlgorithm } from "../../encryption/CryptoEncryption";
 import { CryptoExchangeAlgorithm } from "../../exchange/CryptoExchange";
 import { CryptoExchangeSecrets } from "../../exchange/CryptoExchangeSecrets";
 import { getProviderOrThrow, ProviderIdentifier } from "../CryptoLayerProviders";
-import { asymSpecFromCryptoAlgorithm } from "../CryptoLayerUtils";
+import { asymSpecFromCryptoAlgorithm, DEFAULT_KEY_PAIR_SPEC } from "../CryptoLayerUtils";
 import { CryptoExchangeKeypairHandle } from "./CryptoExchangeKeypairHandle";
 import { CryptoExchangePrivateKeyHandle } from "./CryptoExchangePrivateKeyHandle";
 import { CryptoExchangePublicKeyHandle } from "./CryptoExchangePublicKeyHandle";
@@ -51,6 +52,17 @@ export class CryptoExchangeWithCryptoLayer {
         return await CryptoExchangeKeypairHandle.from({ publicKey, privateKey });
     }
 
+    private static createDHExchangeSpec(algorithm: CryptoExchangeAlgorithm): KeyPairSpec {
+        return defaults(
+            {
+                asym_spec: asymSpecFromCryptoAlgorithm(algorithm),
+                ephemeral: true,
+                non_exportable: false
+            },
+            DEFAULT_KEY_PAIR_SPEC
+        );
+    }
+
     /**
      * Asynchronously derives shared secrets for key exchange in the 'requestor' role using the crypto layer.
      * This method is called by the entity initiating the key exchange (e.g., client).
@@ -65,7 +77,7 @@ export class CryptoExchangeWithCryptoLayer {
     public static async deriveRequestor(
         requestorKeypair: CryptoExchangeKeypairHandle,
         templatorPublicKey: CryptoExchangePublicKeyHandle,
-        algorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.XCHACHA20_POLY1305
+        algorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.XCHACHA20_POLY1305 // Note: Algorithm might not be directly used as Rust DHExchange derives AES-256 key
     ): Promise<CryptoExchangeSecrets> {
         const exchangeAlgorithm = requestorKeypair.privateKey.spec.asym_spec;
 
@@ -83,14 +95,23 @@ export class CryptoExchangeWithCryptoLayer {
         }
 
         try {
-            // TODO: DUMMY PLACEHOLDER
-            const sharedSecret = await requestorKeypair.privateKey.keyPairHandle.calculateSharedSecret(
-                templatorPublicKey.keyPairHandle
+            const provider = getProviderOrThrow(requestorKeypair.privateKey.providerIdentifier);
+            const dhExchangeSpec: KeyPairSpec = CryptoExchangeWithCryptoLayer.createDHExchangeSpec(
+                CryptoExchangeAlgorithm.ECDH_X25519
             );
 
+            const dhExchange = await provider.startEphemeralDhExchange(dhExchangeSpec);
+            const sharedSecretRxRaw = await dhExchange.addExternal(
+                await templatorPublicKey.keyPairHandle.getPublicKey()
+            );
+            const sharedSecretRx = CoreBuffer.from(sharedSecretRxRaw);
+            const sharedSecretTxKeyHandle = await dhExchange.addExternalFinal(sharedSecretRxRaw);
+            const sharedSecretTxRaw = await sharedSecretTxKeyHandle.extractKey();
+            const sharedSecretTx = CoreBuffer.from(sharedSecretTxRaw);
+
             const secrets = CryptoExchangeSecrets.from({
-                receivingKey: CoreBuffer.from(sharedSecret),
-                transmissionKey: CoreBuffer.from(sharedSecret), // In ECDH, both keys are the same
+                receivingKey: sharedSecretRx,
+                transmissionKey: sharedSecretTx,
                 algorithm: algorithm
             });
             return secrets;
@@ -131,14 +152,23 @@ export class CryptoExchangeWithCryptoLayer {
         }
 
         try {
-            // TODO: DUMMY PLACEHOLDER
-            const sharedSecret = await templatorKeypair.privateKey.keyPairHandle.calculateSharedSecret(
-                requestorPublicKey.keyPairHandle
+            const provider = getProviderOrThrow(templatorKeypair.privateKey.providerIdentifier);
+            const dhExchangeSpec: KeyPairSpec = CryptoExchangeWithCryptoLayer.createDHExchangeSpec(
+                CryptoExchangeAlgorithm.ECDH_X25519
             );
 
+            const dhExchange = await provider.startEphemeralDhExchange(dhExchangeSpec);
+            const sharedSecretRxRaw = await dhExchange.addExternal(
+                await requestorPublicKey.keyPairHandle.getPublicKey()
+            );
+            const sharedSecretRx = CoreBuffer.from(sharedSecretRxRaw);
+            const sharedSecretTxKeyHandle = await dhExchange.addExternalFinal(sharedSecretRxRaw);
+            const sharedSecretTxRaw = await sharedSecretTxKeyHandle.extractKey();
+            const sharedSecretTx = CoreBuffer.from(sharedSecretTxRaw);
+
             const secrets = CryptoExchangeSecrets.from({
-                receivingKey: CoreBuffer.from(sharedSecret),
-                transmissionKey: CoreBuffer.from(sharedSecret), // In ECDH, both keys are the same
+                receivingKey: sharedSecretRx,
+                transmissionKey: sharedSecretTx,
                 algorithm: algorithm
             });
             return secrets;

@@ -1,6 +1,5 @@
 import { type } from "@js-soft/ts-serval";
 import { CoreBuffer } from "../../CoreBuffer";
-import { CryptoSerializableAsync } from "../../CryptoSerializable";
 import {
     CryptoPrivateStateHandle,
     ICryptoPrivateStateHandle,

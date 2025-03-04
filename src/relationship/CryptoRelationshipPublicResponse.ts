@@ -137,7 +137,7 @@ export class CryptoRelationshipPublicResponse
                         state: stateHandle
                     });
                 }
-            } catch (e) {
+            } catch (_) {
                 // Fall through to error
             }
         }

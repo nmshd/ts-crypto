@@ -3,7 +3,7 @@ import { CryptoRelationshipRequestSecretsHandle } from "src/crypto-layer/relatio
 import { CoreBuffer, IClearable, ICoreBuffer } from "../CoreBuffer";
 import { ProviderIdentifier } from "../crypto-layer/CryptoLayerProviders";
 import { DEFAULT_KEY_PAIR_SPEC } from "../crypto-layer/CryptoLayerUtils";
-import { CryptoEncryptionWithCryptoLayer } from "../crypto-layer/encryption/CryptoEncryptionWithCryptoLayer";
+import { CryptoEncryptionWithCryptoLayer } from "../crypto-layer/encryption/CryptoEncryption";
 import { CryptoSecretKeyHandle } from "../crypto-layer/encryption/CryptoSecretKeyHandle";
 import { CryptoExchangeKeypairHandle } from "../crypto-layer/exchange/CryptoExchangeKeypairHandle";
 import { CryptoExchangePublicKeyHandle } from "../crypto-layer/exchange/CryptoExchangePublicKeyHandle";
@@ -189,9 +189,8 @@ export class CryptoRelationshipRequestSecrets
     public async encryptRequest(content: CoreBuffer): Promise<CryptoCipher> {
         if (this.secretKey instanceof CryptoSecretKeyHandle) {
             return await CryptoEncryptionWithCryptoLayer.encrypt(content, this.secretKey);
-        } else {
-            return await CryptoEncryption.encrypt(content, this.secretKey as CryptoSecretKey);
         }
+        return await CryptoEncryption.encrypt(content, this.secretKey);
     }
 
     /**
@@ -202,9 +201,8 @@ export class CryptoRelationshipRequestSecrets
     public async decryptRequest(cipher: CryptoCipher): Promise<CoreBuffer> {
         if (this.secretKey instanceof CryptoSecretKeyHandle) {
             return await CryptoEncryptionWithCryptoLayer.decrypt(cipher, this.secretKey);
-        } else {
-            return await CryptoEncryption.decrypt(cipher, this.secretKey as CryptoSecretKey);
         }
+        return await CryptoEncryption.decrypt(cipher, this.secretKey);
     }
 
     /**
@@ -279,7 +277,7 @@ export class CryptoRelationshipRequestSecrets
                 non_exportable: false
             };
 
-            const secretKey = await CryptoEncryption.generateKey(masterKey.algorithm, providerIdent, secretKeySpec);
+            const secretKey = await CryptoEncryption.generateKeyHandle(providerIdent, secretKeySpec);
 
             return CryptoRelationshipRequestSecrets.from({
                 exchangeKeypair: exchangeKeypair,
@@ -293,37 +291,32 @@ export class CryptoRelationshipRequestSecrets
         }
 
         // libsodium implementation path
-        else {
-            const [exchangeKeypair, ephemeralKeypair, signatureKeypair, nonce] = await Promise.all([
-                CryptoExchange.generateKeypair(),
-                CryptoExchange.generateKeypair(),
-                CryptoSignatures.generateKeypair(),
-                CryptoRandom.bytes(24)
-            ]);
+        const [exchangeKeypair, ephemeralKeypair, signatureKeypair, nonce] = await Promise.all([
+            CryptoExchange.generateKeypair(),
+            CryptoExchange.generateKeypair(),
+            CryptoSignatures.generateKeypair(),
+            CryptoRandom.bytes(24)
+        ]);
 
-            // Handle mixed types for peer keys
-            const resolvedPeerExchangeKey =
-                peerExchangeKey instanceof CryptoExchangePublicKeyHandle
-                    ? await CryptoExchangePublicKey.fromHandle(peerExchangeKey)
-                    : peerExchangeKey;
+        // Handle mixed types for peer keys
+        const resolvedPeerExchangeKey =
+            peerExchangeKey instanceof CryptoExchangePublicKeyHandle
+                ? await CryptoExchangePublicKey.fromHandle(peerExchangeKey)
+                : peerExchangeKey;
 
-            const masterKey = await CryptoExchange.deriveRequestor(
-                ephemeralKeypair as CryptoExchangeKeypair,
-                resolvedPeerExchangeKey as CryptoExchangePublicKey
-            );
+        const masterKey = await CryptoExchange.deriveRequestor(ephemeralKeypair, resolvedPeerExchangeKey);
 
-            const secretKey = await CryptoDerivation.deriveKeyFromBase(masterKey.transmissionKey, 1, "REQTMP01");
+        const secretKey = await CryptoDerivation.deriveKeyFromBase(masterKey.transmissionKey, 1, "REQTMP01");
 
-            return CryptoRelationshipRequestSecrets.from({
-                exchangeKeypair: exchangeKeypair,
-                ephemeralKeypair: ephemeralKeypair,
-                signatureKeypair: signatureKeypair,
-                peerExchangeKey: peerExchangeKey,
-                peerIdentityKey: peerIdentityKey,
-                secretKey: secretKey,
-                nonce: nonce
-            });
-        }
+        return CryptoRelationshipRequestSecrets.from({
+            exchangeKeypair: exchangeKeypair,
+            ephemeralKeypair: ephemeralKeypair,
+            signatureKeypair: signatureKeypair,
+            peerExchangeKey: peerExchangeKey,
+            peerIdentityKey: peerIdentityKey,
+            secretKey: secretKey,
+            nonce: nonce
+        });
     }
 
     /**

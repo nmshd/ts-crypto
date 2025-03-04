@@ -24,7 +24,7 @@ export interface ICryptoSecretKeyHandle extends ISerializable {
     algorithm: CryptoEncryptionAlgorithm;
     id: string;
     providerName: string;
-    spec: KeySpec; 
+    spec: KeySpec;
 }
 
 /**
@@ -62,7 +62,7 @@ export class CryptoSecretKeyHandle extends CryptoSerializableAsync implements IC
      */
     @validate()
     @serialize()
-    public spec: KeySpec; 
+    public spec: KeySpec;
 
     /**
      * The provider instance
@@ -134,7 +134,7 @@ export class CryptoSecretKeyHandle extends CryptoSerializableAsync implements IC
         other?: {
             providerName?: string;
             keyId?: string;
-            keySpec?: KeySpec; 
+            keySpec?: KeySpec;
             algorithm?: CryptoEncryptionAlgorithm;
         }
     ): Promise<T> {
@@ -173,7 +173,7 @@ export class CryptoSecretKeyHandle extends CryptoSerializableAsync implements IC
     public static async fromString(
         providerIdent: ProviderIdentifier,
         value: string,
-        spec: KeySpec, 
+        spec: KeySpec,
         encoding: Encoding,
         algorithm: CryptoEncryptionAlgorithm
     ): Promise<CryptoSecretKeyHandle> {
@@ -186,19 +186,12 @@ export class CryptoSecretKeyHandle extends CryptoSerializableAsync implements IC
         });
     }
 
-    // Corrected postFrom:  More general generic constraint, and type assertion
     public static override async postFrom<T extends SerializableAsync>(value: T): Promise<T> {
         if (!(value instanceof CryptoSecretKeyHandle)) {
             throw new CryptoError(CryptoErrorCode.WrongParameters, "Expected 'CryptoSecretKeyHandle'.");
         }
 
         const provider = getProviderOrThrow({ providerName: value.providerName });
-        if (!provider) {
-            throw new CryptoError(
-                CryptoErrorCode.CalFailedLoadingProvider,
-                `Failed loading provider ${value.providerName}`
-            );
-        }
         const keyHandle = await provider.loadKey(value.id);
 
         value.keyHandle = keyHandle;

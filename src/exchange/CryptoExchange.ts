@@ -9,7 +9,6 @@ import { CryptoError } from "../CryptoError";
 import { CryptoErrorCode } from "../CryptoErrorCode";
 import { CryptoEncryptionAlgorithm } from "../encryption/CryptoEncryption";
 import { SodiumWrapper } from "../SodiumWrapper";
-import { CryptoExchangeAlgorithmUtil } from "./CryptoExchangeAlgorithmUtil";
 import { CryptoExchangeKeypair } from "./CryptoExchangeKeypair";
 import { CryptoExchangePrivateKey } from "./CryptoExchangePrivateKey";
 import { CryptoExchangePublicKey } from "./CryptoExchangePublicKey";
@@ -24,41 +23,13 @@ export const enum CryptoExchangeAlgorithm {
     ECDH_X25519 = 3
 }
 
-// Abstract base class that ensures type compatibility
-abstract class CryptoExchangeBase {
-    public static async generateKeypair(
-        algorithm: CryptoExchangeAlgorithm,
-        providerIdent?: ProviderIdentifier,
-        spec?: KeyPairSpec
-    ): Promise<CryptoExchangeKeypair | CryptoExchangeKeypairHandle> {
-        throw new Error("Abstract method");
-    }
-
-    public static async deriveRequestor(
-        requestorKeypair: CryptoExchangeKeypair | CryptoExchangeKeypairHandle,
-        templatorPublicKey: CryptoExchangePublicKey | CryptoExchangePublicKeyHandle,
-        algorithm: CryptoEncryptionAlgorithm
-    ): Promise<CryptoExchangeSecrets> {
-        throw new Error("Abstract method");
-    }
-
-    public static async deriveTemplator(
-        templatorKeypair: CryptoExchangeKeypair | CryptoExchangeKeypairHandle,
-        requestorPublicKey: CryptoExchangePublicKey | CryptoExchangePublicKeyHandle,
-        algorithm: CryptoEncryptionAlgorithm
-    ): Promise<CryptoExchangeSecrets> {
-        throw new Error("Abstract method");
-    }
-}
-
-export class CryptoExchangeWithLibsodium extends CryptoExchangeBase {
+export class CryptoExchangeWithLibsodium {
+    // No longer extends an abstract class
     /**
      * Generates a keypair for the specified key exchange algorithm
-     *
-     * @param algorithm The [[CryptoExchangeAlgorithm]] for which a keypair should be generated. Defaults to ECDH_X25519
-     * @returns A Promise resolving into a [[CryptoExchangeKeypair]] object
      */
-    public static override async generateKeypair(
+    public static async generateKeypair(
+        // Removed override
         algorithm: CryptoExchangeAlgorithm = CryptoExchangeAlgorithm.ECDH_X25519
     ): Promise<CryptoExchangeKeypair> {
         let privateKeyBuffer;
@@ -88,23 +59,12 @@ export class CryptoExchangeWithLibsodium extends CryptoExchangeBase {
 
     /**
      * Derives session keys from the given private exchange keypair and the given public
-     * exchange keypair of another party. Please ensure, that the server/sender/from entity
-     * calls the deriveRequestor method, whereas the counterparty (client/recipient/to entity)
-     * needs to call the deriveTemplator method, in order to derive the working keys.
-     *
-     * The method derives two separate secret keys: One for transmission (transmissionKey) and
-     * one for receiving (receivingKey). Please only use the respective keys for their purpose.
-     *
-     * @param requestorKeypair The [[CryptoExchangeKeypair]] of the sending side
-     * @param templatorPublicKey The [[CryptoExchangePublicKey]] of the receiving side
-     * @param algorithm The [[CryptoEncryptionAlgorithm]] algorithm for which the secret keys should
-     * be generated.
-     * @returns A Promise resolving into a [[CryptoExchangeSecrets]] object, containing the shared keys
-     * for transmission and receiving.
+     * exchange keypair of another party.
      */
-    public static override async deriveRequestor(
-        requestorKeypair: CryptoExchangeKeypair,
-        templatorPublicKey: CryptoExchangePublicKey,
+    public static async deriveRequestor(
+        // Removed override
+        requestorKeypair: CryptoExchangeKeypair, // No handles here
+        templatorPublicKey: CryptoExchangePublicKey, // No handles here
         algorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.XCHACHA20_POLY1305
     ): Promise<CryptoExchangeSecrets> {
         let sharedKey;
@@ -128,23 +88,12 @@ export class CryptoExchangeWithLibsodium extends CryptoExchangeBase {
 
     /**
      * Derives session keys from the given private exchange keypair and the given public
-     * exchange keypair of another party. Please ensure, that the server/sender/from entity
-     * calls the deriveRequestor method, whereas the counterparty (client/recipient/to entity)
-     * needs to call the deriveTemplator method, in order to derive the working keys.
-     *
-     * The method derives two separate secret keys: One for transmission (transmissionKey) and
-     * one for receiving (receivingKey). Please only use the respective keys for their purpose.
-     *
-     * @param templatorKeypair The [[CryptoExchangeKeypair]] of the receiving side
-     * @param requestorPublicKey The [[CryptoExchangePublicKey]] of the sending side
-     * @param algorithm The [[CryptoEncryptionAlgorithm]] algorithm for which the secret keys should
-     * be generated.
-     * @returns A Promise resolving into a [[CryptoExchangeSecrets]] object, containing the shared keys
-     * for transmission and receiving.
+     * exchange keypair of another party.
      */
-    public static override async deriveTemplator(
-        templatorKeypair: CryptoExchangeKeypair,
-        requestorPublicKey: CryptoExchangePublicKey,
+    public static async deriveTemplator(
+        // Removed override
+        templatorKeypair: CryptoExchangeKeypair, // No handles here
+        requestorPublicKey: CryptoExchangePublicKey, // No handles here
         algorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.XCHACHA20_POLY1305
     ): Promise<CryptoExchangeSecrets> {
         let sharedKey;
@@ -177,12 +126,10 @@ export function initCryptoExchange(providerIdent: ProviderIdentifier): void {
     }
 }
 
-export class CryptoExchange extends CryptoExchangeBase {
+export class CryptoExchange extends CryptoExchangeWithLibsodium {
+    // Extends CryptoExchangeWithLibsodium
     /**
      * Asynchronously converts a private key handle for key exchange into its corresponding public key handle.
-     *
-     * @param privateKey - The CryptoExchangePrivateKeyHandle to convert.
-     * @returns A Promise that resolves to a CryptoExchangePublicKeyHandle.
      */
     public static async privateKeyHandleToPublicKey(
         privateKey: CryptoExchangePrivateKeyHandle
@@ -192,10 +139,6 @@ export class CryptoExchange extends CryptoExchangeBase {
 
     /**
      * Asynchronously generates a key pair handle for cryptographic key exchange using the crypto layer.
-     *
-     * @param providerIdent - Identifier for the crypto provider to be used for key generation.
-     * @param spec - Specification for the key pair to be generated, including algorithm and security parameters.
-     * @returns A Promise that resolves to a CryptoExchangeKeypairHandle containing the generated key pair handles.
      */
     public static async generateKeypairHandle(
         providerIdent: ProviderIdentifier,
@@ -205,43 +148,8 @@ export class CryptoExchange extends CryptoExchangeBase {
     }
 
     /**
-     * Generates a keypair for the specified key exchange algorithm, using either libsodium or crypto-layer
-     * based on provider initialization.
-     *
-     * @param algorithm The algorithm for which a keypair should be generated. Defaults to ECDH_X25519
-     * @param providerIdent Optional provider identifier for crypto-layer
-     * @param spec Optional key specification for crypto-layer
-     * @returns A Promise resolving to either a traditional keypair or a keypair handle
-     */
-    public static override async generateKeypair(
-        algorithm: CryptoExchangeAlgorithm = CryptoExchangeAlgorithm.ECDH_X25519,
-        providerIdent?: ProviderIdentifier,
-        spec?: KeyPairSpec
-    ): Promise<CryptoExchangeKeypair | CryptoExchangeKeypairHandle> {
-        if (providerInitialized && providerIdent) {
-            if (!spec) {
-                spec = {
-                    // create default spec if not provided
-                    asym_spec: CryptoExchangeAlgorithmUtil.toCalAsymSpec(algorithm),
-                    cipher: "AesGcm256", // default cipher
-                    signing_hash: "Sha2_512", // default hash
-                    ephemeral: false,
-                    non_exportable: false
-                };
-            }
-            return await CryptoExchangeLayer.generateKeypair(providerIdent, spec);
-        }
-        return await CryptoExchangeWithLibsodium.generateKeypair(algorithm);
-    }
-
-    /**
      * Derives shared secrets for key exchange in the 'requestor' role using crypto-layer.
      * This method properly delegates to the CAL implementation.
-     *
-     * @param requestorKeypair - The keypair handle of the requestor
-     * @param templatorPublicKey - The public key handle of the templator
-     * @param algorithm - The encryption algorithm to use for the derived keys
-     * @returns A Promise resolving to the derived exchange secrets
      */
     public static async deriveRequestorWithHandles(
         requestorKeypair: CryptoExchangeKeypairHandle,
@@ -255,11 +163,6 @@ export class CryptoExchange extends CryptoExchangeBase {
     /**
      * Derives shared secrets for key exchange in the 'requestor' role.
      * This method handles both traditional keypair objects and crypto-layer handle objects.
-     *
-     * @param requestorKeypair - The keypair of the requestor (can be either traditional or handle-based)
-     * @param templatorPublicKey - The public key of the templator (can be either traditional or handle-based)
-     * @param algorithm - The encryption algorithm to use for the derived keys
-     * @returns A Promise resolving to the derived exchange secrets
      */
     public static override async deriveRequestor(
         requestorKeypair: CryptoExchangeKeypair | CryptoExchangeKeypairHandle,
@@ -275,15 +178,12 @@ export class CryptoExchange extends CryptoExchangeBase {
         }
 
         // If either input is not a handle object or provider not initialized, use the libsodium implementation
+        // Removed unnecessary type casting
         if (
             !(requestorKeypair instanceof CryptoExchangeKeypairHandle) &&
             !(templatorPublicKey instanceof CryptoExchangePublicKeyHandle)
         ) {
-            return await CryptoExchangeWithLibsodium.deriveRequestor(
-                requestorKeypair as CryptoExchangeKeypair,
-                templatorPublicKey as CryptoExchangePublicKey,
-                algorithm
-            );
+            return await super.deriveRequestor(requestorKeypair, templatorPublicKey, algorithm);
         }
 
         // If we get here, there's a mismatch in types
@@ -296,11 +196,6 @@ export class CryptoExchange extends CryptoExchangeBase {
     /**
      * Derives shared secrets for key exchange in the 'templator' role using crypto-layer.
      * This method properly delegates to the CAL implementation.
-     *
-     * @param templatorKeypair - The keypair handle of the templator
-     * @param requestorPublicKey - The public key handle of the requestor
-     * @param algorithm - The encryption algorithm to use for the derived keys
-     * @returns A Promise resolving to the derived exchange secrets
      */
     public static async deriveTemplatorWithHandles(
         templatorKeypair: CryptoExchangeKeypairHandle,
@@ -314,11 +209,6 @@ export class CryptoExchange extends CryptoExchangeBase {
     /**
      * Derives shared secrets for key exchange in the 'templator' role.
      * This method handles both traditional keypair objects and crypto-layer handle objects.
-     *
-     * @param templatorKeypair - The keypair of the templator (can be either traditional or handle-based)
-     * @param requestorPublicKey - The public key of the requestor (can be either traditional or handle-based)
-     * @param algorithm - The encryption algorithm to use for the derived keys
-     * @returns A Promise resolving to the derived exchange secrets
      */
     public static override async deriveTemplator(
         templatorKeypair: CryptoExchangeKeypair | CryptoExchangeKeypairHandle,
@@ -334,15 +224,12 @@ export class CryptoExchange extends CryptoExchangeBase {
         }
 
         // If either input is not a handle object or provider not initialized, use the libsodium implementation
+        // Removed unnecessary type casting
         if (
             !(templatorKeypair instanceof CryptoExchangeKeypairHandle) &&
             !(requestorPublicKey instanceof CryptoExchangePublicKeyHandle)
         ) {
-            return await CryptoExchangeWithLibsodium.deriveTemplator(
-                templatorKeypair as CryptoExchangeKeypair,
-                requestorPublicKey as CryptoExchangePublicKey,
-                algorithm
-            );
+            return await super.deriveTemplator(templatorKeypair, requestorPublicKey, algorithm);
         }
 
         // If we get here, there's a mismatch in types

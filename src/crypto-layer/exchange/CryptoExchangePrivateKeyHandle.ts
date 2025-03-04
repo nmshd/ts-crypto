@@ -1,6 +1,7 @@
 import { ISerializable, ISerialized, type } from "@js-soft/ts-serval";
 import { KeyPairSpec } from "@nmshd/rs-crypto-types";
 import { CoreBuffer, IClearable } from "src/CoreBuffer";
+import { ProviderIdentifier } from "../CryptoLayerProviders";
 import { CryptoPrivateKeyHandle } from "../CryptoPrivateKeyHandle";
 import { CryptoExchangePublicKeyHandle } from "./CryptoExchangePublicKeyHandle";
 
@@ -136,4 +137,6 @@ export class CryptoExchangePrivateKeyHandle
     public static override async fromBase64(value: string): Promise<CryptoExchangePrivateKeyHandle> {
         return await this.deserialize(CoreBuffer.base64_utf8(value));
     }
+
+    public readonly providerIdentifier: ProviderIdentifier;
 }

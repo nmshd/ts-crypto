@@ -1,9 +1,7 @@
 import { KeySpec } from "@nmshd/rs-crypto-types";
-import { defaults } from "lodash";
 import { CoreBuffer } from "../CoreBuffer";
 import { getProvider, ProviderIdentifier } from "../crypto-layer/CryptoLayerProviders";
-import { DEFAULT_KEY_PAIR_SPEC } from "../crypto-layer/CryptoLayerUtils";
-import { CryptoEncryptionWithCryptoLayer } from "../crypto-layer/encryption/CryptoEncryptionWithCryptoLayer";
+import { CryptoEncryptionWithCryptoLayer } from "../crypto-layer/encryption/CryptoEncryption";
 import { CryptoSecretKeyHandle } from "../crypto-layer/encryption/CryptoSecretKeyHandle";
 import { CryptoError } from "../CryptoError";
 import { CryptoErrorCode } from "../CryptoErrorCode";
@@ -16,18 +14,19 @@ import { CryptoSecretKey } from "./CryptoSecretKey";
  * The symmetric encryption algorithm to use.
  */
 export const enum CryptoEncryptionAlgorithm {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     AES128_GCM = 1,
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     AES256_GCM = 2,
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     XCHACHA20_POLY1305 = 3
 }
 
-export abstract class CryptoEncryptionWithLibsodium {
-    // Original Libsodium implementation
-    // **CRITICAL CHANGE:  Return type here must be the union**
+export class CryptoEncryptionWithLibsodium {
     public static async generateKey(
         algorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.XCHACHA20_POLY1305
-    ): Promise<CryptoSecretKey | CryptoSecretKeyHandle> {
-        // Corrected return type
+    ): Promise<CryptoSecretKey> {
+        // Only returns CryptoSecretKey
         CryptoValidation.checkEncryptionAlgorithm(algorithm);
 
         let buffer: CoreBuffer;
@@ -49,7 +48,7 @@ export abstract class CryptoEncryptionWithLibsodium {
 
     public static async encrypt(
         plaintext: CoreBuffer,
-        secretKey: CryptoSecretKey | CoreBuffer | CryptoSecretKeyHandle,
+        secretKey: CryptoSecretKey | CoreBuffer,
         nonce?: CoreBuffer,
         algorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.XCHACHA20_POLY1305
     ): Promise<CryptoCipher> {
@@ -61,16 +60,13 @@ export abstract class CryptoEncryptionWithLibsodium {
             secretKeyBuffer = secretKey.secretKey.buffer;
         } else if (secretKey instanceof CoreBuffer) {
             CryptoValidation.checkEncryptionAlgorithm(algorithm);
-
             correctAlgorithm = algorithm;
-
             CryptoValidation.checkSecretKeyForAlgorithm(secretKey, correctAlgorithm);
-
             secretKeyBuffer = secretKey.buffer;
         } else {
             throw new CryptoError(
                 CryptoErrorCode.EncryptionWrongSecretKey,
-                "Secret key must either be a CoreBuffer or a CryptoSecretKey object."
+                "The given secret key must be of type CryptoSecretKey or CoreBuffer."
             );
         }
 
@@ -112,7 +108,7 @@ export abstract class CryptoEncryptionWithLibsodium {
 
     public static async encryptWithCounter(
         plaintext: CoreBuffer,
-        secretKey: CryptoSecretKey | CoreBuffer | CryptoSecretKeyHandle,
+        secretKey: CryptoSecretKey | CoreBuffer,
         nonce: CoreBuffer,
         counter: number,
         algorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.XCHACHA20_POLY1305
@@ -131,7 +127,7 @@ export abstract class CryptoEncryptionWithLibsodium {
         } else {
             throw new CryptoError(
                 CryptoErrorCode.EncryptionWrongSecretKey,
-                "Secret key must either be a CoreBuffer or a CryptoSecretKey object."
+                "The given secret key must be of type CryptoSecretKey or CoreBuffer."
             );
         }
 
@@ -162,7 +158,7 @@ export abstract class CryptoEncryptionWithLibsodium {
 
     public static async decrypt(
         cipher: CryptoCipher,
-        secretKey: CryptoSecretKey | CoreBuffer | CryptoSecretKeyHandle,
+        secretKey: CryptoSecretKey | CoreBuffer,
         nonce?: CoreBuffer,
         algorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.XCHACHA20_POLY1305
     ): Promise<CoreBuffer> {
@@ -181,7 +177,7 @@ export abstract class CryptoEncryptionWithLibsodium {
         } else {
             throw new CryptoError(
                 CryptoErrorCode.EncryptionWrongSecretKey,
-                "Secret key must either be a CoreBuffer or a CryptoSecretKey object."
+                "The given secret key must be of type CryptoSecretKey or CoreBuffer."
             );
         }
 
@@ -222,7 +218,7 @@ export abstract class CryptoEncryptionWithLibsodium {
 
     public static async decryptWithCounter(
         cipher: CryptoCipher,
-        secretKey: CryptoSecretKey | CoreBuffer | CryptoSecretKeyHandle,
+        secretKey: CryptoSecretKey | CoreBuffer, // No CryptoSecretKeyHandle here
         nonce: CoreBuffer,
         counter: number,
         algorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.XCHACHA20_POLY1305
@@ -233,9 +229,9 @@ export abstract class CryptoEncryptionWithLibsodium {
             CryptoValidation.checkEncryptionAlgorithm(algorithm);
             CryptoValidation.checkNonceForAlgorithm(nonce, algorithm);
         } else {
-            throw new CryptoError(
+            throw new CryptoError( // More specific error message
                 CryptoErrorCode.EncryptionWrongSecretKey,
-                "Secret key must either be a CoreBuffer or a CryptoSecretKey object."
+                "The given secret key must be of type CryptoSecretKey or CoreBuffer."
             );
         }
         CryptoValidation.checkCounter(counter);
@@ -297,21 +293,11 @@ export function initCryptoEncryption(providerIdent: ProviderIdentifier): void {
 }
 
 export class CryptoEncryption extends CryptoEncryptionWithLibsodium {
-    public static override async generateKey(
-        algorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.XCHACHA20_POLY1305,
-        providerIdent?: ProviderIdentifier,
-        spec?: KeySpec
-    ): Promise<CryptoSecretKey | CryptoSecretKeyHandle> {
-        if (providerInitialized) {
-            if (!providerIdent) {
-                throw new CryptoError(CryptoErrorCode.CalWrongProvider, "Provider not defined.");
-            }
-            return await CryptoEncryptionWithCryptoLayer.generateKey(
-                providerIdent,
-                defaults({ cipher: algorithm }, spec, DEFAULT_KEY_PAIR_SPEC)
-            );
-        }
-        return await super.generateKey(algorithm);
+    public static async generateKeyHandle(
+        providerIdent: ProviderIdentifier,
+        spec: KeySpec
+    ): Promise<CryptoSecretKeyHandle> {
+        return await CryptoEncryptionWithCryptoLayer.generateKey(providerIdent, spec);
     }
 
     public static override async encrypt(
@@ -321,9 +307,15 @@ export class CryptoEncryption extends CryptoEncryptionWithLibsodium {
         algorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.XCHACHA20_POLY1305
     ): Promise<CryptoCipher> {
         if (providerInitialized && secretKey instanceof CryptoSecretKeyHandle) {
-            return await CryptoEncryptionWithCryptoLayer.encrypt(plaintext, secretKey, nonce);
+            return await CryptoEncryptionWithCryptoLayer.encrypt(plaintext, secretKey);
         }
-        return await super.encrypt(plaintext, secretKey, nonce, algorithm);
+        if (!(secretKey instanceof CryptoSecretKeyHandle)) {
+            return await super.encrypt(plaintext, secretKey, nonce, algorithm);
+        }
+        throw new CryptoError(
+            CryptoErrorCode.EncryptionWrongSecretKey,
+            "Mismatch in key types: expected traditional key."
+        );
     }
 
     public static override async encryptWithCounter(
@@ -334,9 +326,16 @@ export class CryptoEncryption extends CryptoEncryptionWithLibsodium {
         algorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.XCHACHA20_POLY1305
     ): Promise<CryptoCipher> {
         if (providerInitialized && secretKey instanceof CryptoSecretKeyHandle) {
-            return await CryptoEncryptionWithCryptoLayer.encryptWithCounter(plaintext, secretKey, nonce, counter);
+            return await CryptoEncryptionWithCryptoLayer.encryptWithCounter(plaintext, secretKey, counter);
         }
-        return await super.encryptWithCounter(plaintext, secretKey, nonce, counter, algorithm);
+
+        if (!(secretKey instanceof CryptoSecretKeyHandle)) {
+            return await super.encryptWithCounter(plaintext, secretKey, nonce, counter, algorithm);
+        }
+        throw new CryptoError(
+            CryptoErrorCode.EncryptionWrongSecretKey,
+            "Mismatch in key types: expected traditional key."
+        );
     }
 
     public static override async decrypt(
@@ -348,7 +347,14 @@ export class CryptoEncryption extends CryptoEncryptionWithLibsodium {
         if (providerInitialized && secretKey instanceof CryptoSecretKeyHandle) {
             return await CryptoEncryptionWithCryptoLayer.decrypt(cipher, secretKey, nonce);
         }
-        return await super.decrypt(cipher, secretKey, nonce, algorithm);
+
+        if (!(secretKey instanceof CryptoSecretKeyHandle)) {
+            return await super.decrypt(cipher, secretKey, nonce, algorithm);
+        }
+        throw new CryptoError(
+            CryptoErrorCode.EncryptionWrongSecretKey,
+            "Mismatch in key types: expected traditional key."
+        );
     }
 
     public static override async decryptWithCounter(
@@ -359,8 +365,15 @@ export class CryptoEncryption extends CryptoEncryptionWithLibsodium {
         algorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.XCHACHA20_POLY1305
     ): Promise<CoreBuffer> {
         if (providerInitialized && secretKey instanceof CryptoSecretKeyHandle) {
-            return await CryptoEncryptionWithCryptoLayer.decryptWithCounter(cipher, secretKey, nonce, counter);
+            return await CryptoEncryptionWithCryptoLayer.decryptWithCounter(cipher, secretKey, nonce);
         }
-        return await super.decryptWithCounter(cipher, secretKey, nonce, counter, algorithm);
+
+        if (!(secretKey instanceof CryptoSecretKeyHandle)) {
+            return await super.decryptWithCounter(cipher, secretKey, nonce, counter, algorithm);
+        }
+        throw new CryptoError(
+            CryptoErrorCode.EncryptionWrongSecretKey,
+            "Mismatch in key types: expected traditional key."
+        );
     }
 }

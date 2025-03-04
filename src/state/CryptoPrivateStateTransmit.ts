@@ -3,7 +3,7 @@ import { KeySpec } from "@nmshd/rs-crypto-types";
 import { CoreBuffer } from "../CoreBuffer";
 import { getProvider, ProviderIdentifier } from "../crypto-layer/CryptoLayerProviders";
 import { DEFAULT_KEY_PAIR_SPEC } from "../crypto-layer/CryptoLayerUtils";
-import { CryptoEncryptionWithCryptoLayer } from "../crypto-layer/encryption/CryptoEncryptionWithCryptoLayer";
+import { CryptoEncryptionWithCryptoLayer } from "../crypto-layer/encryption/CryptoEncryption";
 import { CryptoSecretKeyHandle } from "../crypto-layer/encryption/CryptoSecretKeyHandle";
 import { CryptoPrivateStateTransmitHandle } from "../crypto-layer/state/CryptoPrivateStateTransmitHandle";
 import { CryptoError } from "../CryptoError";
@@ -33,7 +33,7 @@ export class CryptoPrivateStateTransmit extends CryptoPrivateState {
             cipher = await CryptoEncryptionWithCryptoLayer.encryptWithCounter(
                 plaintext,
                 this.secretKey,
-                this.nonce,
+                // this.nonce,
                 this.counter
             );
         } else {
@@ -58,8 +58,8 @@ export class CryptoPrivateStateTransmit extends CryptoPrivateState {
             return await CryptoEncryptionWithCryptoLayer.decryptWithCounter(
                 cipher,
                 this.secretKey,
-                this.nonce,
-                cipher.counter
+                this.nonce
+                // cipher.counter
             );
         }
 
@@ -156,12 +156,11 @@ export class CryptoPrivateStateTransmit extends CryptoPrivateState {
                     secretKeyHandle: secretKey
                 });
                 return transmitStateHandle;
-            } else {
-                throw new CryptoError(
-                    CryptoErrorCode.StateWrongType,
-                    "If you provide a provider, you also have to provide a secretKeyHandle or no secretKey at all."
-                );
             }
+            throw new CryptoError(
+                CryptoErrorCode.StateWrongType,
+                "If you provide a provider, you also have to provide a secretKeyHandle or no secretKey at all."
+            );
         }
 
         // Using libsodium implementation

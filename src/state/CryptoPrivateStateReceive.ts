@@ -1,6 +1,6 @@
 import { type } from "@js-soft/ts-serval";
 import { CoreBuffer } from "../CoreBuffer";
-import { CryptoEncryptionWithCryptoLayer } from "../crypto-layer/encryption/CryptoEncryptionWithCryptoLayer";
+import { CryptoEncryptionWithCryptoLayer } from "../crypto-layer/encryption/CryptoEncryption";
 import { CryptoSecretKeyHandle } from "../crypto-layer/encryption/CryptoSecretKeyHandle";
 import { CryptoPrivateStateReceiveHandle } from "../crypto-layer/state/CryptoPrivateStateReceiveHandle";
 import { CryptoPublicStateHandle } from "../crypto-layer/state/CryptoPublicStateHandle";
@@ -75,8 +75,7 @@ export class CryptoPrivateStateReceive extends CryptoPrivateState {
                 plaintext = await CryptoEncryptionWithCryptoLayer.decryptWithCounter(
                     cipher,
                     this.secretKey,
-                    this.nonce,
-                    cipher.counter
+                    this.nonce
                 );
             } else {
                 // Using libsodium implementation
@@ -101,8 +100,7 @@ export class CryptoPrivateStateReceive extends CryptoPrivateState {
                 plaintext = await CryptoEncryptionWithCryptoLayer.decryptWithCounter(
                     cipher,
                     this.secretKey,
-                    this.nonce,
-                    this.counter
+                    this.nonce
                 );
             } else {
                 // Using libsodium implementation

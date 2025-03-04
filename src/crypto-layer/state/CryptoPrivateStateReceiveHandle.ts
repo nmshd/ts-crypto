@@ -1,6 +1,5 @@
 import { type } from "@js-soft/ts-serval";
 import { CoreBuffer } from "../../CoreBuffer";
-import { CryptoSerializableAsync } from "../../CryptoSerializable";
 import {
     CryptoPrivateStateHandle,
     ICryptoPrivateStateHandle,
@@ -41,7 +40,7 @@ export class CryptoPrivateStateReceiveHandle
         const base = await super.toJSON(verbose); // Get the base serialization
         return {
             ...base, // Spread the base properties
-            "@type": verbose ? "CryptoPrivateStateReceiveHandle" : undefined 
+            "@type": verbose ? "CryptoPrivateStateReceiveHandle" : undefined
         };
     }
 

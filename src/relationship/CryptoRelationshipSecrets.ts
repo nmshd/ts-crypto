@@ -6,7 +6,7 @@ import { CryptoErrorCode } from "../CryptoErrorCode";
 import { CryptoSerializable } from "../CryptoSerializable";
 import { ProviderIdentifier } from "../crypto-layer/CryptoLayerProviders";
 import { DEFAULT_KEY_PAIR_SPEC } from "../crypto-layer/CryptoLayerUtils";
-import { CryptoEncryptionWithCryptoLayer } from "../crypto-layer/encryption/CryptoEncryptionWithCryptoLayer";
+import { CryptoEncryptionWithCryptoLayer } from "../crypto-layer/encryption/CryptoEncryption";
 import { CryptoSecretKeyHandle } from "../crypto-layer/encryption/CryptoSecretKeyHandle";
 import { CryptoExchangeKeypairHandle } from "../crypto-layer/exchange/CryptoExchangeKeypairHandle";
 import { CryptoExchangePublicKeyHandle } from "../crypto-layer/exchange/CryptoExchangePublicKeyHandle";
@@ -179,9 +179,8 @@ export class CryptoRelationshipSecrets extends CryptoSerializable implements ICr
     ): Promise<CryptoSignature> {
         if (this.signatureKeypair instanceof CryptoSignatureKeypair) {
             return await CryptoSignatures.sign(content, this.signatureKeypair.privateKey, algorithm);
-        } else {
-            return await CryptoSignatures.sign(content, this.signatureKeypair.privateKey, algorithm);
         }
+        return await CryptoSignatures.sign(content, this.signatureKeypair.privateKey, algorithm);
     }
 
     /**
@@ -235,13 +234,12 @@ export class CryptoRelationshipSecrets extends CryptoSerializable implements ICr
             return await CryptoEncryptionWithCryptoLayer.encryptWithCounter(
                 content,
                 this.transmitState.secretKeyHandle,
-                this.transmitState.nonce,
+                // this.transmitState.nonce,
                 this.transmitState.counter
             );
-        } else {
-            // Use traditional implementation
-            return await this.transmitState.encrypt(content);
         }
+        // Use traditional implementation
+        return await this.transmitState.encrypt(content);
     }
 
     /**
@@ -255,13 +253,12 @@ export class CryptoRelationshipSecrets extends CryptoSerializable implements ICr
             return await CryptoEncryptionWithCryptoLayer.decryptWithCounter(
                 cipher,
                 this.transmitState.secretKeyHandle,
-                this.transmitState.nonce,
-                cipher.counter !== undefined ? cipher.counter : this.transmitState.counter
+                this.transmitState.nonce
+                // cipher.counter !== undefined ? cipher.counter : this.transmitState.counter
             );
-        } else {
-            // Use traditional implementation
-            return await this.transmitState.decrypt(cipher);
         }
+        // Use traditional implementation
+        return await this.transmitState.decrypt(cipher);
     }
 
     /**
@@ -279,33 +276,29 @@ export class CryptoRelationshipSecrets extends CryptoSerializable implements ICr
                     this.receiveState.secretKeyHandle,
                     this.receiveState.nonce
                 );
-            } else {
-                // Verify counter
-                if (this.receiveState.counter !== cipher.counter && cipher.counter !== undefined) {
-                    throw new CryptoError(
-                        CryptoErrorCode.StateWrongOrder,
-                        `The current message seems to be out of order. The in order number would be ${this.receiveState.counter} and message is ${cipher.counter}.`
-                    );
-                }
-
-                const result = await CryptoEncryptionWithCryptoLayer.decryptWithCounter(
-                    cipher,
-                    this.receiveState.secretKeyHandle,
-                    this.receiveState.nonce,
-                    cipher.counter !== undefined ? cipher.counter : this.receiveState.counter
-                );
-
-                // Increment counter
-                if (this.receiveState.counter !== undefined) {
-                    this.receiveState.counter++;
-                }
-
-                return result;
             }
-        } else {
-            // Use traditional implementation
-            return await this.receiveState.decrypt(cipher, omitCounterCheck);
+            // Verify counter
+            if (this.receiveState.counter !== cipher.counter && cipher.counter !== undefined) {
+                throw new CryptoError(
+                    CryptoErrorCode.StateWrongOrder,
+                    `The current message seems to be out of order. The in order number would be ${this.receiveState.counter} and message is ${cipher.counter}.`
+                );
+            }
+
+            const result = await CryptoEncryptionWithCryptoLayer.decryptWithCounter(
+                cipher,
+                this.receiveState.secretKeyHandle,
+                this.receiveState.nonce
+                // cipher.counter !== undefined ? cipher.counter : this.receiveState.counter
+            );
+
+            // Increment counter
+            this.receiveState.counter++;
+
+            return result;
         }
+        // Use traditional implementation
+        return await this.receiveState.decrypt(cipher, omitCounterCheck);
     }
 
     /**
@@ -316,9 +309,8 @@ export class CryptoRelationshipSecrets extends CryptoSerializable implements ICr
     public async decryptRequest(cipher: CryptoCipher): Promise<CoreBuffer> {
         if (this.requestSecretKey instanceof CryptoSecretKeyHandle) {
             return await CryptoEncryptionWithCryptoLayer.decrypt(cipher, this.requestSecretKey);
-        } else {
-            return await CryptoEncryption.decrypt(cipher, this.requestSecretKey as CryptoSecretKey);
         }
+        return await CryptoEncryption.decrypt(cipher, this.requestSecretKey);
     }
 
     /**
@@ -391,11 +383,11 @@ export class CryptoRelationshipSecrets extends CryptoSerializable implements ICr
             const ownType = CryptoRelationshipType.Requestor;
 
             const hashAlgorithm = CryptoHashAlgorithm.SHA512;
-            const defaultSpec = {
-                ...DEFAULT_KEY_PAIR_SPEC,
-                cipher: CryptoEncryptionAlgorithmUtil.toCalCipher(CryptoEncryptionAlgorithm.XCHACHA20_POLY1305),
-                signing_hash: CryptoHashAlgorithmUtil.toCalHash(hashAlgorithm)
-            };
+            // const defaultSpec = {
+            //     ...DEFAULT_KEY_PAIR_SPEC,
+            //     cipher: CryptoEncryptionAlgorithmUtil.toCalCipher(CryptoEncryptionAlgorithm.XCHACHA20_POLY1305),
+            //     signing_hash: CryptoHashAlgorithmUtil.toCalHash(hashAlgorithm)
+            // };
 
             // Generate transmit state with CAL
             const transmitState = await CryptoPrivateStateTransmit.generate(
@@ -413,22 +405,16 @@ export class CryptoRelationshipSecrets extends CryptoSerializable implements ICr
                     peerPublicTransmitState.nonce,
                     requestSecretKey
                 );
-            } else {
+            } else if (peerPublicTransmitState instanceof CryptoPublicStateHandle) {
                 // Convert to CAL handle if possible
-                if (peerPublicTransmitState instanceof CryptoPublicStateHandle) {
-                    receiveState = await CryptoPrivateStateReceive.fromPublicState(
-                        peerPublicTransmitState,
-                        derivedKey.receivingKey, // Use the derived key from CAL
-                        0
-                    );
-                } else {
-                    const stateHandle = await peerPublicTransmitState.toHandle();
-                    receiveState = await CryptoPrivateStateReceive.fromPublicState(
-                        stateHandle,
-                        derivedKey.receivingKey,
-                        0
-                    );
-                }
+                receiveState = await CryptoPrivateStateReceive.fromPublicState(
+                    peerPublicTransmitState,
+                    derivedKey.receivingKey, // Use the derived key from CAL
+                    0
+                );
+            } else {
+                const stateHandle = await peerPublicTransmitState.toHandle();
+                receiveState = await CryptoPrivateStateReceive.fromPublicState(stateHandle, derivedKey.receivingKey, 0);
             }
 
             return CryptoRelationshipSecrets.from({
@@ -446,75 +432,70 @@ export class CryptoRelationshipSecrets extends CryptoSerializable implements ICr
         }
 
         // libsodium implementation path
-        else {
-            // Convert CAL handles to traditional objects if needed
-            let resolvedExchangeKeypair = exchangeKeypair;
-            if (exchangeKeypair instanceof CryptoExchangeKeypairHandle) {
-                // Create a compatible keypair from the handle
-                const pubKey = await CryptoExchangePublicKey.fromHandle(exchangeKeypair.publicKey);
 
-                // We need to access the private key data - must be implemented in the crypto-layer
-                const privateKeyStr = await exchangeKeypair.privateKey.toSerializedString();
-                const privateKey = new CryptoExchangePrivateKey();
-                privateKey.algorithm = pubKey.algorithm;
-                privateKey.privateKey = CoreBuffer.fromString(privateKeyStr, Encoding.Base64_UrlSafe_NoPadding);
+        // Convert CAL handles to traditional objects if needed
+        let resolvedExchangeKeypair = exchangeKeypair;
+        if (exchangeKeypair instanceof CryptoExchangeKeypairHandle) {
+            // Create a compatible keypair from the handle
+            const pubKey = await CryptoExchangePublicKey.fromHandle(exchangeKeypair.publicKey);
 
-                resolvedExchangeKeypair = new CryptoExchangeKeypair();
-                resolvedExchangeKeypair.publicKey = pubKey;
-                resolvedExchangeKeypair.privateKey = privateKey;
-            }
+            // We need to access the private key data - must be implemented in the crypto-layer
+            const privateKeyStr = await exchangeKeypair.privateKey.toSerializedString();
+            const privateKey = new CryptoExchangePrivateKey();
+            privateKey.algorithm = pubKey.algorithm;
+            privateKey.privateKey = CoreBuffer.fromString(privateKeyStr, Encoding.Base64_UrlSafe_NoPadding);
 
-            const resolvedPeerExchangeKey =
-                peerExchangeKey instanceof CryptoExchangePublicKeyHandle
-                    ? await CryptoExchangePublicKey.fromHandle(peerExchangeKey)
-                    : peerExchangeKey;
-
-            const derivedKey = await CryptoExchange.deriveRequestor(
-                resolvedExchangeKeypair as CryptoExchangeKeypair,
-                resolvedPeerExchangeKey as CryptoExchangePublicKey
-            );
-
-            const ownType = CryptoRelationshipType.Requestor;
-
-            const [derivedTx, derivedRx] = await Promise.all([
-                CryptoDerivation.deriveKeyFromBase(derivedKey.transmissionKey, 1, "RELREQ01"),
-                CryptoDerivation.deriveKeyFromBase(derivedKey.receivingKey, 1, "RELTEM01")
-            ]);
-
-            // Create states using the traditional path
-            const resolvedPeerPublicState =
-                peerPublicTransmitState instanceof CryptoPublicStateHandle
-                    ? await CryptoPublicState.fromHandle(peerPublicTransmitState)
-                    : peerPublicTransmitState;
-
-            const [receiveState, transmitState] = await Promise.all([
-                CryptoPrivateStateReceive.fromPublicState(
-                    resolvedPeerPublicState as CryptoPublicState,
-                    derivedRx.secretKey,
-                    0
-                ),
-                CryptoPrivateStateTransmit.from({
-                    algorithm: CryptoEncryptionAlgorithm.XCHACHA20_POLY1305,
-                    counter: 0,
-                    nonce: request.nonce,
-                    secretKey: derivedTx.secretKey,
-                    stateType: CryptoStateType.Transmit
-                })
-            ]);
-
-            return CryptoRelationshipSecrets.from({
-                exchangeKeypair: exchangeKeypair,
-                signatureKeypair: signatureKeypair,
-                receiveState: receiveState,
-                transmitState: transmitState,
-                type: ownType,
-                peerExchangeKey: peerExchangeKey,
-                peerSignatureKey: peerSignatureKey,
-                peerTemplateKey: peerTemplateKey,
-                peerIdentityKey: peerIdentityKey,
-                requestSecretKey: requestSecretKey
-            });
+            resolvedExchangeKeypair = new CryptoExchangeKeypair();
+            resolvedExchangeKeypair.publicKey = pubKey;
+            resolvedExchangeKeypair.privateKey = privateKey;
         }
+
+        const resolvedPeerExchangeKey =
+            peerExchangeKey instanceof CryptoExchangePublicKeyHandle
+                ? await CryptoExchangePublicKey.fromHandle(peerExchangeKey)
+                : peerExchangeKey;
+
+        const derivedKey = await CryptoExchange.deriveRequestor(
+            resolvedExchangeKeypair as CryptoExchangeKeypair,
+            resolvedPeerExchangeKey
+        );
+
+        const ownType = CryptoRelationshipType.Requestor;
+
+        const [derivedTx, derivedRx] = await Promise.all([
+            CryptoDerivation.deriveKeyFromBase(derivedKey.transmissionKey, 1, "RELREQ01"),
+            CryptoDerivation.deriveKeyFromBase(derivedKey.receivingKey, 1, "RELTEM01")
+        ]);
+
+        // Create states using the traditional path
+        const resolvedPeerPublicState =
+            peerPublicTransmitState instanceof CryptoPublicStateHandle
+                ? await CryptoPublicState.fromHandle(peerPublicTransmitState)
+                : peerPublicTransmitState;
+
+        const [receiveState, transmitState] = await Promise.all([
+            CryptoPrivateStateReceive.fromPublicState(resolvedPeerPublicState, derivedRx.secretKey, 0),
+            CryptoPrivateStateTransmit.from({
+                algorithm: CryptoEncryptionAlgorithm.XCHACHA20_POLY1305,
+                counter: 0,
+                nonce: request.nonce,
+                secretKey: derivedTx.secretKey,
+                stateType: CryptoStateType.Transmit
+            })
+        ]);
+
+        return CryptoRelationshipSecrets.from({
+            exchangeKeypair: exchangeKeypair,
+            signatureKeypair: signatureKeypair,
+            receiveState: receiveState,
+            transmitState: transmitState,
+            type: ownType,
+            peerExchangeKey: peerExchangeKey,
+            peerSignatureKey: peerSignatureKey,
+            peerTemplateKey: peerTemplateKey,
+            peerIdentityKey: peerIdentityKey,
+            requestSecretKey: requestSecretKey
+        });
     }
 
     /**
@@ -627,7 +608,7 @@ export class CryptoRelationshipSecrets extends CryptoSerializable implements ICr
                 non_exportable: false
             };
 
-            const secretKey = await CryptoEncryption.generateKey(masterKey.algorithm, providerIdent, secretKeySpec);
+            const secretKey = await CryptoEncryption.generateKeyHandle(providerIdent, secretKeySpec);
 
             return CryptoRelationshipSecrets.from({
                 exchangeKeypair: exchangeKeypair,
@@ -644,95 +625,87 @@ export class CryptoRelationshipSecrets extends CryptoSerializable implements ICr
         }
 
         // libsodium implementation path
-        else {
-            const [signatureKeypair, exchangeKeypair] = await Promise.all([
-                CryptoSignatures.generateKeypair(),
-                CryptoExchange.generateKeypair()
-            ]);
+        const [signatureKeypair, exchangeKeypair] = await Promise.all([
+            CryptoSignatures.generateKeypair(),
+            CryptoExchange.generateKeypair()
+        ]);
 
-            // Handle mixed types by converting handles to traditional objects if needed
-            const resolvedPeerExchangeKey =
-                peerExchangeKey instanceof CryptoExchangePublicKeyHandle
-                    ? await CryptoExchangePublicKey.fromHandle(peerExchangeKey)
-                    : peerExchangeKey;
+        // Handle mixed types by converting handles to traditional objects if needed
+        const resolvedPeerExchangeKey =
+            peerExchangeKey instanceof CryptoExchangePublicKeyHandle
+                ? await CryptoExchangePublicKey.fromHandle(peerExchangeKey)
+                : peerExchangeKey;
 
-            // Convert template keypair if needed
-            let resolvedTemplateKeypair = templateExchangeKeypair;
-            if (templateExchangeKeypair instanceof CryptoExchangeKeypairHandle) {
-                // Create a compatible keypair from the handle
-                const pubKey = await CryptoExchangePublicKey.fromHandle(templateExchangeKeypair.publicKey);
+        // Convert template keypair if needed
+        let resolvedTemplateKeypair = templateExchangeKeypair;
+        if (templateExchangeKeypair instanceof CryptoExchangeKeypairHandle) {
+            // Create a compatible keypair from the handle
+            const pubKey = await CryptoExchangePublicKey.fromHandle(templateExchangeKeypair.publicKey);
 
-                // We need to access the private key data
-                const privateKeyStr = await templateExchangeKeypair.privateKey.toSerializedString();
-                const privateKey = new CryptoExchangePrivateKey();
-                privateKey.algorithm = pubKey.algorithm;
-                privateKey.privateKey = CoreBuffer.fromString(privateKeyStr, Encoding.Base64_UrlSafe_NoPadding);
+            // We need to access the private key data
+            const privateKeyStr = await templateExchangeKeypair.privateKey.toSerializedString();
+            const privateKey = new CryptoExchangePrivateKey();
+            privateKey.algorithm = pubKey.algorithm;
+            privateKey.privateKey = CoreBuffer.fromString(privateKeyStr, Encoding.Base64_UrlSafe_NoPadding);
 
-                resolvedTemplateKeypair = new CryptoExchangeKeypair();
-                resolvedTemplateKeypair.publicKey = pubKey;
-                resolvedTemplateKeypair.privateKey = privateKey;
-            }
-
-            const resolvedPeerTemplateKey =
-                peerTemplateKey instanceof CryptoExchangePublicKeyHandle
-                    ? await CryptoExchangePublicKey.fromHandle(peerTemplateKey)
-                    : peerTemplateKey;
-
-            // Derive keys based on relationship type
-            let derivedKey;
-            let ownType;
-            switch (peerType) {
-                case CryptoRelationshipType.Requestor:
-                    derivedKey = await CryptoExchange.deriveTemplator(
-                        exchangeKeypair as CryptoExchangeKeypair,
-                        resolvedPeerExchangeKey as CryptoExchangePublicKey
-                    );
-                    ownType = CryptoRelationshipType.Templator;
-                    break;
-                case CryptoRelationshipType.Templator:
-                    derivedKey = await CryptoExchange.deriveRequestor(
-                        exchangeKeypair as CryptoExchangeKeypair,
-                        resolvedPeerExchangeKey as CryptoExchangePublicKey
-                    );
-                    ownType = CryptoRelationshipType.Requestor;
-                    break;
-                default:
-                    throw new CryptoError(CryptoErrorCode.RelationshipNoRequestorNorTemplator);
-            }
-
-            // Derive keys for states
-            const [derivedTx, derivedRx] = await Promise.all([
-                CryptoDerivation.deriveKeyFromBase(derivedKey.transmissionKey, 1, "RELTEM01"),
-                CryptoDerivation.deriveKeyFromBase(derivedKey.receivingKey, 1, "RELREQ01")
-            ]);
-
-            // Create states
-            const [receiveState, transmitState] = await Promise.all([
-                CryptoPrivateStateReceive.fromNonce(peerGeneratedNonce, derivedRx.secretKey),
-                CryptoPrivateStateTransmit.generate(derivedTx.secretKey)
-            ]);
-
-            // Create master key and derive request secret
-            const masterKey = await CryptoExchange.deriveTemplator(
-                resolvedTemplateKeypair as CryptoExchangeKeypair,
-                resolvedPeerTemplateKey as CryptoExchangePublicKey
-            );
-
-            const secretKey = await CryptoDerivation.deriveKeyFromBase(masterKey.receivingKey, 1, "REQTMP01");
-
-            return CryptoRelationshipSecrets.from({
-                exchangeKeypair: exchangeKeypair,
-                signatureKeypair: signatureKeypair,
-                receiveState: receiveState,
-                transmitState: transmitState,
-                type: ownType,
-                peerExchangeKey: peerExchangeKey,
-                peerSignatureKey: peerSignatureKey,
-                peerTemplateKey: peerTemplateKey,
-                peerIdentityKey: peerIdentityKey,
-                requestSecretKey: secretKey
-            });
+            resolvedTemplateKeypair = new CryptoExchangeKeypair();
+            resolvedTemplateKeypair.publicKey = pubKey;
+            resolvedTemplateKeypair.privateKey = privateKey;
         }
+
+        const resolvedPeerTemplateKey =
+            peerTemplateKey instanceof CryptoExchangePublicKeyHandle
+                ? await CryptoExchangePublicKey.fromHandle(peerTemplateKey)
+                : peerTemplateKey;
+
+        // Derive keys based on relationship type
+        let derivedKey;
+        let ownType;
+        switch (peerType) {
+            case CryptoRelationshipType.Requestor:
+                derivedKey = await CryptoExchange.deriveTemplator(exchangeKeypair, resolvedPeerExchangeKey);
+                ownType = CryptoRelationshipType.Templator;
+                break;
+            case CryptoRelationshipType.Templator:
+                derivedKey = await CryptoExchange.deriveRequestor(exchangeKeypair, resolvedPeerExchangeKey);
+                ownType = CryptoRelationshipType.Requestor;
+                break;
+            default:
+                throw new CryptoError(CryptoErrorCode.RelationshipNoRequestorNorTemplator);
+        }
+
+        // Derive keys for states
+        const [derivedTx, derivedRx] = await Promise.all([
+            CryptoDerivation.deriveKeyFromBase(derivedKey.transmissionKey, 1, "RELTEM01"),
+            CryptoDerivation.deriveKeyFromBase(derivedKey.receivingKey, 1, "RELREQ01")
+        ]);
+
+        // Create states
+        const [receiveState, transmitState] = await Promise.all([
+            CryptoPrivateStateReceive.fromNonce(peerGeneratedNonce, derivedRx.secretKey),
+            CryptoPrivateStateTransmit.generate(derivedTx.secretKey)
+        ]);
+
+        // Create master key and derive request secret
+        const masterKey = await CryptoExchange.deriveTemplator(
+            resolvedTemplateKeypair as CryptoExchangeKeypair,
+            resolvedPeerTemplateKey
+        );
+
+        const secretKey = await CryptoDerivation.deriveKeyFromBase(masterKey.receivingKey, 1, "REQTMP01");
+
+        return CryptoRelationshipSecrets.from({
+            exchangeKeypair: exchangeKeypair,
+            signatureKeypair: signatureKeypair,
+            receiveState: receiveState,
+            transmitState: transmitState,
+            type: ownType,
+            peerExchangeKey: peerExchangeKey,
+            peerSignatureKey: peerSignatureKey,
+            peerTemplateKey: peerTemplateKey,
+            peerIdentityKey: peerIdentityKey,
+            requestSecretKey: secretKey
+        });
     }
 
     /**

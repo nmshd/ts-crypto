@@ -20,10 +20,7 @@ export class CryptoEncryptionWithCryptoLayer {
      * @param spec - Specification for the cipher
      * @returns A Promise that resolves to a {@link CryptoSecretKeyHandle} containing the generated key handle.
      */
-    public static async generateKey(
-        providerIdent: ProviderIdentifier,
-        spec: KeySpec
-    ): Promise<CryptoSecretKeyHandle> {
+    public static async generateKey(providerIdent: ProviderIdentifier, spec: KeySpec): Promise<CryptoSecretKeyHandle> {
         const provider = getProviderOrThrow(providerIdent);
         const keyHandle = await provider.createKey(spec);
         const secretKeyHandle = await CryptoSecretKeyHandle.newFromProviderAndKeyHandle(provider, keyHandle, {
@@ -43,8 +40,8 @@ export class CryptoEncryptionWithCryptoLayer {
      */
     public static async encrypt(
         plaintext: CoreBuffer,
-        secretKeyHandle: CryptoSecretKeyHandle,
-        nonce?: CoreBuffer
+        secretKeyHandle: CryptoSecretKeyHandle
+        // nonce?: CoreBuffer
     ): Promise<CryptoCipher> {
         const encryptionAlgorithm = secretKeyHandle.algorithm;
 
@@ -73,12 +70,12 @@ export class CryptoEncryptionWithCryptoLayer {
     public static async encryptWithCounter(
         plaintext: CoreBuffer,
         secretKeyHandle: CryptoSecretKeyHandle,
-        nonce: CoreBuffer,
+        // nonce: CoreBuffer,
         counter: number
     ): Promise<CryptoCipher> {
         const encryptionAlgorithm = secretKeyHandle.algorithm;
 
-        const publicnonce = nonce.buffer;
+        // const publicnonce = nonce.buffer;
 
         try {
             // Corrected: Use encryptData and destructure
@@ -87,7 +84,7 @@ export class CryptoEncryptionWithCryptoLayer {
             return CryptoCipher.from({
                 cipher: CoreBuffer.from(cipher),
                 algorithm: encryptionAlgorithm,
-                nonce: CoreBuffer.from(iv), 
+                nonce: CoreBuffer.from(iv),
                 counter
             });
         } catch (e) {
@@ -141,11 +138,9 @@ export class CryptoEncryptionWithCryptoLayer {
     public static async decryptWithCounter(
         cipher: CryptoCipher,
         secretKeyHandle: CryptoSecretKeyHandle,
-        nonce: CoreBuffer,
-        counter: number 
+        nonce: CoreBuffer
     ): Promise<CoreBuffer> {
         const publicnonce = nonce.buffer;
-        // Corrected:  We still call decrypt; the counter (if needed) is handled within the rust layer
         return await this.decrypt(cipher, secretKeyHandle, CoreBuffer.from(publicnonce));
     }
 
