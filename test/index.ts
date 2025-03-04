@@ -5,6 +5,7 @@ import {
     getAllProviders,
     getProviderCapabilities
 } from "@nmshd/rs-crypto-node";
+import chai from "chai";
 import { BufferTest } from "./BufferTest.test";
 import { CryptoLayerProviderTest } from "./crypto-layer/CryptoLayerProviderTest.test";
 import { CryptoSignatureKeypairHandleTest } from "./crypto-layer/CryptoSignatureKeypairHandle.test";
@@ -23,6 +24,8 @@ import { CryptoSecretKeyTest } from "./crypto/CryptoSecretKeyTest.test";
 import { CryptoSignatureTest } from "./crypto/CryptoSignature.test";
 import { CryptoStateTest } from "./crypto/CryptoStateTest.test";
 import { SodiumWrapperTest } from "./crypto/SodiumWrapperTest.test";
+
+chai.config.truncateThreshold = 0;
 
 // This is valid: https://mochajs.org/#delayed-root-suite
 // eslint-disable-next-line @typescript-eslint/no-floating-promises
