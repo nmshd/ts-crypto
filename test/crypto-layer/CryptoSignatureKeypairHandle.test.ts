@@ -6,7 +6,7 @@ import { CryptoSignaturePrivateKeyHandle } from "src/crypto-layer/signature/Cryp
 import { CryptoSignaturePublicKeyHandle } from "src/crypto-layer/signature/CryptoSignaturePublicKeyHandle";
 import { parameterizedKeyPairSpec } from "./CryptoLayerTestUtil";
 
-async function expectCryptoSignatureKeypairHandle(
+export async function expectCryptoSignatureKeypairHandle(
     cryptoKeyPairHandle: CryptoSignatureKeypairHandle,
     expectedProvider: string,
     spec: KeyPairSpec

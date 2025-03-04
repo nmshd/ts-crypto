@@ -8,6 +8,7 @@ import {
 import { BufferTest } from "./BufferTest.test";
 import { CryptoLayerProviderTest } from "./crypto-layer/CryptoLayerProviderTest.test";
 import { CryptoSignatureKeypairHandleTest } from "./crypto-layer/CryptoSignatureKeypairHandle.test";
+import { CryptoSignaturePrivateKeyHandleTest } from "./crypto-layer/CryptoSignaturePrivateKeyHandle.test";
 import { CryptoDerivationTest } from "./crypto/CryptoDerivationTest.test";
 import { CryptoEncryptionTest } from "./crypto/CryptoEncryptionTest.test";
 import { CryptoExchangeTest } from "./crypto/CryptoExchangeTest.test";
@@ -37,6 +38,7 @@ import { SodiumWrapperTest } from "./crypto/SodiumWrapperTest.test";
     });
     CryptoLayerProviderTest.run();
     CryptoSignatureKeypairHandleTest.run();
+    CryptoSignaturePrivateKeyHandleTest.run();
 
     // === Other ===
     await SodiumWrapper.ready();
