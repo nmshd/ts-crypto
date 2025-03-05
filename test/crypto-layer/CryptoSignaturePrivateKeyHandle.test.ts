@@ -5,22 +5,7 @@ import { expect } from "chai";
 import { CoreBuffer } from "src/CoreBuffer";
 import { CryptoSignaturePrivateKeyHandle } from "src/crypto-layer/signature/CryptoSignaturePrivateKeyHandle";
 import { CryptoSignatures } from "src/signature/CryptoSignatures";
-
-export async function expectCryptoSignaturePrivateKeyHandle(
-    value: CryptoSignaturePrivateKeyHandle,
-    id: string,
-    spec: KeyPairSpec,
-    providerName: string
-): Promise<void> {
-    expect(value).to.be.instanceOf(CryptoSignaturePrivateKeyHandle);
-    expect(value.id).to.equal(id);
-    expect(value.providerName).to.equal(providerName);
-    expect(value.spec).to.deep.equal(spec);
-    expect(value.keyPairHandle).to.be.ok;
-    expect(value.provider).to.be.ok;
-    expect(await value.keyPairHandle.id()).to.equal(id);
-    expect(await value.provider.providerName()).to.equal(providerName);
-}
+import { expectCryptoSignatureAsymmetricKeyHandle } from "./CryptoLayerTestUtil";
 
 export class CryptoSignaturePrivateKeyHandleTest {
     public static run(): void {
@@ -71,7 +56,7 @@ export class CryptoSignaturePrivateKeyHandleTest {
 
                     const loadedPrivateKeyHandle =
                         await CryptoSignaturePrivateKeyHandle.fromJSON(serializedPrivateKeyHandle);
-                    await expectCryptoSignaturePrivateKeyHandle(loadedPrivateKeyHandle, id, spec, providerName);
+                    await expectCryptoSignatureAsymmetricKeyHandle(loadedPrivateKeyHandle, id, spec, providerName);
                 });
 
                 it("toBase64 and fromBase64", async function () {
@@ -83,7 +68,12 @@ export class CryptoSignaturePrivateKeyHandleTest {
                     const serializedPrivateKey = privateKeyHandle.toBase64();
                     expect(serializedPrivateKey).to.be.ok;
                     const deserializedPrivateKey = CryptoSignaturePrivateKeyHandle.fromBase64(serializedPrivateKey);
-                    await expectCryptoSignaturePrivateKeyHandle(await deserializedPrivateKey, id, spec, providerName);
+                    await expectCryptoSignatureAsymmetricKeyHandle(
+                        await deserializedPrivateKey,
+                        id,
+                        spec,
+                        providerName
+                    );
                 });
 
                 // eslint-disable-next-line jest/expect-expect
@@ -98,7 +88,7 @@ export class CryptoSignaturePrivateKeyHandleTest {
                         id: id,
                         providerName: providerName
                     });
-                    await expectCryptoSignaturePrivateKeyHandle(loadedPrivateKeyHandle, id, spec, providerName);
+                    await expectCryptoSignatureAsymmetricKeyHandle(loadedPrivateKeyHandle, id, spec, providerName);
                 });
             });
         });

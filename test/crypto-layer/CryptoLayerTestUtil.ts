@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import { AsymmetricKeySpec, Cipher, CryptoHash, KeyPairSpec } from "@nmshd/rs-crypto-types";
+import { expect } from "chai";
 import { defaultsDeep } from "lodash";
+import { CryptoAsymmetricKeyHandle } from "src/crypto-layer/CryptoAsymmetricKeyHandle";
 
 export function parameterizedKeyPairSpec(
     name: string,
@@ -48,4 +50,20 @@ export function parameterizedKeyPairSpec(
             });
         });
     });
+}
+
+export async function expectCryptoSignatureAsymmetricKeyHandle<T extends CryptoAsymmetricKeyHandle>(
+    value: T,
+    id: string,
+    spec: KeyPairSpec,
+    providerName: string
+): Promise<void> {
+    expect(value).to.be.instanceOf(CryptoAsymmetricKeyHandle);
+    expect(value.id).to.equal(id);
+    expect(value.providerName).to.equal(providerName);
+    expect(value.spec).to.deep.equal(spec);
+    expect(value.keyPairHandle).to.be.ok;
+    expect(value.provider).to.be.ok;
+    expect(await value.keyPairHandle.id()).to.equal(id);
+    expect(await value.provider.providerName()).to.equal(providerName);
 }
