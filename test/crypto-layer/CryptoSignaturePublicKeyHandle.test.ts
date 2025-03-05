@@ -9,6 +9,7 @@ export class CryptoSignaturePublicKeyHandleTest {
     public static run(): void {
         describe("CryptoSignaturePublicKeyHandle", function () {
             describe("CryptoSignaturePublicKeyHandle SoftwareProvider P256 Sha2_512", function () {
+                const providerIdent = { providerName: "SoftwareProvider" };
                 const spec: KeyPairSpec = {
                     asym_spec: "P256",
                     cipher: null,
@@ -16,7 +17,6 @@ export class CryptoSignaturePublicKeyHandleTest {
                     ephemeral: false,
                     non_exportable: false
                 };
-                const providerIdent = { providerName: "SoftwareProvider" };
 
                 it("toJSON() and fromJSON()", async function () {
                     const cryptoKeyPairHandle = await CryptoSignatures.generateKeypairHandle(providerIdent, spec);
