@@ -42,6 +42,10 @@ export class CryptoSignatureKeypairHandle extends CryptoSerializableAsync implem
         };
     }
 
+    public override toBase64(verbose = true): string {
+        return CoreBuffer.utf8_base64(this.serialize(verbose));
+    }
+
     public static async from(
         value: CryptoSignatureKeypairHandle | ICryptoSignatureKeypairHandle
     ): Promise<CryptoSignatureKeypairHandle> {
@@ -60,19 +64,32 @@ export class CryptoSignatureKeypairHandle extends CryptoSerializableAsync implem
 
     protected static override preFrom(value: any): any {
         if (value.pub) {
-            value = {
-                publicKey: value.pub,
-                privateKey: value.prv
-            };
+            value = { publicKey: value.pub, privateKey: value.prv };
         }
 
-        if (value.privateKey.spec !== value.publicKey.spec) {
+        if (value.privateKey && value.privateKey.spec !== value.publicKey.spec) {
             throw new CryptoError(
                 CryptoErrorCode.SignatureWrongAlgorithm,
                 "Spec of private and public key handles do not match."
             );
         }
 
+        // Strips the neon JsBox. Otherwise ts-serval will use the neon objects for the
+        // new CryptoSignatureKeypairHandle and change them in a way that makes them unusable.
+        if (value.privateKey.keyPairHandle) {
+            value = {
+                publicKey: {
+                    id: value.publicKey.id,
+                    spec: value.publicKey.spec,
+                    providerName: value.publicKey.providerName
+                },
+                privateKey: {
+                    id: value.privateKey.id,
+                    spec: value.privateKey.spec,
+                    providerName: value.privateKey.providerName
+                }
+            };
+        }
         return value;
     }
 

@@ -18,7 +18,7 @@ export class CryptoSignaturePublicKeyHandleTest {
                 };
                 const providerIdent = { providerName: "SoftwareProvider" };
 
-                it("toJSON and fromJSON", async function () {
+                it("toJSON() and fromJSON()", async function () {
                     const cryptoKeyPairHandle = await CryptoSignatures.generateKeypairHandle(providerIdent, spec);
                     const publicKeyHandle = cryptoKeyPairHandle.publicKey;
                     const id = publicKeyHandle.id;
@@ -36,7 +36,7 @@ export class CryptoSignaturePublicKeyHandleTest {
                     await expectCryptoSignatureAsymmetricKeyHandle(loadedpublicKeyHandle, id, spec, providerName);
                 });
 
-                it("toBase64 and fromBase64", async function () {
+                it("toBase64() and fromBase64()", async function () {
                     const cryptoKeyPairHandle = await CryptoSignatures.generateKeypairHandle(providerIdent, spec);
                     const publicKeyHandle = cryptoKeyPairHandle.publicKey;
                     const id = publicKeyHandle.id;
@@ -49,7 +49,7 @@ export class CryptoSignaturePublicKeyHandleTest {
                 });
 
                 // eslint-disable-next-line jest/expect-expect
-                it("from", async function () {
+                it("from() ICryptoSignaturePublicKeyHandle", async function () {
                     const cryptoKeyPairHandle = await CryptoSignatures.generateKeypairHandle(providerIdent, spec);
                     const publicKeyHandle = cryptoKeyPairHandle.publicKey;
                     const id = publicKeyHandle.id;
@@ -60,6 +60,17 @@ export class CryptoSignaturePublicKeyHandleTest {
                         id: id,
                         providerName: providerName
                     });
+                    await expectCryptoSignatureAsymmetricKeyHandle(loadedpublicKeyHandle, id, spec, providerName);
+                });
+
+                // eslint-disable-next-line jest/expect-expect
+                it("from() CryptoSignaturePublicKeyHandle", async function () {
+                    const cryptoKeyPairHandle = await CryptoSignatures.generateKeypairHandle(providerIdent, spec);
+                    const publicKeyHandle = cryptoKeyPairHandle.publicKey;
+                    const id = publicKeyHandle.id;
+                    const providerName = publicKeyHandle.providerName;
+
+                    const loadedpublicKeyHandle = await CryptoSignaturePublicKeyHandle.from(publicKeyHandle);
                     await expectCryptoSignatureAsymmetricKeyHandle(loadedpublicKeyHandle, id, spec, providerName);
                 });
             });
