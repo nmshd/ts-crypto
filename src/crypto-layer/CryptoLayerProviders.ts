@@ -26,11 +26,20 @@ const DEFAULT_PROVIDER_CONFIG: ProviderConfig = {
 async function providerBySecurityMapFromProviderByNameMap(
     providersByName: Map<string, Provider>
 ): Promise<Map<SecurityLevel, Provider[]>> {
-    const providersBySecurity = new Map();
-    for (const [_key, value] of providersByName) {
-        const caps = await value.getCapabilities();
-        if (!caps?.min_security_level) {
-            continue;
+    const providersBySecurity = new Map<SecurityLevel, Provider[]>();
+    for (const [providerName, provider] of providersByName) {
+        const caps = await provider.getCapabilities();
+        if (!caps) {
+            throw new CryptoError(
+                CryptoErrorCode.CalFailedLoadingProvider,
+                `Failed fetching capabilities or security levels of provider ${providerName}`
+            );
+        }
+        if (caps.max_security_level !== caps.min_security_level) {
+            throw new CryptoError(
+                CryptoErrorCode.CalFailedLoadingProvider,
+                `Minimum and maximum security levels of provider ${providerName} must be the same.`
+            );
         }
         const securityLevel = caps.min_security_level;
 
@@ -38,7 +47,7 @@ async function providerBySecurityMapFromProviderByNameMap(
             providersBySecurity.set(securityLevel, []);
         }
 
-        providersBySecurity.get(securityLevel)!.push(value);
+        providersBySecurity.get(securityLevel)!.push(provider);
     }
     return providersBySecurity;
 }

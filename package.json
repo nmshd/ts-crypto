@@ -34,7 +34,7 @@
         "test": "npm run test:node && npm run test:web",
         "test:local": "npm run test",
         "test:ci": "npm run test",
-        "test:node": "mocha -r ts-node/register -r tsconfig-paths/register -r test/fixtures.ts ./test/index.ts --project ./test/tsconfig.json --exit",
+        "test:node": "mocha -r ts-node/register -r tsconfig-paths/register -r test/fixtures.ts ./test/index.ts --project ./test/tsconfig.json --exit --delay --fail-zero",
         "test:local:node": "npm run test:node",
         "test:web": "browsertest-runner",
         "test:web:debug": "browsertest-runner --debug"
@@ -50,6 +50,7 @@
         "@js-soft/eslint-config-ts": "^1.6.13",
         "@js-soft/license-check": "1.0.9",
         "@js-soft/ts-serval": "2.0.10",
+        "@nmshd/rs-crypto-node": "^0.1.2",
         "@types/chai": "^5.0.0",
         "@types/libsodium-wrappers-sumo": "^0.7.8",
         "@types/mocha": "^10.0.9",

@@ -2,6 +2,7 @@ export * from "./BaseX";
 export * from "./buildInformation";
 export * from "./CoreBuffer";
 export * from "./crypto-layer/CryptoLayerConfig";
+export * from "./crypto-layer/CryptoLayerProviders";
 export * from "./crypto-layer/CryptoPrivateKeyHandle";
 export * from "./CryptoDerivation";
 export * from "./CryptoError";

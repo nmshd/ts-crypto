@@ -33,7 +33,7 @@ export class CryptoSignaturesWithCryptoLayer {
         );
         const publicKey = await privateKey.toPublicKey();
 
-        return await CryptoSignatureKeypairHandle.from({ publicKey, privateKey });
+        return CryptoSignatureKeypairHandle.fromPublicAndPrivateKeys(publicKey, privateKey);
     }
 
     public static async sign(
