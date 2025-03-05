@@ -218,7 +218,7 @@ export class CryptoEncryptionWithLibsodium {
 
     public static async decryptWithCounter(
         cipher: CryptoCipher,
-        secretKey: CryptoSecretKey | CoreBuffer, // No CryptoSecretKeyHandle here
+        secretKey: CryptoSecretKey | CoreBuffer,
         nonce: CoreBuffer,
         counter: number,
         algorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.XCHACHA20_POLY1305
@@ -229,7 +229,7 @@ export class CryptoEncryptionWithLibsodium {
             CryptoValidation.checkEncryptionAlgorithm(algorithm);
             CryptoValidation.checkNonceForAlgorithm(nonce, algorithm);
         } else {
-            throw new CryptoError( // More specific error message
+            throw new CryptoError(
                 CryptoErrorCode.EncryptionWrongSecretKey,
                 "The given secret key must be of type CryptoSecretKey or CoreBuffer."
             );

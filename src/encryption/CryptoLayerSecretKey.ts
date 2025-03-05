@@ -3,7 +3,8 @@ import { KeyHandle } from "@nmshd/rs-crypto-types";
 import { getProviderOrThrow } from "src/crypto-layer/CryptoLayerProviders";
 import { CryptoSerializableAsync } from "src/CryptoSerializable";
 import { CryptoValidation } from "../CryptoValidation";
-import { CryptoEncryptionAlgorithm, CryptoEncryptionAlgorithmUtil } from "./CryptoEncryption";
+import { CryptoEncryptionAlgorithm } from "./CryptoEncryption";
+import { CryptoEncryptionAlgorithmUtil } from "./CryptoEncryptionAlgorithmUtil";
 
 interface ICryptoLayerSecretKeySerialized extends ISerialized {
     algorithm: number;
