@@ -1,8 +1,10 @@
 import { ISerializable, ISerialized, type } from "@js-soft/ts-serval";
+import { CryptoSignaturePublicKeyHandle } from "src/crypto-layer/signature/CryptoSignaturePublicKeyHandle";
 import { CoreBuffer, IClearable, ICoreBuffer } from "../CoreBuffer";
 import { CryptoPublicKey } from "../CryptoPublicKey";
 import { CryptoSignatureAlgorithm } from "./CryptoSignatureAlgorithm";
 import { CryptoSignatureValidation } from "./CryptoSignatureValidation";
+import { CryptoSignatureAlgorithmUtil } from "./ CryptoSignatureAlgorithmUtil";
 
 export interface ICryptoSignaturePublicKeySerialized extends ISerialized {
     alg: number;
@@ -51,6 +53,14 @@ export class CryptoSignaturePublicKey extends CryptoPublicKey implements ICrypto
         CryptoSignatureValidation.checkSignaturePublicKey(value.publicKey, value.algorithm, "publicKey");
 
         return value;
+    }
+
+    public static async fromHandle(handle: CryptoSignaturePublicKeyHandle): Promise<CryptoSignaturePublicKey> {
+        return CryptoSignaturePublicKey.from({
+            algorithm: CryptoSignatureAlgorithmUtil.fromCalSigSpec(handle.spec.asym_spec),
+            // Convert the serialized key string into a CoreBuffer instance.
+            publicKey: CoreBuffer.from(await handle.toSerializedString())
+        });
     }
 
     public static fromJSON(value: ICryptoSignaturePublicKeySerialized): CryptoSignaturePublicKey {

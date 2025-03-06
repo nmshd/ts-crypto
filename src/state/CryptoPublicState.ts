@@ -1,6 +1,5 @@
 import { ISerializable, ISerialized, Serializable, serialize, type, validate } from "@js-soft/ts-serval";
 import { CoreBuffer, IClearable } from "../CoreBuffer";
-import { CryptoPublicStateHandle } from "../crypto-layer/state/CryptoPublicStateHandle";
 import { CryptoValidation } from "../CryptoValidation";
 import { CryptoEncryptionAlgorithm } from "../encryption/CryptoEncryption";
 import { CryptoStateType } from "./CryptoStateType";
@@ -66,33 +65,6 @@ export class CryptoPublicState extends Serializable implements ICryptoPublicStat
         CryptoValidation.checkNonce(value.nonce, value.algorithm);
 
         return value;
-    }
-
-    /**
-     * Creates a CryptoPublicState from a CryptoPublicStateHandle
-     * @param handle The CAL public state handle
-     * @returns A CryptoPublicState instance
-     */
-    public static async fromHandle(handle: CryptoPublicStateHandle): Promise<CryptoPublicState> {
-        return CryptoPublicState.from({
-            id: handle.id,
-            nonce: handle.nonce,
-            algorithm: handle.algorithm,
-            stateType: handle.stateType
-        });
-    }
-
-    /**
-     * Converts this public state to a CAL handle
-     * @returns A CAL public state handle
-     */
-    public async toHandle(): Promise<CryptoPublicStateHandle> {
-        return await CryptoPublicStateHandle.from({
-            id: this.id,
-            nonce: this.nonce,
-            algorithm: this.algorithm,
-            stateType: this.stateType
-        });
     }
 
     public static from(value: CryptoPublicState | ICryptoPublicState): CryptoPublicState {

@@ -1,4 +1,5 @@
 import { ISerializable, ISerialized, serialize, type, validate } from "@js-soft/ts-serval";
+import { CryptoSecretKeyHandle } from "src/crypto-layer/encryption/CryptoSecretKeyHandle";
 import { CoreBuffer, IClearable, ICoreBuffer } from "../CoreBuffer";
 import { CryptoSerializable } from "../CryptoSerializable";
 import { CryptoValidation } from "../CryptoValidation";
@@ -64,5 +65,13 @@ export class CryptoSecretKey extends CryptoSerializable implements ICryptoSecret
 
     public static fromBase64(value: string): CryptoSecretKey {
         return this.deserialize(CoreBuffer.base64_utf8(value));
+    }
+
+    public static async fromHandle(handle: CryptoSecretKeyHandle): Promise<CryptoSecretKey> {
+        const serializedKey = await handle.toSerializedString();
+        return CryptoSecretKey.from({
+            algorithm: handle.algorithm,
+            secretKey: CoreBuffer.from(serializedKey)
+        });
     }
 }
