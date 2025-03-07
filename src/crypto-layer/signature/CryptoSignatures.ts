@@ -10,7 +10,18 @@ import { CryptoSignatureKeypairHandle } from "./CryptoSignatureKeypair";
 import { CryptoSignaturePrivateKeyHandle } from "./CryptoSignaturePrivateKeyHandle";
 import { CryptoSignaturePublicKeyHandle } from "./CryptoSignaturePublicKeyHandle";
 
+/**
+ * Provides cryptographic signature functionalities using the crypto layer.
+ * This class leverages an underlying crypto provider to generate keypairs,
+ * sign content, and verify signatures.
+ */
 export class CryptoSignaturesWithCryptoLayer {
+    /**
+     * Asynchronously converts a private key handle into its corresponding public key handle.
+     *
+     * @param privateKey - The {@link CryptoSignaturePrivateKeyHandle} to convert.
+     * @returns A Promise that resolves to a {@link CryptoSignaturePublicKeyHandle}.
+     */
     public static async privateKeyToPublicKey(
         privateKey: CryptoSignaturePrivateKeyHandle
     ): Promise<CryptoSignaturePublicKeyHandle> {
@@ -18,8 +29,11 @@ export class CryptoSignaturesWithCryptoLayer {
     }
 
     /**
-     * Generates a keypair for the specified elliptic algorithm
-     * @param algorithm
+     * Generates a signature keypair for the specified elliptic algorithm.
+     *
+     * @param providerIdent - The identifier for the crypto provider to use.
+     * @param spec - The specification/configuration for the keypair.
+     * @returns A Promise that resolves to a {@link CryptoSignatureKeypairHandle} containing the generated keypair.
      */
     public static async generateKeypair(
         providerIdent: ProviderIdentifier,
@@ -32,10 +46,18 @@ export class CryptoSignaturesWithCryptoLayer {
             rawKeyPairHandle
         );
         const publicKey = await privateKey.toPublicKey();
-
         return CryptoSignatureKeypairHandle.fromPublicAndPrivateKeys(publicKey, privateKey);
     }
 
+    /**
+     * Signs the given content using the provided private key handle.
+     *
+     * @param content - The {@link CoreBuffer} containing the data to be signed.
+     * @param privateKey - The {@link CryptoSignaturePrivateKeyHandle} to use for signing.
+     * @param id - Optional identifier for the signature.
+     * @returns A Promise that resolves to a {@link CryptoSignature} representing the signature.
+     * @throws {@link CryptoError} with {@link CryptoErrorCode.SignatureSign} if signing fails.
+     */
     public static async sign(
         content: CoreBuffer,
         privateKey: CryptoSignaturePrivateKeyHandle,
@@ -56,6 +78,16 @@ export class CryptoSignaturesWithCryptoLayer {
         }
     }
 
+    /**
+     * Verifies a signature against the provided content using the specified public key handle.
+     *
+     * @param content - The {@link CoreBuffer} containing the data whose signature is to be verified.
+     * @param signature - The {@link CryptoSignature} to verify.
+     * @param publicKey - The {@link CryptoSignaturePublicKeyHandle} corresponding to the signing key.
+     * @returns A Promise that resolves to a boolean indicating whether the signature is valid.
+     * @throws {@link CryptoError} with {@link CryptoErrorCode.SignatureWrongAlgorithm} if the signature algorithm does not match the public key's algorithm.
+     * @throws {@link CryptoError} with {@link CryptoErrorCode.SignatureVerify} if verification fails.
+     */
     public static async verify(
         content: CoreBuffer,
         signature: CryptoSignature,

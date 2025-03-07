@@ -95,7 +95,9 @@ export class CryptoExchangeWithCryptoLayer {
         }
 
         try {
-            const provider = getProviderOrThrow(requestorKeypair.privateKey.providerIdentifier);
+            const provider = getProviderOrThrow({
+                providerName: requestorKeypair.privateKey.providerName
+            });
             const dhExchangeSpec: KeyPairSpec = CryptoExchangeWithCryptoLayer.createDHExchangeSpec(
                 CryptoExchangeAlgorithm.ECDH_X25519
             );
@@ -152,7 +154,9 @@ export class CryptoExchangeWithCryptoLayer {
         }
 
         try {
-            const provider = getProviderOrThrow(templatorKeypair.privateKey.providerIdentifier);
+            const provider = getProviderOrThrow({
+                providerName: templatorKeypair.privateKey.providerName
+            });
             const dhExchangeSpec: KeyPairSpec = CryptoExchangeWithCryptoLayer.createDHExchangeSpec(
                 CryptoExchangeAlgorithm.ECDH_X25519
             );

@@ -70,12 +70,9 @@ export class CryptoEncryptionWithCryptoLayer {
     public static async encryptWithCounter(
         plaintext: CoreBuffer,
         secretKeyHandle: CryptoSecretKeyHandle,
-        // nonce: CoreBuffer,
         counter: number
     ): Promise<CryptoCipher> {
         const encryptionAlgorithm = secretKeyHandle.algorithm;
-
-        // const publicnonce = nonce.buffer;
 
         try {
             // Corrected: Use encryptData and destructure

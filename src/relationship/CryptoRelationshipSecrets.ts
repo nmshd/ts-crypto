@@ -1,4 +1,4 @@
-import { ISerializable, serialize, type, validate } from "@js-soft/ts-serval";
+import { serialize, type, validate } from "@js-soft/ts-serval";
 import { CoreBuffer } from "../CoreBuffer";
 import { CryptoDerivation } from "../CryptoDerivation";
 import { CryptoError } from "../CryptoError";
@@ -6,14 +6,14 @@ import { CryptoErrorCode } from "../CryptoErrorCode";
 import { CryptoSerializable } from "../CryptoSerializable";
 import { CryptoCipher } from "../encryption/CryptoCipher";
 import { CryptoEncryption, CryptoEncryptionAlgorithm } from "../encryption/CryptoEncryption";
-import { CryptoSecretKey, ICryptoSecretKey } from "../encryption/CryptoSecretKey";
+import { CryptoSecretKey } from "../encryption/CryptoSecretKey";
 import { CryptoExchange } from "../exchange/CryptoExchange";
-import { CryptoExchangeKeypair, ICryptoExchangeKeypair } from "../exchange/CryptoExchangeKeypair";
-import { CryptoExchangePublicKey, ICryptoExchangePublicKey } from "../exchange/CryptoExchangePublicKey";
+import { CryptoExchangeKeypair } from "../exchange/CryptoExchangeKeypair";
+import { CryptoExchangePublicKey } from "../exchange/CryptoExchangePublicKey";
 import { CryptoHashAlgorithm } from "../hash/CryptoHash";
 import { CryptoSignature } from "../signature/CryptoSignature";
-import { CryptoSignatureKeypair, ICryptoSignatureKeypair } from "../signature/CryptoSignatureKeypair";
-import { CryptoSignaturePublicKey, ICryptoSignaturePublicKey } from "../signature/CryptoSignaturePublicKey";
+import { CryptoSignatureKeypair } from "../signature/CryptoSignatureKeypair";
+import { CryptoSignaturePublicKey } from "../signature/CryptoSignaturePublicKey";
 import { CryptoSignatures } from "../signature/CryptoSignatures";
 import { ICryptoPrivateState } from "../state/CryptoPrivateState";
 import { CryptoPrivateStateReceive } from "../state/CryptoPrivateStateReceive";
@@ -24,22 +24,37 @@ import { CryptoRelationshipPublicResponse } from "./CryptoRelationshipPublicResp
 import { CryptoRelationshipRequestSecrets } from "./CryptoRelationshipRequestSecrets";
 import { CryptoRelationshipType } from "./CryptoRelationshipType";
 
-export interface ICryptoRelationshipSecrets extends ISerializable {
+// The handle-based imports for the unified approach
+import { CryptoExchangeKeypairHandle } from "src/crypto-layer/exchange/CryptoExchangeKeypairHandle";
+import { CryptoExchangePublicKeyHandle } from "src/crypto-layer/exchange/CryptoExchangePublicKeyHandle";
+import { CryptoRelationshipPublicRequestHandle } from "src/crypto-layer/relationship/CryptoRelationshipPublicRequestHandle";
+import { CryptoRelationshipRequestSecretsHandle } from "src/crypto-layer/relationship/CryptoRelationshipRequestSecretsHandle";
+import { CryptoSignaturePublicKeyHandle } from "src/crypto-layer/signature/CryptoSignaturePublicKeyHandle";
+import { CryptoRelationshipPublicResponseHandle } from "../crypto-layer/relationship/CryptoRelationshipPublicResponseHandle";
+import { CryptoRelationshipSecretsHandle } from "../crypto-layer/relationship/CryptoRelationshipSecretsHandle";
+
+/**
+ * The original interface describing libsodium-based relationship secrets.
+ */
+export interface ICryptoRelationshipSecrets {
     id?: string;
     type: CryptoRelationshipType;
-    exchangeKeypair: ICryptoExchangeKeypair;
-    signatureKeypair: ICryptoSignatureKeypair;
+    exchangeKeypair: CryptoExchangeKeypair;
+    signatureKeypair: CryptoSignatureKeypair;
     transmitState: ICryptoPrivateState;
     receiveState: ICryptoPrivateState;
-    peerExchangeKey: ICryptoExchangePublicKey;
-    peerSignatureKey: ICryptoSignaturePublicKey;
-    peerTemplateKey: ICryptoExchangePublicKey;
-    peerIdentityKey?: ICryptoSignaturePublicKey;
-    requestSecretKey: ICryptoSecretKey;
+    peerExchangeKey: CryptoExchangePublicKey;
+    peerSignatureKey: CryptoSignaturePublicKey;
+    peerTemplateKey: CryptoExchangePublicKey;
+    peerIdentityKey?: CryptoSignaturePublicKey;
+    requestSecretKey: CryptoSecretKey;
 }
 
-@type("CryptoRelationshipSecrets")
-export class CryptoRelationshipSecrets extends CryptoSerializable implements ICryptoRelationshipSecrets {
+/**
+ * The libsodium-based relationship secrets class.
+ */
+@type("CryptoRelationshipSecretsWithLibsodium")
+export class CryptoRelationshipSecretsWithLibsodium extends CryptoSerializable implements ICryptoRelationshipSecrets {
     @validate({ nullable: true })
     @serialize()
     public id?: string;
@@ -84,7 +99,7 @@ export class CryptoRelationshipSecrets extends CryptoSerializable implements ICr
     @serialize({ alias: "rsk" })
     public requestSecretKey: CryptoSecretKey;
 
-    public static from(value: ICryptoRelationshipSecrets): CryptoRelationshipSecrets {
+    public static from(value: ICryptoRelationshipSecrets): CryptoRelationshipSecretsWithLibsodium {
         return this.fromAny(value);
     }
 
@@ -107,7 +122,7 @@ export class CryptoRelationshipSecrets extends CryptoSerializable implements ICr
         if (!this.peerIdentityKey) {
             throw new CryptoError(
                 CryptoErrorCode.RelationshipNoPeer,
-                "The peer of this relationship is not set. You have to initialize this relationship with a peer first."
+                "The peer identity key is not set. This relationship must be initialized with a peer's identity key."
             );
         }
         return await CryptoSignatures.verify(content, signature, this.peerIdentityKey);
@@ -130,17 +145,21 @@ export class CryptoRelationshipSecrets extends CryptoSerializable implements ICr
     }
 
     public toPublicResponse(): CryptoRelationshipPublicResponse {
-        return CryptoRelationshipPublicResponse.from({
-            exchangeKey: this.exchangeKeypair.publicKey,
-            signatureKey: this.signatureKeypair.publicKey,
-            state: this.transmitState.toPublicState()
-        });
+        const publicResponse = new CryptoRelationshipPublicResponse();
+        publicResponse.exchangeKey = this.exchangeKeypair.publicKey;
+        publicResponse.signatureKey = this.signatureKeypair.publicKey;
+        publicResponse.state = this.transmitState.toPublicState();
+        return publicResponse;
     }
 
+    /**
+     * Creates a libsodium-based relationship secrets from a relationship public response,
+     * typically used by the requestor after receiving the templator's response.
+     */
     public static async fromRelationshipResponse(
         response: CryptoRelationshipPublicResponse,
         request: CryptoRelationshipRequestSecrets
-    ): Promise<CryptoRelationshipSecrets> {
+    ): Promise<CryptoRelationshipSecretsWithLibsodium> {
         const signatureKeypair = request.signatureKeypair;
         const exchangeKeypair = request.exchangeKeypair;
         const requestSecretKey = request.secretKey;
@@ -169,25 +188,29 @@ export class CryptoRelationshipSecrets extends CryptoSerializable implements ICr
             })
         ]);
 
-        return CryptoRelationshipSecrets.from({
-            exchangeKeypair: exchangeKeypair,
-            signatureKeypair: signatureKeypair,
-            receiveState: receiveState,
-            transmitState: transmitState,
+        return this.from({
+            exchangeKeypair,
+            signatureKeypair,
+            receiveState,
+            transmitState,
             type: ownType,
-            peerExchangeKey: peerExchangeKey,
-            peerSignatureKey: peerSignatureKey,
-            peerTemplateKey: peerTemplateKey,
-            peerIdentityKey: peerIdentityKey,
-            requestSecretKey: requestSecretKey
+            peerExchangeKey,
+            peerSignatureKey,
+            peerTemplateKey,
+            peerIdentityKey,
+            requestSecretKey
         });
     }
 
+    /**
+     * Creates a libsodium-based relationship secrets from a relationship public request,
+     * typically used by the templator after receiving the requestor's data.
+     */
     public static async fromRelationshipRequest(
         request: CryptoRelationshipPublicRequest,
         templateExchangeKeypair: CryptoExchangeKeypair
-    ): Promise<CryptoRelationshipSecrets> {
-        return await CryptoRelationshipSecrets.fromPeerNonce(
+    ): Promise<CryptoRelationshipSecretsWithLibsodium> {
+        return await this.fromPeerNonce(
             request.exchangeKey,
             request.ephemeralKey,
             request.signatureKey,
@@ -198,6 +221,9 @@ export class CryptoRelationshipSecrets extends CryptoSerializable implements ICr
         );
     }
 
+    /**
+     * The "peer nonce" approach – sets up keys & states using ephemeral derivations (libsodium).
+     */
     public static async fromPeerNonce(
         peerExchangeKey: CryptoExchangePublicKey,
         peerTemplateKey: CryptoExchangePublicKey,
@@ -206,7 +232,7 @@ export class CryptoRelationshipSecrets extends CryptoSerializable implements ICr
         templateExchangeKeypair: CryptoExchangeKeypair,
         peerIdentityKey?: CryptoSignaturePublicKey,
         peerType: CryptoRelationshipType = CryptoRelationshipType.Requestor
-    ): Promise<CryptoRelationshipSecrets> {
+    ): Promise<CryptoRelationshipSecretsWithLibsodium> {
         const [signatureKeypair, exchangeKeypair] = await Promise.all([
             CryptoSignatures.generateKeypair(),
             CryptoExchange.generateKeypair()
@@ -239,17 +265,176 @@ export class CryptoRelationshipSecrets extends CryptoSerializable implements ICr
         const masterKey = await CryptoExchange.deriveTemplator(templateExchangeKeypair, peerTemplateKey);
         const secretKey = await CryptoDerivation.deriveKeyFromBase(masterKey.receivingKey, 1, "REQTMP01");
 
-        return CryptoRelationshipSecrets.from({
-            exchangeKeypair: exchangeKeypair,
-            signatureKeypair: signatureKeypair,
-            receiveState: receiveState,
-            transmitState: transmitState,
+        return this.from({
+            exchangeKeypair,
+            signatureKeypair,
+            receiveState,
+            transmitState,
             type: ownType,
-            peerExchangeKey: peerExchangeKey,
-            peerSignatureKey: peerSignatureKey,
-            peerTemplateKey: peerTemplateKey,
-            peerIdentityKey: peerIdentityKey,
+            peerExchangeKey,
+            peerSignatureKey,
+            peerTemplateKey,
+            peerIdentityKey,
             requestSecretKey: secretKey
         });
+    }
+}
+
+/**
+ * A simple flag indicating if handle-based usage is available.
+ */
+let relationshipSecretsProviderInitialized = false;
+
+/**
+ * Call this during initialization if you have a crypto-layer provider for relationship secrets.
+ */
+export function initCryptoRelationshipSecrets(): void {
+    relationshipSecretsProviderInitialized = true;
+}
+
+/**
+ * The "unified" class that checks if the object is handle-based and calls the handle-based code if so,
+ * or calls libsodium fallback if not.
+ */
+@type("CryptoRelationshipSecrets")
+export class CryptoRelationshipSecrets extends CryptoRelationshipSecretsWithLibsodium {
+    public override async sign(content: CoreBuffer, algorithm = CryptoHashAlgorithm.SHA256): Promise<CryptoSignature> {
+        if (relationshipSecretsProviderInitialized && this.exchangeKeypair instanceof CryptoExchangeKeypairHandle) {
+            // Delegate to the handle-based instance
+            const handle = this as unknown as CryptoRelationshipSecretsHandle;
+            return await handle.sign(content, algorithm);
+        }
+        return await super.sign(content, algorithm);
+    }
+
+    public override async verifyOwn(content: CoreBuffer, signature: CryptoSignature): Promise<boolean> {
+        if (relationshipSecretsProviderInitialized && this.exchangeKeypair instanceof CryptoExchangeKeypairHandle) {
+            return await (this as unknown as CryptoRelationshipSecretsHandle).verifyOwn(content, signature);
+        }
+        return await super.verifyOwn(content, signature);
+    }
+
+    public override async verifyPeer(content: CoreBuffer, signature: CryptoSignature): Promise<boolean> {
+        if (relationshipSecretsProviderInitialized && this.exchangeKeypair instanceof CryptoExchangeKeypairHandle) {
+            return await (this as unknown as CryptoRelationshipSecretsHandle).verifyPeer(content, signature);
+        }
+        return await super.verifyPeer(content, signature);
+    }
+
+    public override async verifyPeerIdentity(content: CoreBuffer, signature: CryptoSignature): Promise<boolean> {
+        if (relationshipSecretsProviderInitialized && this.exchangeKeypair instanceof CryptoExchangeKeypairHandle) {
+            return await (this as unknown as CryptoRelationshipSecretsHandle).verifyPeerIdentity(content, signature);
+        }
+        return await super.verifyPeerIdentity(content, signature);
+    }
+
+    public override async encrypt(content: CoreBuffer): Promise<CryptoCipher> {
+        if (relationshipSecretsProviderInitialized && this.exchangeKeypair instanceof CryptoExchangeKeypairHandle) {
+            return await (this as unknown as CryptoRelationshipSecretsHandle).encrypt(content);
+        }
+        return await super.encrypt(content);
+    }
+
+    public override async decryptOwn(cipher: CryptoCipher): Promise<CoreBuffer> {
+        if (relationshipSecretsProviderInitialized && this.exchangeKeypair instanceof CryptoExchangeKeypairHandle) {
+            return await (this as unknown as CryptoRelationshipSecretsHandle).decryptOwn(cipher);
+        }
+        return await super.decryptOwn(cipher);
+    }
+
+    public override async decryptPeer(cipher: CryptoCipher, omitCounterCheck = false): Promise<CoreBuffer> {
+        if (relationshipSecretsProviderInitialized && this.exchangeKeypair instanceof CryptoExchangeKeypairHandle) {
+            return await (this as unknown as CryptoRelationshipSecretsHandle).decryptPeer(cipher, omitCounterCheck);
+        }
+        return await super.decryptPeer(cipher, omitCounterCheck);
+    }
+
+    public override async decryptRequest(cipher: CryptoCipher): Promise<CoreBuffer> {
+        if (relationshipSecretsProviderInitialized && this.exchangeKeypair instanceof CryptoExchangeKeypairHandle) {
+            return await (this as unknown as CryptoRelationshipSecretsHandle).decryptRequest(cipher);
+        }
+        return await super.decryptRequest(cipher);
+    }
+
+    /**
+     * Overridden method: if handle-based, produce a handle-based public response (async).
+     * Otherwise, call the libsodium-based method from the parent class.
+     */
+    public override toPublicResponse(): CryptoRelationshipPublicResponse {
+        if (relationshipSecretsProviderInitialized && this.exchangeKeypair instanceof CryptoExchangeKeypairHandle) {
+            // If handle-based usage is active, cast to the handle-based secrets class
+            // and call its async `toPublicResponse()` method.
+            const handle = this as unknown as CryptoRelationshipSecretsHandle;
+            return handle.toPublicResponse() as unknown as CryptoRelationshipPublicResponse;
+        }
+        // fallback to the libsodium-based method
+        return super.toPublicResponse();
+    }
+
+    /**
+     * We override fromRelationshipResponse to detect handle-based usage, calling the handle-based method if so.
+     */
+    public static override async fromRelationshipResponse(
+        response: CryptoRelationshipPublicResponse,
+        request: CryptoRelationshipRequestSecrets
+    ): Promise<CryptoRelationshipSecrets> {
+        // If the exchangeKeypair in the request is handle-based, do handle-based
+        if (relationshipSecretsProviderInitialized && (request.exchangeKeypair as any)?.keyPairHandle) {
+            const handle = await CryptoRelationshipSecretsHandle.fromRelationshipResponse(
+                response as unknown as CryptoRelationshipPublicResponseHandle,
+                request as unknown as CryptoRelationshipRequestSecretsHandle
+            );
+            return handle as unknown as CryptoRelationshipSecrets;
+        }
+        // fallback to libsodium approach
+        const baseResult = await super.fromRelationshipResponse(response, request);
+        return baseResult as CryptoRelationshipSecrets;
+    }
+
+    public static override async fromRelationshipRequest(
+        request: CryptoRelationshipPublicRequest,
+        templateExchangeKeypair: CryptoExchangeKeypair
+    ): Promise<CryptoRelationshipSecrets> {
+        if (relationshipSecretsProviderInitialized && (templateExchangeKeypair as any)?.keyPairHandle) {
+            const handle = await CryptoRelationshipSecretsHandle.fromRelationshipRequest(
+                request as unknown as CryptoRelationshipPublicRequestHandle,
+                templateExchangeKeypair as unknown as CryptoExchangeKeypairHandle
+            );
+            return handle as unknown as CryptoRelationshipSecrets;
+        }
+        return await super.fromRelationshipRequest(request, templateExchangeKeypair);
+    }
+
+    public static override async fromPeerNonce(
+        peerExchangeKey: CryptoExchangePublicKey,
+        peerTemplateKey: CryptoExchangePublicKey,
+        peerSignatureKey: CryptoSignaturePublicKey,
+        peerGeneratedNonce: CoreBuffer,
+        templateExchangeKeypair: CryptoExchangeKeypair,
+        peerIdentityKey?: CryptoSignaturePublicKey,
+        peerType: CryptoRelationshipType = CryptoRelationshipType.Requestor
+    ): Promise<CryptoRelationshipSecrets> {
+        if (relationshipSecretsProviderInitialized && (templateExchangeKeypair as any)?.keyPairHandle) {
+            const handle = await CryptoRelationshipSecretsHandle.fromPeerNonce(
+                peerExchangeKey as unknown as CryptoExchangePublicKeyHandle,
+                peerTemplateKey as unknown as CryptoExchangePublicKeyHandle,
+                peerSignatureKey as unknown as CryptoSignaturePublicKeyHandle,
+                peerGeneratedNonce,
+                templateExchangeKeypair as unknown as CryptoExchangeKeypairHandle,
+                peerIdentityKey as unknown as CryptoSignaturePublicKeyHandle,
+                peerType
+            );
+            return handle as unknown as CryptoRelationshipSecrets;
+        }
+        const baseResult = await super.fromPeerNonce(
+            peerExchangeKey,
+            peerTemplateKey,
+            peerSignatureKey,
+            peerGeneratedNonce,
+            templateExchangeKeypair,
+            peerIdentityKey,
+            peerType
+        );
+        return baseResult as CryptoRelationshipSecrets;
     }
 }

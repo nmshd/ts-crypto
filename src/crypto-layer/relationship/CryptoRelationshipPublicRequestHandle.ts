@@ -1,169 +1,113 @@
 import { ISerializable, ISerialized, serialize, type, validate } from "@js-soft/ts-serval";
-import { CoreBuffer } from "../../CoreBuffer";
+import { CoreBuffer, IClearable } from "../../CoreBuffer";
 import { CryptoSerializableAsync } from "../../CryptoSerializable";
-import { CryptoSecretKeyHandle, ICryptoSecretKeyHandleSerialized } from "../encryption/CryptoSecretKeyHandle";
-import {
-    CryptoExchangeKeypairHandle,
-    ICryptoExchangeKeypairHandleSerialized
-} from "../exchange/CryptoExchangeKeypairHandle";
-import {
-    CryptoExchangePublicKeyHandle,
-    ICryptoExchangePublicKeyHandleSerialized
-} from "../exchange/CryptoExchangePublicKeyHandle";
-import {
-    CryptoSignatureKeypairHandle,
-    ICryptoSignatureKeypairHandleSerialized
-} from "../signature/CryptoSignatureKeypair";
-import {
-    CryptoSignaturePublicKeyHandle,
-    ICryptoSignaturePublicKeyHandleSerialized
-} from "../signature/CryptoSignaturePublicKeyHandle";
+import { CryptoCipher } from "../../encryption/CryptoCipher";
+import { CryptoRandom } from "../../random/CryptoRandom";
+import { CryptoSignature } from "../../signature/CryptoSignature";
+import { CryptoEncryptionWithCryptoLayer } from "../encryption/CryptoEncryption";
+import { CryptoSecretKeyHandle } from "../encryption/CryptoSecretKeyHandle";
+import { CryptoExchangeWithCryptoLayer } from "../exchange/CryptoExchange";
+import { CryptoExchangeKeypairHandle } from "../exchange/CryptoExchangeKeypairHandle";
+import { CryptoExchangePublicKeyHandle } from "../exchange/CryptoExchangePublicKeyHandle";
+import { CryptoSignaturePublicKeyHandle } from "../signature/CryptoSignaturePublicKeyHandle";
+import { CryptoSignaturesWithCryptoLayer } from "../signature/CryptoSignatures";
 
 /**
- * Interface defining the serialized form of {@link CryptoRelationshipRequestSecretsHandle}.
+ * Serialized form of CryptoRelationshipPublicRequestHandle.
  */
-export interface ICryptoRelationshipRequestSecretsHandleSerialized extends ISerialized {
+export interface ICryptoRelationshipPublicRequestHandleSerialized extends ISerialized {
     id?: string;
-    exc: ICryptoExchangeKeypairHandleSerialized;
-    sig: ICryptoSignatureKeypairHandleSerialized;
-    eph: ICryptoExchangeKeypairHandleSerialized;
-    pik: ICryptoSignaturePublicKeyHandleSerialized;
-    pxk: ICryptoExchangePublicKeyHandleSerialized;
-    key: ICryptoSecretKeyHandleSerialized;
+    exc: any;
+    sig: any;
+    eph: any;
     nnc: string;
 }
 
 /**
- * Interface defining the structure of {@link CryptoRelationshipRequestSecretsHandle}.
+ * Interface defining the structure of CryptoRelationshipPublicRequestHandle.
  */
-export interface ICryptoRelationshipRequestSecretsHandle extends ISerializable {
+export interface ICryptoRelationshipPublicRequestHandle extends ISerializable {
     id?: string;
-    exchangeKeypair: CryptoExchangeKeypairHandle;
-    signatureKeypair: CryptoSignatureKeypairHandle;
-    ephemeralKeypair: CryptoExchangeKeypairHandle;
-    peerIdentityKey: CryptoSignaturePublicKeyHandle;
-    peerExchangeKey: CryptoExchangePublicKeyHandle;
-    secretKey: CryptoSecretKeyHandle;
+    exchangeKey: CryptoExchangePublicKeyHandle;
+    signatureKey: CryptoSignaturePublicKeyHandle;
+    ephemeralKey: CryptoExchangePublicKeyHandle;
     nonce: CoreBuffer;
 }
 
-/**
- * Represents a handle to the request secrets for a relationship within the crypto layer.
- * This handle encapsulates references to keypairs, public keys, secret key and nonce, managed by the crypto provider,
- * without exposing the raw key material directly. It extends {@link CryptoSerializableAsync} to support
- * asynchronous serialization and deserialization.
- */
-@type("CryptoRelationshipRequestSecretsHandle")
-export class CryptoRelationshipRequestSecretsHandle
+@type("CryptoRelationshipPublicRequestHandle")
+export class CryptoRelationshipPublicRequestHandle
     extends CryptoSerializableAsync
-    implements ICryptoRelationshipRequestSecretsHandle
+    implements ICryptoRelationshipPublicRequestHandle, IClearable
 {
-    /**
-     * An optional ID for the relationship request secrets.
-     */
     @validate({ nullable: true })
     @serialize()
     public id?: string;
 
-    /**
-     * Handle to the exchange keypair used for the relationship.
-     */
     @validate()
-    @serialize({ alias: "exc" })
-    public exchangeKeypair: CryptoExchangeKeypairHandle;
+    @serialize()
+    public exchangeKey: CryptoExchangePublicKeyHandle;
 
-    /**
-     * Handle to the ephemeral exchange keypair used for the relationship request.
-     */
     @validate()
-    @serialize({ alias: "eph" })
-    public ephemeralKeypair: CryptoExchangeKeypairHandle;
+    @serialize()
+    public signatureKey: CryptoSignaturePublicKeyHandle;
 
-    /**
-     * Handle to the signature keypair used for the relationship.
-     */
     @validate()
-    @serialize({ alias: "sig" })
-    public signatureKeypair: CryptoSignatureKeypairHandle;
+    @serialize()
+    public ephemeralKey: CryptoExchangePublicKeyHandle;
 
-    /**
-     * Handle to the peer's identity signature public key.
-     */
     @validate()
-    @serialize({ alias: "pik" })
-    public peerIdentityKey: CryptoSignaturePublicKeyHandle;
-
-    /**
-     * Handle to the peer's exchange public key.
-     */
-    @validate()
-    @serialize({ alias: "pxk" })
-    public peerExchangeKey: CryptoExchangePublicKeyHandle;
-
-    /**
-     * Handle to the secret key used for encrypting the relationship request.
-     */
-    @validate()
-    @serialize({ alias: "key" })
-    public secretKey: CryptoSecretKeyHandle;
-
-    /**
-     * Nonce (number used once) for the relationship request, ensuring uniqueness and preventing replay attacks.
-     */
-    @validate()
-    @serialize({ alias: "nnc" })
+    @serialize()
     public nonce: CoreBuffer;
 
-    /**
-     * Converts the {@link CryptoRelationshipRequestSecretsHandle} object into a JSON serializable object.
-     *
-     * @param verbose - If `true`, includes the `@type` property in the JSON output. Defaults to `true`.
-     * @returns An {@link ICryptoRelationshipRequestSecretsHandleSerialized} object that is JSON serializable.
-     */
-    public override toJSON(verbose = true): ICryptoRelationshipRequestSecretsHandleSerialized {
+    public override toJSON(verbose = true): ICryptoRelationshipPublicRequestHandleSerialized {
         return {
-            exc: this.exchangeKeypair.toJSON(false),
-            eph: this.ephemeralKeypair.toJSON(false),
-            sig: this.signatureKeypair.toJSON(false),
-            pik: this.peerIdentityKey.toJSON(false),
-            pxk: this.peerExchangeKey.toJSON(false),
-            key: this.secretKey.toJSON(false),
+            exc: this.exchangeKey.toJSON(false),
+            sig: this.signatureKey.toJSON(false),
+            eph: this.ephemeralKey.toJSON(false),
             nnc: this.nonce.toBase64URL(),
             id: this.id,
-            "@type": verbose ? "CryptoRelationshipRequestSecretsHandle" : undefined
+            "@type": verbose ? "CryptoRelationshipPublicRequestHandle" : undefined
         };
     }
 
-    /**
-     * Asynchronously creates a {@link CryptoRelationshipRequestSecretsHandle} instance from a generic value.
-     * This method is designed to handle both instances of {@link CryptoRelationshipRequestSecretsHandle} and
-     * interfaces conforming to {@link ICryptoRelationshipRequestSecretsHandle}.
-     *
-     * @param value - The value to be converted into a {@link CryptoRelationshipRequestSecretsHandle}.
-     * @returns A Promise that resolves to a {@link CryptoRelationshipRequestSecretsHandle} instance.
-     */
+    public clear(): void {
+        this.nonce.clear();
+    }
+
+    /** Handle-based implementation of fromPeer method */
+    public static async fromPeer(
+        providerName: string,
+        peerExchangeKey: CryptoExchangePublicKeyHandle,
+        peerSignatureKey: CryptoSignaturePublicKeyHandle
+    ): Promise<CryptoRelationshipPublicRequestHandle> {
+        const ephemeralKeypair: CryptoExchangeKeypairHandle = await CryptoExchangeWithCryptoLayer.generateKeypair(
+            { providerName },
+            peerExchangeKey.spec
+        );
+
+        const nonce = await CryptoRandom.bytes(24);
+
+        const handle = new CryptoRelationshipPublicRequestHandle();
+        handle.exchangeKey = peerExchangeKey;
+        handle.signatureKey = peerSignatureKey;
+        handle.ephemeralKey = ephemeralKeypair.publicKey;
+        handle.nonce = nonce;
+
+        return handle;
+    }
+
     public static async from(
-        value: CryptoRelationshipRequestSecretsHandle | ICryptoRelationshipRequestSecretsHandle
-    ): Promise<CryptoRelationshipRequestSecretsHandle> {
+        value: CryptoRelationshipPublicRequestHandle | ICryptoRelationshipPublicRequestHandle
+    ): Promise<CryptoRelationshipPublicRequestHandle> {
         return await this.fromAny(value);
     }
 
-    /**
-     * Hook method called before the `from` method during deserialization.
-     * It performs pre-processing and validation of the input value.
-     *
-     * @param value - The value being deserialized.
-     * @returns The processed value.
-     */
     protected static override preFrom(value: any): any {
         if (value.exc) {
             value = {
-                exchangeKeypair: value.exc,
-                ephemeralKeypair: value.eph,
-                signatureKeypair: value.sig,
-                peerIdentityKey: value.pik,
-                peerExchangeKey: value.pxk,
-                secretKey: value.key,
+                exchangeKey: value.exc,
+                signatureKey: value.sig,
+                ephemeralKey: value.eph,
                 nonce: value.nnc,
                 id: value.id
             };
@@ -171,25 +115,25 @@ export class CryptoRelationshipRequestSecretsHandle
         return value;
     }
 
-    /**
-     * Asynchronously creates a {@link CryptoRelationshipRequestSecretsHandle} from a JSON object.
-     *
-     * @param value - JSON object representing the serialized {@link CryptoRelationshipRequestSecretsHandle}.
-     * @returns A Promise that resolves to a {@link CryptoRelationshipRequestSecretsHandle} instance.
-     */
     public static async fromJSON(
-        value: ICryptoRelationshipRequestSecretsHandleSerialized
-    ): Promise<CryptoRelationshipRequestSecretsHandle> {
+        value: ICryptoRelationshipPublicRequestHandleSerialized
+    ): Promise<CryptoRelationshipPublicRequestHandle> {
         return await this.fromAny(value);
     }
 
-    /**
-     * Asynchronously creates a {@link CryptoRelationshipRequestSecretsHandle} from a Base64 encoded string.
-     *
-     * @param value - Base64 encoded string representing the serialized {@link CryptoRelationshipRequestSecretsHandle}.
-     * @returns A Promise that resolves to a {@link CryptoRelationshipRequestSecretsHandle} instance.
-     */
-    public static async fromBase64(value: string): Promise<CryptoRelationshipRequestSecretsHandle> {
+    public static async fromBase64(value: string): Promise<CryptoRelationshipPublicRequestHandle> {
         return await this.deserialize(CoreBuffer.base64_utf8(value));
+    }
+
+    public async verify(content: CoreBuffer, signature: CryptoSignature): Promise<boolean> {
+        return await CryptoSignaturesWithCryptoLayer.verify(content, signature, this.signatureKey);
+    }
+
+    public async encryptRequest(content: CoreBuffer, secretKey: CryptoSecretKeyHandle): Promise<CryptoCipher> {
+        return await CryptoEncryptionWithCryptoLayer.encrypt(content, secretKey);
+    }
+
+    public async decryptRequest(cipher: CryptoCipher, secretKey: CryptoSecretKeyHandle): Promise<CoreBuffer> {
+        return await CryptoEncryptionWithCryptoLayer.decrypt(cipher, secretKey, this.nonce);
     }
 }

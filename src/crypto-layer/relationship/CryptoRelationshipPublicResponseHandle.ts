@@ -193,4 +193,27 @@ export class CryptoRelationshipPublicResponseHandle
             throw new CryptoError(CryptoErrorCode.SignatureVerify, `${e}`);
         }
     }
+
+    /**
+     * Clears all sensitive sub-fields.
+     */
+    public clear(): void {
+        this.exchangeKey.clear();
+        this.signatureKey.clear();
+        this.state.clear();
+    }
+
+    /**
+     * Returns a promise resolving to this handle.
+     */
+    public async toHandle(): Promise<CryptoRelationshipPublicResponseHandle> {
+        return await Promise.resolve(this);
+    }
+
+    /**
+     * Indicates that this object uses the crypto-layer.
+     */
+    public isUsingCryptoLayer(): boolean {
+        return true;
+    }
 }

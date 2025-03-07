@@ -1,9 +1,14 @@
 import { ISerializable, ISerialized, serialize, type, validate } from "@js-soft/ts-serval";
 import { CoreBuffer } from "../../CoreBuffer";
+import { CryptoError } from "../../CryptoError";
+import { CryptoErrorCode } from "../../CryptoErrorCode";
 import { CryptoSerializableAsync } from "../../CryptoSerializable";
+import { CryptoCipher } from "../../encryption/CryptoCipher";
 import { CryptoEncryptionAlgorithm } from "../../encryption/CryptoEncryption";
 import { CryptoStateType } from "../../state/CryptoStateType";
+import { CryptoEncryptionWithCryptoLayer } from "../encryption/CryptoEncryption";
 import { CryptoSecretKeyHandle } from "../encryption/CryptoSecretKeyHandle";
+import { CryptoPublicStateHandle } from "./CryptoPublicStateHandle";
 
 /**
  * Interface defining the serialized form of {@link CryptoPrivateStateHandle}.
@@ -31,44 +36,28 @@ export interface ICryptoPrivateStateHandle extends ISerializable {
 
 /**
  * Represents a handle to a private state for cryptographic operations within the crypto layer.
- * This abstract class provides a base for more specific private state handles,
- * encapsulating common properties like nonce, counter, and algorithm, without exposing
- * sensitive key material. It extends {@link CryptoSerializableAsync} to support
- * asynchronous serialization and deserialization.
+ * This class includes encryption/decryption methods that use the crypto-layer approach,
+ * as well as a method to derive a corresponding {@link CryptoPublicStateHandle}.
+ * It extends {@link CryptoSerializableAsync} to support asynchronous serialization/deserialization.
  */
 @type("CryptoPrivateStateHandle")
 export class CryptoPrivateStateHandle extends CryptoSerializableAsync implements ICryptoPrivateStateHandle {
-    /**
-     * An optional ID for the private state.
-     */
     @validate({ nullable: true })
     @serialize()
     public id?: string;
 
-    /**
-     * Nonce (number used once) for stateful encryption/decryption operations.
-     */
     @validate()
     @serialize()
     public nonce: CoreBuffer;
 
-    /**
-     * Counter for stateful encryption/decryption operations, ensuring message order.
-     */
     @validate()
     @serialize()
     public counter: number;
 
-    /**
-     * The encryption algorithm used for the state.
-     */
     @validate()
     @serialize()
     public algorithm: CryptoEncryptionAlgorithm;
 
-    /**
-     * The type of the crypto state (e.g., Receive, Transmit).
-     */
     @validate()
     @serialize()
     public stateType: CryptoStateType;
@@ -97,11 +86,6 @@ export class CryptoPrivateStateHandle extends CryptoSerializableAsync implements
 
     /**
      * Asynchronously creates a {@link CryptoPrivateStateHandle} instance from a generic value.
-     * This method is designed to handle both instances of {@link CryptoPrivateStateHandle} and
-     * interfaces conforming to {@link ICryptoPrivateStateHandle}.
-     *
-     * @param value - The value to be converted into a {@link CryptoPrivateStateHandle}.
-     * @returns A Promise that resolves to a {@link CryptoPrivateStateHandle} instance.
      */
     public static async from(
         value: CryptoPrivateStateHandle | ICryptoPrivateStateHandle
@@ -109,13 +93,6 @@ export class CryptoPrivateStateHandle extends CryptoSerializableAsync implements
         return await this.fromAny(value);
     }
 
-    /**
-     * Hook method called before the `from` method during deserialization.
-     * It performs pre-processing and validation of the input value.
-     *
-     * @param value - The value being deserialized.
-     * @returns The processed value.
-     */
     protected static override preFrom(value: any): any {
         if (value.nnc) {
             value = {
@@ -127,27 +104,86 @@ export class CryptoPrivateStateHandle extends CryptoSerializableAsync implements
                 secretKeyHandle: value.key
             };
         }
-
         return value;
     }
 
-    /**
-     * Asynchronously creates a {@link CryptoPrivateStateHandle} from a JSON object.
-     *
-     * @param value - JSON object representing the serialized {@link CryptoPrivateStateHandle}.
-     * @returns A Promise that resolves to a {@link CryptoPrivateStateHandle} instance.
-     */
     public static async fromJSON(value: ICryptoPrivateStateHandleSerialized): Promise<CryptoPrivateStateHandle> {
         return await this.fromAny(value);
     }
 
-    /**
-     * Asynchronously creates a {@link CryptoPrivateStateHandle} from a Base64 encoded string.
-     *
-     * @param value - Base64 encoded string representing the serialized {@link CryptoPrivateStateHandle}.
-     * @returns A Promise that resolves to a {@link CryptoPrivateStateHandle} instance.
-     */
     public static async fromBase64(value: string): Promise<CryptoPrivateStateHandle> {
         return await this.deserialize(CoreBuffer.base64_utf8(value));
+    }
+
+    /**
+     * Encrypts the provided plaintext using this handle’s key material, incrementing the counter
+     * (mirroring transmit state logic). The result is a {@link CryptoCipher} containing the ciphertext (and the new counter).
+     *
+     * @param plaintext - The content to encrypt.
+     * @returns A Promise resolving to a CryptoCipher with the resulting ciphertext.
+     */
+    public async encrypt(plaintext: CoreBuffer): Promise<CryptoCipher> {
+        try {
+            const cipher = await CryptoEncryptionWithCryptoLayer.encryptWithCounter(
+                plaintext,
+                this.secretKeyHandle,
+                this.counter
+            );
+            // After successful encryption, increment our local counter.
+            this.counter++;
+            return cipher;
+        } catch (e) {
+            throw new CryptoError(CryptoErrorCode.EncryptionEncrypt, `State handle encrypt error: ${e}`);
+        }
+    }
+
+    /**
+     * Decrypts the provided ciphertext using this handle’s key material, comparing counters if needed
+     * (mirroring receive state logic).
+     *
+     * @param cipher - The cipher to decrypt (which may have a counter).
+     * @param omitCounterCheck - If true, skip the counter check. Otherwise, require cipher.counter to match our current counter.
+     * @returns A Promise resolving to the decrypted plaintext.
+     */
+    public async decrypt(cipher: CryptoCipher, omitCounterCheck = false): Promise<CoreBuffer> {
+        try {
+            if (!omitCounterCheck) {
+                // If the cipher has no counter or does not match, throw
+                if (typeof cipher.counter === "undefined") {
+                    throw new CryptoError(CryptoErrorCode.StateWrongCounter, "Cipher has no counter set.");
+                }
+                if (this.counter !== cipher.counter) {
+                    throw new CryptoError(
+                        CryptoErrorCode.StateWrongOrder,
+                        `Expected counter=${this.counter}, got ${cipher.counter}.`
+                    );
+                }
+            }
+            const plaintext = await CryptoEncryptionWithCryptoLayer.decryptWithCounter(
+                cipher,
+                this.secretKeyHandle,
+                this.nonce
+            );
+            if (!omitCounterCheck) {
+                this.counter++;
+            }
+            return plaintext;
+        } catch (e) {
+            throw new CryptoError(CryptoErrorCode.EncryptionDecrypt, `State handle decrypt error: ${e}`);
+        }
+    }
+
+    /**
+     * Creates a new {@link CryptoPublicStateHandle} representing the public portion of this handle.
+     *
+     * @returns A new CryptoPublicStateHandle that contains the public fields (id, nonce, algorithm, stateType).
+     */
+    public toPublicState(): CryptoPublicStateHandle {
+        const publicState = new CryptoPublicStateHandle();
+        publicState.id = this.id;
+        publicState.nonce = this.nonce.clone();
+        publicState.algorithm = this.algorithm;
+        publicState.stateType = this.stateType;
+        return publicState;
     }
 }

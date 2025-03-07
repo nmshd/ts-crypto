@@ -173,6 +173,18 @@ export class CryptoRelationshipPublicResponseWithLibsodium
     public static fromBase64(value: string): CryptoRelationshipPublicResponseWithLibsodium {
         return this.deserialize(CoreBuffer.base64_utf8(value));
     }
+
+    /**
+     * Checks if all relevant fields are crypto-layer handles.
+     * @returns True if crypto-layer, false if libsodium-based.
+     */
+    public isUsingCryptoLayer(): boolean {
+        return (
+            this.exchangeKey instanceof CryptoExchangePublicKeyHandle &&
+            this.signatureKey instanceof CryptoSignaturePublicKeyHandle &&
+            this.state instanceof CryptoPublicStateHandle
+        );
+    }
 }
 
 /* ----------------------------------------------------------------
@@ -198,18 +210,6 @@ export function initCryptoRelationshipPublicResponse(/* providerIdent: ProviderI
  */
 @type("CryptoRelationshipPublicResponse")
 export class CryptoRelationshipPublicResponse extends CryptoRelationshipPublicResponseWithLibsodium {
-    /**
-     * Checks if all relevant fields are crypto-layer handles.
-     * @returns True if crypto-layer, false if libsodium-based.
-     */
-    public isUsingCryptoLayer(): boolean {
-        return (
-            this.exchangeKey instanceof CryptoExchangePublicKeyHandle &&
-            this.signatureKey instanceof CryptoSignaturePublicKeyHandle &&
-            this.state instanceof CryptoPublicStateHandle
-        );
-    }
-
     /**
      * Verifies a signature over the given content. Chooses libsodium or crypto-layer logic.
      *
