@@ -61,9 +61,11 @@ export class CryptoRelationshipRequestSecretsHandle {
             CoreBuffer.random(24)
         ]);
 
+        // const provider = getProvider({ providerName });
+        // provider?.deriveKeyFromPassword
         // TODO: Add Key derivation
-        // const masterKey = await CryptoExchangeWithCryptoLayer.deriveRequestor(ephemeralKeypair, peerExchangeKey);
-        // const secretKey = await masterKey.deriveSecretKey("REQTMP01");
+        const masterKey = await CryptoExchangeWithCryptoLayer.deriveRequestor(ephemeralKeypair, peerExchangeKey);
+        const secretKey = await masterKey.deriveSecretKey("REQTMP01");
 
         const secrets = new CryptoRelationshipRequestSecretsHandle();
         secrets.exchangeKeypair = exchangeKeypair;

@@ -232,7 +232,7 @@ export class CryptoRelationshipSecretsWithLibsodium extends CryptoSerializable i
         templateExchangeKeypair: CryptoExchangeKeypair,
         peerIdentityKey?: CryptoSignaturePublicKey,
         peerType: CryptoRelationshipType = CryptoRelationshipType.Requestor
-    ): Promise<CryptoRelationshipSecretsWithLibsodium> {
+    ): Promise<CryptoRelationshipSecrets> {
         const [signatureKeypair, exchangeKeypair] = await Promise.all([
             CryptoSignatures.generateKeypair(),
             CryptoExchange.generateKeypair()
@@ -435,6 +435,6 @@ export class CryptoRelationshipSecrets extends CryptoRelationshipSecretsWithLibs
             peerIdentityKey,
             peerType
         );
-        return baseResult as CryptoRelationshipSecrets;
+        return CryptoRelationshipSecrets.from(baseResult);
     }
 }

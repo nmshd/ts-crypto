@@ -120,13 +120,6 @@ export class CryptoSecretKeyWithLibsodium extends CryptoSerializable implements 
             secretKey: CoreBuffer.from(serializedKey)
         });
     }
-
-    /**
-     * Tells if we store a handle reference or not; for backward tests, typically false.
-     */
-    public get isCryptoLayerKey(): boolean {
-        return (this as any).keyHandle instanceof CryptoSecretKeyHandle;
-    }
 }
 
 /**
@@ -182,7 +175,7 @@ export class CryptoSecretKey extends CryptoSecretKeyWithLibsodium {
      * ask the provider to revoke the handle. Otherwise, fallback to zeroing raw memory.
      */
     public override clear(): void {
-        if (secretKeyProviderInitialized && this.isCryptoLayerKey) {
+        if (secretKeyProviderInitialized && this.secretKey instanceof CryptoSecretKeyHandle) {
             // For handle-based keys, there's no raw data in memory to clear.
             // Possibly do "this.keyHandle = null" or call the provider's deletion method.
             return;

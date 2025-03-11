@@ -1,8 +1,20 @@
 {
-	"folders": [
-		{
-			"path": ".."
-		}
-	],
-	"settings": {}
+    "folders": [
+        {
+            "path": ".."
+        }
+    ],
+    "settings": {},
+    "launch": {
+        "version": "0.2.0",
+        "configurations": [
+            {
+                "name": "Debug Mocha Tests",
+                "type": "node-terminal",
+                "request": "launch",
+                "command": "npm run test:node",
+                "cwd": "${workspaceFolder}"
+            }
+        ]
+    }
 }

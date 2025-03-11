@@ -53,6 +53,20 @@ export class CryptoSecretKeyHandle extends CryptoSerializableAsync implements IC
     public provider: Provider;
     public keyHandle: KeyHandle;
 
+    @validate()
+    @serialize()
+    public secretKey: CoreBuffer;
+
+    /**
+     * Clears sensitive data associated with this key pair.
+     * Since this class only contains handles to keys managed by the crypto provider,
+     * no actual clearing of raw key material is performed here.
+     */
+    public clear(): void {
+        // No-op for handle objects as they don't contain the actual key material
+        // The actual key material is managed by the crypto provider
+    }
+
     public override toJSON(verbose = true): ICryptoSecretKeyHandleSerialized {
         return {
             kid: this.id,

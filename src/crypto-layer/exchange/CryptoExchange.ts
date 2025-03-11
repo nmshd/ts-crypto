@@ -77,7 +77,7 @@ export class CryptoExchangeWithCryptoLayer {
     public static async deriveRequestor(
         requestorKeypair: CryptoExchangeKeypairHandle,
         templatorPublicKey: CryptoExchangePublicKeyHandle,
-        algorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.XCHACHA20_POLY1305 // Note: Algorithm might not be directly used as Rust DHExchange derives AES-256 key
+        algorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.XCHACHA20_POLY1305
     ): Promise<CryptoExchangeSecrets> {
         const exchangeAlgorithm = requestorKeypair.privateKey.spec.asym_spec;
 
