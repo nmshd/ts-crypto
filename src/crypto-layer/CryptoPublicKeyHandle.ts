@@ -7,6 +7,7 @@ import { getProviderOrThrow, ProviderIdentifier } from "./CryptoLayerProviders";
 export interface ICryptoPublicKeyHandle {
     keyPairHandle: KeyPairHandle;
     spec: KeyPairSpec;
+    providerName: string;
     toSerializedString(): Promise<string>;
     toPEM(): Promise<string>;
     toJSON(): Object;

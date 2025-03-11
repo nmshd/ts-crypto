@@ -7,9 +7,11 @@ import {
 } from "@nmshd/rs-crypto-node";
 import chai from "chai";
 import { BufferTest } from "./BufferTest.test";
+import { CryptoExportedPublicKeyTest } from "./crypto-layer/CryptoExportedPublicKey.test";
 import { CryptoLayerProviderTest } from "./crypto-layer/CryptoLayerProviderTest.test";
 import { CryptoSignatureKeypairHandleTest } from "./crypto-layer/CryptoSignatureKeypairHandle.test";
 import { CryptoSignaturePrivateKeyHandleTest } from "./crypto-layer/CryptoSignaturePrivateKeyHandle.test";
+import { CryptoSignaturePublicKeyHandleTest } from "./crypto-layer/CryptoSignaturePublicKeyHandle.test";
 import { CryptoDerivationTest } from "./crypto/CryptoDerivationTest.test";
 import { CryptoEncryptionTest } from "./crypto/CryptoEncryptionTest.test";
 import { CryptoExchangeTest } from "./crypto/CryptoExchangeTest.test";
@@ -42,6 +44,8 @@ chai.config.truncateThreshold = 0;
     CryptoLayerProviderTest.run();
     CryptoSignatureKeypairHandleTest.run();
     CryptoSignaturePrivateKeyHandleTest.run();
+    CryptoSignaturePublicKeyHandleTest.run();
+    CryptoExportedPublicKeyTest.run();
 
     // === Other ===
     await SodiumWrapper.ready();
