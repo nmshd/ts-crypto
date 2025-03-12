@@ -64,6 +64,10 @@ export class CryptoPublicStateHandle extends CryptoSerializableAsync implements 
         this.nonce.clear();
     }
 
+    public toHandle(): this {
+        return this;
+    }
+
     /**
      * Converts the {@link CryptoPublicStateHandle} object into a JSON serializable object.
      *

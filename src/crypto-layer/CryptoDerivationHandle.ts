@@ -1,4 +1,4 @@
-import { Cipher, CryptoHash, KeySpec } from "@nmshd/rs-crypto-types";
+import { Cipher, CryptoHash, KDF, KeySpec } from "@nmshd/rs-crypto-types";
 import { ICoreBuffer } from "src/CoreBuffer";
 import { CryptoError } from "src/CryptoError";
 import { CryptoErrorCode } from "src/CryptoErrorCode";
@@ -24,7 +24,9 @@ export class CryptoDerivationHandle extends CryptoSerializableAsync {
         providerIdent: ProviderIdentifier,
         password: ICoreBuffer,
         salt: ICoreBuffer,
-        keyAlgorithm: CryptoEncryptionAlgorithm
+        keyAlgorithm: CryptoEncryptionAlgorithm,
+        opslimit = 100000,
+        memlimit = 8192
     ): Promise<CryptoSecretKeyHandle> {
         if (!handleDerivationInitialized) {
             throw new CryptoError(CryptoErrorCode.CalUninitializedKey, "CryptoDerivationHandle not initialized.");
@@ -39,7 +41,11 @@ export class CryptoDerivationHandle extends CryptoSerializableAsync {
             signing_hash: signingHash
         };
 
-        const keyHandle = await provider.deriveKeyFromPassword(password.toUtf8(), salt.buffer, spec);
+        // Create the KDF options using Argon2id.
+        const kdfOptions: KDF = { Argon2id: { memory: memlimit, iterations: opslimit, parallelism: 1 } };
+
+        // Now call deriveKeyFromPassword with the additional kdf parameter.
+        const keyHandle = await provider.deriveKeyFromPassword(password.toUtf8(), salt.buffer, spec, kdfOptions);
 
         return await CryptoSecretKeyHandle.newFromProviderAndKeyHandle(provider, keyHandle);
     }
@@ -56,7 +62,6 @@ export class CryptoDerivationHandle extends CryptoSerializableAsync {
         }
 
         const provider = getProviderOrThrow(providerIdent);
-
         const cipherName = CryptoDerivationHandle.mapAlgorithmToCipherName(keyAlgorithm);
 
         const spec: KeySpec = {
@@ -65,27 +70,7 @@ export class CryptoDerivationHandle extends CryptoSerializableAsync {
             signing_hash: "Sha2_512"
         };
 
-        // Libsodium derivation (since provider doesn't support it directly)
-        const sodium = await import("libsodium-wrappers");
-        await sodium.ready;
-
-        let keyLength: number;
-        switch (keyAlgorithm) {
-            case CryptoEncryptionAlgorithm.AES128_GCM:
-                keyLength = 16;
-                break;
-            case CryptoEncryptionAlgorithm.AES256_GCM:
-            case CryptoEncryptionAlgorithm.XCHACHA20_POLY1305:
-                keyLength = 32;
-                break;
-            default:
-                throw new CryptoError(CryptoErrorCode.EncryptionWrongAlgorithm, "Unsupported encryption algorithm.");
-        }
-
-        const rawDerivedKey = sodium.crypto_kdf_derive_from_key(keyLength, keyId, context, baseKey.buffer);
-
-        // Import derived key into provider
-        const keyHandle = await provider.importKey(spec, rawDerivedKey);
+        const keyHandle = await provider.deriveKeyFromBase(baseKey.buffer, keyId, context, spec);
 
         return await CryptoSecretKeyHandle.newFromProviderAndKeyHandle(provider, keyHandle, {
             keySpec: spec,
