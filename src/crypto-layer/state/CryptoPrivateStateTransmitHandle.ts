@@ -27,9 +27,6 @@ export class CryptoPrivateStateTransmitHandle
     extends CryptoPrivateStateHandle
     implements ICryptoPrivateStateTransmitHandle
 {
-    // No longer needed, inherited from base class
-    // public secretKeyHandle: CryptoSecretKeyHandle;
-
     /**
      * Converts the {@link CryptoPrivateStateTransmitHandle} object into a JSON serializable object.
      *

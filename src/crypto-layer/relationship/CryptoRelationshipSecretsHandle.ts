@@ -332,7 +332,7 @@ export class CryptoRelationshipSecretsHandle
     ): Promise<CryptoRelationshipSecretsHandle> {
         const signatureKeypair = request.signatureKeypair;
         const exchangeKeypair = request.exchangeKeypair;
-        const requestSecretKey = request.secretKey; // raw ephemeral key
+        const requestSecretKey = request.secretKey;
         const peerExchangeKey = response.exchangeKey;
         const peerPublicTransmitState = response.state;
         const peerSignatureKey = response.signatureKey;

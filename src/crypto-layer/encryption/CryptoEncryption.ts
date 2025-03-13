@@ -75,7 +75,6 @@ export class CryptoEncryptionWithCryptoLayer {
         const encryptionAlgorithm = secretKeyHandle.algorithm;
 
         try {
-            // Corrected: Use encryptData and destructure
             const [cipher, iv] = await secretKeyHandle.keyHandle.encryptData(plaintext.buffer);
 
             return CryptoCipher.from({
