@@ -163,7 +163,6 @@ export class CryptoExchangePrivateKeyCryptoLayer
      * For a crypto-layer key, we assume some property like 'keyPairHandle' is present.
      */
     public override get isCryptoLayerKey(): boolean {
-        // For example, if the key was loaded from a handle, it might have a 'keyPairHandle' property
         return (this as any).keyPairHandle !== undefined;
     }
 }

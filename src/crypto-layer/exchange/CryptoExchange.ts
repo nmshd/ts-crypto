@@ -103,17 +103,15 @@ export class CryptoExchangeWithCryptoLayer {
             );
 
             const dhExchange = await provider.startEphemeralDhExchange(dhExchangeSpec);
-            const sharedSecretRxRaw = await dhExchange.addExternal(
+
+            // Use deriveServerSessionKeys for the requestor (server role)
+            const [sharedRx, sharedTx] = await dhExchange.deriveServerSessionKeys(
                 await templatorPublicKey.keyPairHandle.getPublicKey()
             );
-            const sharedSecretRx = CoreBuffer.from(sharedSecretRxRaw);
-            const sharedSecretTxKeyHandle = await dhExchange.addExternalFinal(sharedSecretRxRaw);
-            const sharedSecretTxRaw = await sharedSecretTxKeyHandle.extractKey();
-            const sharedSecretTx = CoreBuffer.from(sharedSecretTxRaw);
 
             const secrets = CryptoExchangeSecrets.from({
-                receivingKey: sharedSecretRx,
-                transmissionKey: sharedSecretTx,
+                receivingKey: CoreBuffer.from(sharedRx),
+                transmissionKey: CoreBuffer.from(sharedTx),
                 algorithm: algorithm
             });
             return secrets;
@@ -162,17 +160,15 @@ export class CryptoExchangeWithCryptoLayer {
             );
 
             const dhExchange = await provider.startEphemeralDhExchange(dhExchangeSpec);
-            const sharedSecretRxRaw = await dhExchange.addExternal(
+
+            // Use deriveClientSessionKeys for the templator (client role)
+            const [sharedRx, sharedTx] = await dhExchange.deriveClientSessionKeys(
                 await requestorPublicKey.keyPairHandle.getPublicKey()
             );
-            const sharedSecretRx = CoreBuffer.from(sharedSecretRxRaw);
-            const sharedSecretTxKeyHandle = await dhExchange.addExternalFinal(sharedSecretRxRaw);
-            const sharedSecretTxRaw = await sharedSecretTxKeyHandle.extractKey();
-            const sharedSecretTx = CoreBuffer.from(sharedSecretTxRaw);
 
             const secrets = CryptoExchangeSecrets.from({
-                receivingKey: sharedSecretRx,
-                transmissionKey: sharedSecretTx,
+                receivingKey: CoreBuffer.from(sharedRx),
+                transmissionKey: CoreBuffer.from(sharedTx),
                 algorithm: algorithm
             });
             return secrets;

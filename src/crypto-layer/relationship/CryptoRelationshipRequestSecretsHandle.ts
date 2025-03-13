@@ -1,7 +1,9 @@
 import { serialize, type, validate } from "@js-soft/ts-serval";
+import { KeySpec } from "@nmshd/rs-crypto-types";
 import { CoreBuffer } from "../../CoreBuffer";
 import { CryptoCipher } from "../../encryption/CryptoCipher";
 import { CryptoSignature } from "../../signature/CryptoSignature";
+import { getProvider } from "../CryptoLayerProviders";
 import { CryptoEncryptionWithCryptoLayer } from "../encryption/CryptoEncryption";
 import { CryptoSecretKeyHandle } from "../encryption/CryptoSecretKeyHandle";
 import { CryptoExchangeWithCryptoLayer } from "../exchange/CryptoExchange";
@@ -48,12 +50,15 @@ export class CryptoRelationshipRequestSecretsHandle {
     @serialize()
     public nonce: CoreBuffer;
 
-    /** Creates the secrets from peer public keys (handle-based). */
+    /**
+     * Creates request secrets from peer public keys (handle-based).
+     */
     public static async fromPeer(
         providerName: string,
         peerExchangeKey: CryptoExchangePublicKeyHandle,
         peerIdentityKey: CryptoSignaturePublicKeyHandle
     ): Promise<CryptoRelationshipRequestSecretsHandle> {
+        // Generate keypairs and nonce
         const [exchangeKeypair, ephemeralKeypair, signatureKeypair, nonce] = await Promise.all([
             CryptoExchangeWithCryptoLayer.generateKeypair({ providerName }, peerExchangeKey.spec),
             CryptoExchangeWithCryptoLayer.generateKeypair({ providerName }, peerExchangeKey.spec),
@@ -61,19 +66,45 @@ export class CryptoRelationshipRequestSecretsHandle {
             CoreBuffer.random(24)
         ]);
 
-        // const provider = getProvider({ providerName });
-        // provider?.deriveKeyFromPassword
-        // TODO: Add Key derivation
-        const masterKey = await CryptoExchangeWithCryptoLayer.deriveRequestor(ephemeralKeypair, peerExchangeKey);
-        const secretKey = await masterKey.deriveSecretKey("REQTMP01");
+        // Get the provider
+        const provider = getProvider({ providerName });
+        if (!provider) {
+            throw new Error(`Provider ${providerName} not found`);
+        }
 
+        // Derive the master key
+        const masterKey = await CryptoExchangeWithCryptoLayer.deriveRequestor(ephemeralKeypair, peerExchangeKey);
+
+        // Create a key spec for the derived key
+        const keySpec: KeySpec = {
+            cipher: "XChaCha20Poly1305",
+            signing_hash: "Sha2_256",
+            ephemeral: true
+        };
+
+        // Derive the secret key using the provider, following the same pattern as libsodium implementation
+        const secretKey = await provider.deriveKeyFromBase(
+            masterKey.receivingKey.buffer, // Using receivingKey as base, matching libsodium implementation
+            1, // Using 1 as keyId, matching the original
+            "REQTMP01", // Using the same context as the original
+            keySpec // Providing the key spec required by the CAL interface
+        );
+
+        const secretKeyNew = await CryptoSecretKeyHandle.importRawKeyIntoHandle(
+            { providerName },
+            CoreBuffer.from(await secretKey.extractKey()),
+            await secretKey.spec(),
+            masterKey.algorithm
+        );
+
+        // Create and return the secrets
         const secrets = new CryptoRelationshipRequestSecretsHandle();
         secrets.exchangeKeypair = exchangeKeypair;
         secrets.ephemeralKeypair = ephemeralKeypair;
         secrets.signatureKeypair = signatureKeypair;
         secrets.peerExchangeKey = peerExchangeKey;
         secrets.peerIdentityKey = peerIdentityKey;
-        // secrets.secretKey = secretKey;
+        secrets.secretKey = secretKeyNew;
         secrets.nonce = nonce;
 
         return secrets;

@@ -209,11 +209,4 @@ export class CryptoRelationshipPublicResponseHandle
     public async toHandle(): Promise<CryptoRelationshipPublicResponseHandle> {
         return await Promise.resolve(this);
     }
-
-    /**
-     * Indicates that this object uses the crypto-layer.
-     */
-    public isUsingCryptoLayer(): boolean {
-        return true;
-    }
 }
