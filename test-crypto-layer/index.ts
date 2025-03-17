@@ -1,0 +1,38 @@
+import { initCryptoLayerProviders, SodiumWrapper } from "@nmshd/crypto";
+import {
+    createProvider,
+    createProviderFromName,
+    getAllProviders,
+    getProviderCapabilities
+} from "@nmshd/rs-crypto-node";
+import chai from "chai";
+import { CryptoExportedPublicKeyTest } from "./crypto-layer/CryptoExportedPublicKey.test";
+import { CryptoLayerProviderTest } from "./crypto-layer/CryptoLayerProviderTest.test";
+import { CryptoSignatureKeypairHandleTest } from "./crypto-layer/CryptoSignatureKeypairHandle.test";
+import { CryptoSignaturePrivateKeyHandleTest } from "./crypto-layer/CryptoSignaturePrivateKeyHandle.test";
+import { CryptoSignaturePublicKeyHandleTest } from "./crypto-layer/CryptoSignaturePublicKeyHandle.test";
+
+chai.config.truncateThreshold = 0;
+
+// This is valid: https://mochajs.org/#delayed-root-suite
+// eslint-disable-next-line @typescript-eslint/no-floating-promises
+(async function () {
+    await Promise.all([
+        initCryptoLayerProviders({
+            factoryFunctions: { getAllProviders, createProvider, createProviderFromName, getProviderCapabilities },
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            keyMetadataStoreConfig: { FileStoreConfig: { db_dir: "./test_cal_db" } },
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            keyMetadataStoreAuth: { StorageConfigPass: "12345678" },
+            providersToBeInitialized: [{ providerName: "SoftwareProvider" }]
+        }),
+        SodiumWrapper.ready()
+    ]);
+    CryptoLayerProviderTest.run();
+    CryptoSignatureKeypairHandleTest.run();
+    CryptoSignaturePrivateKeyHandleTest.run();
+    CryptoSignaturePublicKeyHandleTest.run();
+    CryptoExportedPublicKeyTest.run();
+
+    run();
+})();

@@ -6,6 +6,7 @@ tests_output
 debug.log
 dist
 dist-test
+dist-test-crypto-layer
 lib-web
 lib-esm
 test_cal_db
