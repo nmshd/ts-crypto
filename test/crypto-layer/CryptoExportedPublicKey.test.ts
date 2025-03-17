@@ -1,9 +1,6 @@
+import { CoreBuffer, CryptoExportedPublicKey, CryptoPublicKeyHandle, CryptoSignatures } from "@nmshd/crypto";
 import { KeyPairSpec } from "@nmshd/rs-crypto-types";
 import { expect } from "chai";
-import { CoreBuffer } from "src/CoreBuffer";
-import { CryptoExportedPublicKey } from "src/crypto-layer";
-import { CryptoPublicKeyHandle } from "src/crypto-layer/CryptoPublicKeyHandle";
-import { CryptoSignatures } from "src/signature/CryptoSignatures";
 import { expectCryptoSignatureAsymmetricKeyHandle } from "./CryptoLayerTestUtil";
 
 /* eslint-disable @typescript-eslint/naming-convention */

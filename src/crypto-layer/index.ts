@@ -1,3 +1,4 @@
+export * from "./CryptoAsymmetricKeyHandle";
 export * from "./CryptoExportedPublicKey";
 export * from "./CryptoLayerConfig";
 export * from "./CryptoLayerProviders";

@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/naming-convention */
+import { CryptoSignaturePublicKeyHandle, CryptoSignatures } from "@nmshd/crypto";
 import { KeyPairSpec } from "@nmshd/rs-crypto-types";
 import { expect } from "chai";
-import { CryptoSignaturePublicKeyHandle } from "src/crypto-layer/signature/CryptoSignaturePublicKeyHandle";
-import { CryptoSignatures } from "src/signature/CryptoSignatures";
 import { expectCryptoSignatureAsymmetricKeyHandle } from "./CryptoLayerTestUtil";
 
 export class CryptoSignaturePublicKeyHandleTest {

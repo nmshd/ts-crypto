@@ -50,7 +50,7 @@
         "@js-soft/eslint-config-ts": "^1.6.13",
         "@js-soft/license-check": "1.0.9",
         "@js-soft/ts-serval": "2.0.10",
-        "@nmshd/rs-crypto-node": "^0.2.0",
+        "@nmshd/rs-crypto-node": "^0.4.0",
         "@types/chai": "^5.0.0",
         "@types/libsodium-wrappers-sumo": "^0.7.8",
         "@types/mocha": "^10.0.9",

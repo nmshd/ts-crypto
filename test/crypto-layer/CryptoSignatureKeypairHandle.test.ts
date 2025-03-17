@@ -1,10 +1,15 @@
 /* eslint-disable @typescript-eslint/naming-convention */
+import {
+    CoreBuffer,
+    CryptoHashAlgorithm,
+    CryptoSignature,
+    CryptoSignatureKeypairHandle,
+    CryptoSignaturePrivateKeyHandle,
+    CryptoSignaturePublicKeyHandle,
+    CryptoSignatures
+} from "@nmshd/crypto";
 import { KeyPairSpec } from "@nmshd/rs-crypto-types";
 import { expect } from "chai";
-import { CoreBuffer, CryptoHashAlgorithm, CryptoSignature, CryptoSignatures } from "src/";
-import { CryptoSignatureKeypairHandle } from "src/crypto-layer/signature/CryptoSignatureKeypair";
-import { CryptoSignaturePrivateKeyHandle } from "src/crypto-layer/signature/CryptoSignaturePrivateKeyHandle";
-import { CryptoSignaturePublicKeyHandle } from "src/crypto-layer/signature/CryptoSignaturePublicKeyHandle";
 import { parameterizedKeyPairSpec } from "./CryptoLayerTestUtil";
 
 export async function expectCryptoSignatureKeypairHandle(

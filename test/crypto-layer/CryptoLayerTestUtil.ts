@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/naming-convention */
+import { CryptoAsymmetricKeyHandle } from "@nmshd/crypto";
 import { AsymmetricKeySpec, Cipher, CryptoHash, KeyPairSpec } from "@nmshd/rs-crypto-types";
 import { expect } from "chai";
 import { defaults } from "lodash";
-import { CryptoAsymmetricKeyHandle } from "src/crypto-layer/CryptoAsymmetricKeyHandle";
 
 export interface ParametersKeyPairSpec {
     asymSpec: AsymmetricKeySpec[];
