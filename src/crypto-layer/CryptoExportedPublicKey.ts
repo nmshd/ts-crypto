@@ -1,7 +1,7 @@
 import { serialize, type, validate } from "@js-soft/ts-serval";
 import { KeyPairHandle, KeyPairSpec, Provider } from "@nmshd/rs-crypto-types";
-import { CoreBuffer } from "src/CoreBuffer";
-import { CryptoSerializable } from "src/CryptoSerializable";
+import { CoreBuffer } from "../CoreBuffer";
+import { CryptoSerializable } from "../CryptoSerializable";
 import { getProviderOrThrow, ProviderIdentifier } from "./CryptoLayerProviders";
 import { CryptoPublicKeyHandle } from "./CryptoPublicKeyHandle";
 

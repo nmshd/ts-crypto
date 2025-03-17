@@ -1,8 +1,8 @@
 import { ISerializable, ISerialized, serialize, type, validate } from "@js-soft/ts-serval";
-import { CoreBuffer } from "src/CoreBuffer";
-import { CryptoError } from "src/CryptoError";
-import { CryptoErrorCode } from "src/CryptoErrorCode";
-import { CryptoSerializableAsync } from "src/CryptoSerializable";
+import { CoreBuffer } from "../../CoreBuffer";
+import { CryptoError } from "../../CryptoError";
+import { CryptoErrorCode } from "../../CryptoErrorCode";
+import { CryptoSerializableAsync } from "../../CryptoSerializable";
 import {
     CryptoSignaturePrivateKeyHandle,
     ICryptoSignaturePrivateKeyHandleSerialized

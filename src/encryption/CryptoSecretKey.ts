@@ -1,8 +1,8 @@
 import { ISerializable, ISerialized, serialize, type, validate } from "@js-soft/ts-serval";
 import { KeySpec } from "@nmshd/rs-crypto-types";
-import { ProviderIdentifier } from "src/crypto-layer/CryptoLayerProviders";
-import { CryptoSecretKeyHandle } from "src/crypto-layer/encryption/CryptoSecretKeyHandle";
 import { CoreBuffer, IClearable } from "../CoreBuffer";
+import { ProviderIdentifier } from "../crypto-layer/CryptoLayerProviders";
+import { CryptoSecretKeyHandle } from "../crypto-layer/encryption/CryptoSecretKeyHandle";
 import { CryptoError } from "../CryptoError";
 import { CryptoErrorCode } from "../CryptoErrorCode";
 import { CryptoSerializable } from "../CryptoSerializable";

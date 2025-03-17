@@ -1,9 +1,9 @@
 import { ISerializable, ISerialized, serialize, type, validate } from "@js-soft/ts-serval";
-import { CryptoExchangePublicKeyHandle } from "src/crypto-layer/exchange/CryptoExchangePublicKeyHandle";
-import { CryptoRelationshipPublicResponseHandle } from "src/crypto-layer/relationship/CryptoRelationshipPublicResponseHandle";
-import { CryptoSignaturePublicKeyHandle } from "src/crypto-layer/signature/CryptoSignaturePublicKeyHandle";
-import { CryptoPublicStateHandle } from "src/crypto-layer/state/CryptoPublicStateHandle";
 import { CoreBuffer, IClearable } from "../CoreBuffer";
+import { CryptoExchangePublicKeyHandle } from "../crypto-layer/exchange/CryptoExchangePublicKeyHandle";
+import { CryptoRelationshipPublicResponseHandle } from "../crypto-layer/relationship/CryptoRelationshipPublicResponseHandle";
+import { CryptoSignaturePublicKeyHandle } from "../crypto-layer/signature/CryptoSignaturePublicKeyHandle";
+import { CryptoPublicStateHandle } from "../crypto-layer/state/CryptoPublicStateHandle";
 import { CryptoError } from "../CryptoError";
 import { CryptoErrorCode } from "../CryptoErrorCode";
 import { CryptoSerializable } from "../CryptoSerializable";

@@ -1,5 +1,4 @@
 import { ISerializable, ISerialized, serialize, type, validate } from "@js-soft/ts-serval";
-import { CryptoRelationshipType } from "src/relationship/CryptoRelationshipType";
 import { CoreBuffer } from "../../CoreBuffer";
 import { CryptoDerivation } from "../../CryptoDerivation";
 import { CryptoError } from "../../CryptoError";
@@ -8,6 +7,7 @@ import { CryptoSerializableAsync } from "../../CryptoSerializable";
 import { CryptoCipher } from "../../encryption/CryptoCipher";
 import { CryptoEncryptionAlgorithm } from "../../encryption/CryptoEncryption";
 import { CryptoHashAlgorithm } from "../../hash/CryptoHash";
+import { CryptoRelationshipType } from "../../relationship/CryptoRelationshipType";
 import { CryptoSignature } from "../../signature/CryptoSignature";
 import { CryptoStateType } from "../../state/CryptoStateType";
 import { CryptoEncryptionWithCryptoLayer } from "../encryption/CryptoEncryption";

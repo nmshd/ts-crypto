@@ -1,6 +1,6 @@
 import { ISerializable, ISerialized, Serializable, serialize, validate } from "@js-soft/ts-serval";
-import { CryptoSecretKeyHandle } from "src/crypto-layer/encryption/CryptoSecretKeyHandle";
 import { CoreBuffer, IClearable, ICoreBuffer } from "../CoreBuffer";
+import { CryptoSecretKeyHandle } from "../crypto-layer/encryption/CryptoSecretKeyHandle";
 import { CryptoPrivateStateHandle } from "../crypto-layer/state/CryptoPrivateStateHandle";
 import { CryptoPublicStateHandle } from "../crypto-layer/state/CryptoPublicStateHandle";
 import { CryptoError } from "../CryptoError";

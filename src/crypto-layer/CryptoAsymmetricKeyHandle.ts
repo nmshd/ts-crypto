@@ -1,6 +1,6 @@
 import { SerializableAsync, serialize, type, validate } from "@js-soft/ts-serval";
 import { KeyPairHandle, KeyPairSpec, Provider } from "@nmshd/rs-crypto-types";
-import { CoreBuffer } from "src/CoreBuffer";
+import { CoreBuffer } from "../CoreBuffer";
 import { CryptoError } from "../CryptoError";
 import { CryptoErrorCode } from "../CryptoErrorCode";
 import { CryptoSerializableAsync } from "../CryptoSerializable";

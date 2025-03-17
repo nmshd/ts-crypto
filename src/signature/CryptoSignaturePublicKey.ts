@@ -1,6 +1,6 @@
 import { ISerializable, ISerialized, type } from "@js-soft/ts-serval";
-import { CryptoSignaturePublicKeyHandle } from "src/crypto-layer/signature/CryptoSignaturePublicKeyHandle";
 import { CoreBuffer, IClearable, ICoreBuffer } from "../CoreBuffer";
+import { CryptoSignaturePublicKeyHandle } from "../crypto-layer/signature/CryptoSignaturePublicKeyHandle";
 import { CryptoPublicKey } from "../CryptoPublicKey";
 import { CryptoSignatureAlgorithm } from "./CryptoSignatureAlgorithm";
 import { CryptoSignatureValidation } from "./CryptoSignatureValidation";

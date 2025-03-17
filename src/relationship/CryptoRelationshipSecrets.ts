@@ -25,13 +25,13 @@ import { CryptoRelationshipRequestSecrets } from "./CryptoRelationshipRequestSec
 import { CryptoRelationshipType } from "./CryptoRelationshipType";
 
 // The handle-based imports for the unified approach
-import { CryptoExchangeKeypairHandle } from "src/crypto-layer/exchange/CryptoExchangeKeypairHandle";
-import { CryptoExchangePublicKeyHandle } from "src/crypto-layer/exchange/CryptoExchangePublicKeyHandle";
-import { CryptoRelationshipPublicRequestHandle } from "src/crypto-layer/relationship/CryptoRelationshipPublicRequestHandle";
-import { CryptoRelationshipRequestSecretsHandle } from "src/crypto-layer/relationship/CryptoRelationshipRequestSecretsHandle";
-import { CryptoSignaturePublicKeyHandle } from "src/crypto-layer/signature/CryptoSignaturePublicKeyHandle";
+import { CryptoExchangeKeypairHandle } from "../crypto-layer/exchange/CryptoExchangeKeypairHandle";
+import { CryptoExchangePublicKeyHandle } from "../crypto-layer/exchange/CryptoExchangePublicKeyHandle";
+import { CryptoRelationshipPublicRequestHandle } from "../crypto-layer/relationship/CryptoRelationshipPublicRequestHandle";
 import { CryptoRelationshipPublicResponseHandle } from "../crypto-layer/relationship/CryptoRelationshipPublicResponseHandle";
+import { CryptoRelationshipRequestSecretsHandle } from "../crypto-layer/relationship/CryptoRelationshipRequestSecretsHandle";
 import { CryptoRelationshipSecretsHandle } from "../crypto-layer/relationship/CryptoRelationshipSecretsHandle";
+import { CryptoSignaturePublicKeyHandle } from "../crypto-layer/signature/CryptoSignaturePublicKeyHandle";
 
 /**
  * The original interface describing libsodium-based relationship secrets.

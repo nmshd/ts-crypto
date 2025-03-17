@@ -1,8 +1,8 @@
 import { type } from "@js-soft/ts-serval";
-import { ProviderIdentifier, getProvider } from "src/crypto-layer/CryptoLayerProviders";
-import { CryptoEncryptionWithCryptoLayer } from "src/crypto-layer/encryption/CryptoEncryption";
-import { CryptoSecretKeyHandle } from "src/crypto-layer/encryption/CryptoSecretKeyHandle";
 import { CoreBuffer } from "../CoreBuffer";
+import { ProviderIdentifier, getProvider } from "../crypto-layer/CryptoLayerProviders";
+import { CryptoEncryptionWithCryptoLayer } from "../crypto-layer/encryption/CryptoEncryption";
+import { CryptoSecretKeyHandle } from "../crypto-layer/encryption/CryptoSecretKeyHandle";
 import { CryptoError } from "../CryptoError";
 import { CryptoErrorCode } from "../CryptoErrorCode";
 import { CryptoValidation } from "../CryptoValidation";

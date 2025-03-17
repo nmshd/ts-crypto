@@ -1,11 +1,11 @@
 import { KeyPairSpec } from "@nmshd/rs-crypto-types";
-import { ProviderIdentifier } from "src/crypto-layer/CryptoLayerProviders";
-import { cryptoHashFromCryptoHashAlgorithm } from "src/crypto-layer/CryptoLayerUtils";
-import { CryptoSignatureKeypairHandle } from "src/crypto-layer/signature/CryptoSignatureKeypair";
-import { CryptoSignaturePrivateKeyHandle } from "src/crypto-layer/signature/CryptoSignaturePrivateKeyHandle";
-import { CryptoSignaturePublicKeyHandle } from "src/crypto-layer/signature/CryptoSignaturePublicKeyHandle";
-import { CryptoSignaturesWithCryptoLayer } from "src/crypto-layer/signature/CryptoSignatures";
 import { CoreBuffer } from "../CoreBuffer";
+import { ProviderIdentifier } from "../crypto-layer/CryptoLayerProviders";
+import { cryptoHashFromCryptoHashAlgorithm } from "../crypto-layer/CryptoLayerUtils";
+import { CryptoSignatureKeypairHandle } from "../crypto-layer/signature/CryptoSignatureKeypair";
+import { CryptoSignaturePrivateKeyHandle } from "../crypto-layer/signature/CryptoSignaturePrivateKeyHandle";
+import { CryptoSignaturePublicKeyHandle } from "../crypto-layer/signature/CryptoSignaturePublicKeyHandle";
+import { CryptoSignaturesWithCryptoLayer } from "../crypto-layer/signature/CryptoSignatures";
 import { CryptoError } from "../CryptoError";
 import { CryptoErrorCode } from "../CryptoErrorCode";
 import { CryptoHashAlgorithm } from "../hash/CryptoHash";

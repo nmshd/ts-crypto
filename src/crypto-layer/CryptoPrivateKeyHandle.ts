@@ -1,6 +1,6 @@
 import { type } from "@js-soft/ts-serval";
 import { KeyPairHandle, KeyPairSpec } from "@nmshd/rs-crypto-types";
-import { CoreBuffer, Encoding } from "src/CoreBuffer";
+import { CoreBuffer, Encoding } from "../CoreBuffer";
 import { CryptoAsymmetricKeyHandle } from "./CryptoAsymmetricKeyHandle";
 import { getProviderOrThrow, ProviderIdentifier } from "./CryptoLayerProviders";
 

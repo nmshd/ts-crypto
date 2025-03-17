@@ -1,9 +1,9 @@
 import { Cipher, CryptoHash, KDF, KeySpec } from "@nmshd/rs-crypto-types";
-import { ICoreBuffer } from "src/CoreBuffer";
-import { CryptoError } from "src/CryptoError";
-import { CryptoErrorCode } from "src/CryptoErrorCode";
-import { CryptoSerializableAsync } from "src/CryptoSerializable";
-import { CryptoEncryptionAlgorithm } from "src/encryption/CryptoEncryption";
+import { ICoreBuffer } from "../CoreBuffer";
+import { CryptoError } from "../CryptoError";
+import { CryptoErrorCode } from "../CryptoErrorCode";
+import { CryptoSerializableAsync } from "../CryptoSerializable";
+import { CryptoEncryptionAlgorithm } from "../encryption/CryptoEncryption";
 import { getProviderOrThrow, ProviderIdentifier } from "./CryptoLayerProviders";
 import { CryptoSecretKeyHandle } from "./encryption/CryptoSecretKeyHandle";
 

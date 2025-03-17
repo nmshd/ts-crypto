@@ -1,13 +1,13 @@
 import { ISerializable, serialize, type, validate } from "@js-soft/ts-serval";
-import { CryptoSignaturePrivateKeyHandle } from "src/crypto-layer/signature/CryptoSignaturePrivateKeyHandle";
-import { CryptoSignaturesWithCryptoLayer } from "src/crypto-layer/signature/CryptoSignatures";
-import { CryptoExchange } from "src/exchange/CryptoExchange";
 import { CoreBuffer, ICoreBuffer } from "../CoreBuffer";
+import { CryptoSignaturePrivateKeyHandle } from "../crypto-layer/signature/CryptoSignaturePrivateKeyHandle";
+import { CryptoSignaturesWithCryptoLayer } from "../crypto-layer/signature/CryptoSignatures";
 import { CryptoDerivation } from "../CryptoDerivation";
 import { CryptoSerializable } from "../CryptoSerializable";
 import { CryptoCipher } from "../encryption/CryptoCipher";
 import { CryptoEncryption } from "../encryption/CryptoEncryption";
 import { CryptoSecretKey } from "../encryption/CryptoSecretKey";
+import { CryptoExchange } from "../exchange/CryptoExchange";
 import { CryptoExchangeKeypair } from "../exchange/CryptoExchangeKeypair";
 import { CryptoExchangePublicKey } from "../exchange/CryptoExchangePublicKey";
 import { CryptoHashAlgorithm } from "../hash/CryptoHash";

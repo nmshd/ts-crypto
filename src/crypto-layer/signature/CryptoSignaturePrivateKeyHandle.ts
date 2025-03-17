@@ -1,6 +1,6 @@
 import { ISerializable, ISerialized, type } from "@js-soft/ts-serval";
 import { KeyPairSpec } from "@nmshd/rs-crypto-types";
-import { CoreBuffer } from "src/CoreBuffer";
+import { CoreBuffer } from "../../CoreBuffer";
 import { CryptoPrivateKeyHandle } from "../CryptoPrivateKeyHandle";
 import { CryptoSignaturePublicKeyHandle } from "./CryptoSignaturePublicKeyHandle";
 
