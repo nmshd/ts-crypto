@@ -1,4 +1,5 @@
 import { getProviderOrThrow } from "@nmshd/crypto";
+import { assertProvider } from "@nmshd/rs-crypto-types/checks";
 import { expect } from "chai";
 
 export class CryptoLayerProviderTest {
@@ -7,16 +8,7 @@ export class CryptoLayerProviderTest {
             it("getProvider() should return a valid provider", async function () {
                 const provider = getProviderOrThrow({ providerName: "SoftwareProvider" });
                 expect(provider).to.exist;
-                expect(provider.createKey).to.exist.that.is.a("function");
-                expect(provider.loadKey).to.exist.that.is.a("function");
-                expect(provider.importKey).to.exist.that.is.a("function");
-                expect(provider.createKeyPair).to.exist.that.is.a("function");
-                expect(provider.loadKeyPair).to.exist.that.is.a("function");
-                expect(provider.importKeyPair).to.exist.that.is.a("function");
-                expect(provider.importPublicKey).to.exist.that.is.a("function");
-                expect(provider.getCapabilities).to.exist.that.is.a("function");
-                expect(provider.providerName).to.exist.that.is.a("function");
-                expect(provider.startEphemeralDhExchange).to.exist.that.is.a("function");
+                assertProvider(provider);
                 expect(await provider.providerName()).to.equal("SoftwareProvider");
             });
         });

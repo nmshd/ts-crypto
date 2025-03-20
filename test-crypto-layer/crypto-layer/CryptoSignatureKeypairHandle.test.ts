@@ -10,6 +10,7 @@ import {
 } from "@nmshd/crypto";
 import { KeyPairSpec } from "@nmshd/rs-crypto-types";
 import { expect } from "chai";
+import { assertCryptoAsymmetricKeyHandle } from "./CryptoAsymmetricKeyHandle.test";
 import { parameterizedKeyPairSpec } from "./CryptoLayerTestUtil";
 
 export async function expectCryptoSignatureKeypairHandle(
@@ -20,24 +21,13 @@ export async function expectCryptoSignatureKeypairHandle(
     expect(cryptoKeyPairHandle).to.be.instanceOf(CryptoSignatureKeypairHandle);
     expect(cryptoKeyPairHandle.privateKey).to.be.instanceOf(CryptoSignaturePrivateKeyHandle);
     expect(cryptoKeyPairHandle.publicKey).to.be.instanceOf(CryptoSignaturePublicKeyHandle);
+
+    assertCryptoAsymmetricKeyHandle(cryptoKeyPairHandle.privateKey);
+    assertCryptoAsymmetricKeyHandle(cryptoKeyPairHandle.publicKey);
+
     expect(cryptoKeyPairHandle.privateKey.keyPairHandle).to.be.ok.and.deep.equal(
         cryptoKeyPairHandle.publicKey.keyPairHandle
     );
-    expect(cryptoKeyPairHandle.privateKey.id)
-        .to.be.a("string")
-        .and.to.equal(await cryptoKeyPairHandle.privateKey.keyPairHandle.id());
-    expect(cryptoKeyPairHandle.publicKey.id)
-        .to.be.a("string")
-        .and.to.equal(await cryptoKeyPairHandle.publicKey.keyPairHandle.id())
-        .and.to.be.string(cryptoKeyPairHandle.privateKey.id);
-
-    expect(cryptoKeyPairHandle.privateKey.provider).to.be.ok.and.deep.equal(cryptoKeyPairHandle.publicKey.provider);
-    expect(cryptoKeyPairHandle.privateKey.providerName)
-        .to.be.a("string")
-        .and.to.be.string(cryptoKeyPairHandle.publicKey.providerName)
-        .and.to.be.string(expectedProvider);
-    expect(await cryptoKeyPairHandle.privateKey.keyPairHandle.spec()).to.deep.equal(spec);
-    expect(await cryptoKeyPairHandle.publicKey.keyPairHandle.spec()).to.deep.equal(spec);
 }
 
 export class CryptoSignatureKeypairHandleTest {

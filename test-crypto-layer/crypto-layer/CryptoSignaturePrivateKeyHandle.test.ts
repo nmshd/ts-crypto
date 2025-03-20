@@ -2,7 +2,8 @@
 import { CryptoSignaturePrivateKeyHandle, CryptoSignatures } from "@nmshd/crypto";
 import { KeyPairSpec } from "@nmshd/rs-crypto-types";
 import { expect } from "chai";
-import { expectCryptoSignatureAsymmetricKeyHandle } from "./CryptoLayerTestUtil";
+import { assertCryptoAsymmetricKeyHandle } from "./CryptoAsymmetricKeyHandle.test";
+import { idSpecProviderNameEqual } from "./CryptoLayerTestUtil";
 
 export class CryptoSignaturePrivateKeyHandleTest {
     public static run(): void {
@@ -24,7 +25,6 @@ export class CryptoSignaturePrivateKeyHandleTest {
                     const providerName = privateKeyHandle.providerName;
 
                     const serializedPrivateKeyHandle = privateKeyHandle.toJSON();
-                    expect(serializedPrivateKeyHandle).to.be.instanceOf(Object);
                     expect(serializedPrivateKeyHandle.cid).to.equal(id);
                     expect(serializedPrivateKeyHandle.pnm).to.equal(providerName);
                     expect(serializedPrivateKeyHandle.spc).to.deep.equal(spec);
@@ -32,7 +32,8 @@ export class CryptoSignaturePrivateKeyHandleTest {
 
                     const loadedPrivateKeyHandle =
                         await CryptoSignaturePrivateKeyHandle.fromJSON(serializedPrivateKeyHandle);
-                    await expectCryptoSignatureAsymmetricKeyHandle(loadedPrivateKeyHandle, id, spec, providerName);
+                    assertCryptoAsymmetricKeyHandle(loadedPrivateKeyHandle);
+                    await idSpecProviderNameEqual(loadedPrivateKeyHandle, id, spec, providerName);
                 });
 
                 it("toBase64() and fromBase64()", async function () {
@@ -40,16 +41,14 @@ export class CryptoSignaturePrivateKeyHandleTest {
                     const privateKeyHandle = cryptoKeyPairHandle.privateKey;
                     const id = privateKeyHandle.id;
                     const providerName = privateKeyHandle.providerName;
+                    privateKeyHandle.keyPairHandle;
 
                     const serializedPrivateKey = privateKeyHandle.toBase64();
                     expect(serializedPrivateKey).to.be.ok;
-                    const deserializedPrivateKey = CryptoSignaturePrivateKeyHandle.fromBase64(serializedPrivateKey);
-                    await expectCryptoSignatureAsymmetricKeyHandle(
-                        await deserializedPrivateKey,
-                        id,
-                        spec,
-                        providerName
-                    );
+                    const deserializedPrivateKey =
+                        await CryptoSignaturePrivateKeyHandle.fromBase64(serializedPrivateKey);
+                    assertCryptoAsymmetricKeyHandle(deserializedPrivateKey);
+                    await idSpecProviderNameEqual(deserializedPrivateKey, id, spec, providerName);
                 });
 
                 // eslint-disable-next-line jest/expect-expect
@@ -64,7 +63,8 @@ export class CryptoSignaturePrivateKeyHandleTest {
                         id: id,
                         providerName: providerName
                     });
-                    await expectCryptoSignatureAsymmetricKeyHandle(loadedPrivateKeyHandle, id, spec, providerName);
+                    assertCryptoAsymmetricKeyHandle(loadedPrivateKeyHandle);
+                    await idSpecProviderNameEqual(loadedPrivateKeyHandle, id, spec, providerName);
                 });
 
                 // eslint-disable-next-line jest/expect-expect
@@ -75,7 +75,8 @@ export class CryptoSignaturePrivateKeyHandleTest {
                     const providerName = privateKeyHandle.providerName;
 
                     const loadedPrivateKeyHandle = await CryptoSignaturePrivateKeyHandle.from(privateKeyHandle);
-                    await expectCryptoSignatureAsymmetricKeyHandle(loadedPrivateKeyHandle, id, spec, providerName);
+                    assertCryptoAsymmetricKeyHandle(loadedPrivateKeyHandle);
+                    await idSpecProviderNameEqual(loadedPrivateKeyHandle, id, spec, providerName);
                 });
             });
         });

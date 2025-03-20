@@ -2,7 +2,8 @@
 import { CryptoSignaturePublicKeyHandle, CryptoSignatures } from "@nmshd/crypto";
 import { KeyPairSpec } from "@nmshd/rs-crypto-types";
 import { expect } from "chai";
-import { expectCryptoSignatureAsymmetricKeyHandle } from "./CryptoLayerTestUtil";
+import { assertCryptoAsymmetricKeyHandle } from "./CryptoAsymmetricKeyHandle.test";
+import { idSpecProviderNameEqual } from "./CryptoLayerTestUtil";
 
 export class CryptoSignaturePublicKeyHandleTest {
     public static run(): void {
@@ -23,16 +24,17 @@ export class CryptoSignaturePublicKeyHandleTest {
                     const id = publicKeyHandle.id;
                     const providerName = publicKeyHandle.providerName;
 
-                    const serializedpublicKeyHandle = publicKeyHandle.toJSON();
-                    expect(serializedpublicKeyHandle).to.be.instanceOf(Object);
-                    expect(serializedpublicKeyHandle.cid).to.equal(id);
-                    expect(serializedpublicKeyHandle.pnm).to.equal(providerName);
-                    expect(serializedpublicKeyHandle.spc).to.deep.equal(spec);
-                    expect(serializedpublicKeyHandle["@type"]).to.equal("CryptoSignaturePublicKeyHandle");
+                    const serializedPublicKeyHandle = publicKeyHandle.toJSON();
+                    expect(serializedPublicKeyHandle).to.be.instanceOf(Object);
+                    expect(serializedPublicKeyHandle.cid).to.equal(id);
+                    expect(serializedPublicKeyHandle.pnm).to.equal(providerName);
+                    expect(serializedPublicKeyHandle.spc).to.deep.equal(spec);
+                    expect(serializedPublicKeyHandle["@type"]).to.equal("CryptoSignaturePublicKeyHandle");
 
-                    const loadedpublicKeyHandle =
-                        await CryptoSignaturePublicKeyHandle.fromJSON(serializedpublicKeyHandle);
-                    await expectCryptoSignatureAsymmetricKeyHandle(loadedpublicKeyHandle, id, spec, providerName);
+                    const loadedPublicKeyHandle =
+                        await CryptoSignaturePublicKeyHandle.fromJSON(serializedPublicKeyHandle);
+                    assertCryptoAsymmetricKeyHandle(loadedPublicKeyHandle);
+                    await idSpecProviderNameEqual(loadedPublicKeyHandle, id, spec, providerName);
                 });
 
                 it("toBase64() and fromBase64()", async function () {
@@ -41,10 +43,11 @@ export class CryptoSignaturePublicKeyHandleTest {
                     const id = publicKeyHandle.id;
                     const providerName = publicKeyHandle.providerName;
 
-                    const serializedpublicKey = publicKeyHandle.toBase64();
-                    expect(serializedpublicKey).to.be.ok;
-                    const deserializedpublicKey = CryptoSignaturePublicKeyHandle.fromBase64(serializedpublicKey);
-                    await expectCryptoSignatureAsymmetricKeyHandle(await deserializedpublicKey, id, spec, providerName);
+                    const serializedPublicKey = publicKeyHandle.toBase64();
+                    expect(serializedPublicKey).to.be.ok;
+                    const deserializedPublicKey = CryptoSignaturePublicKeyHandle.fromBase64(serializedPublicKey);
+                    assertCryptoAsymmetricKeyHandle(await deserializedPublicKey);
+                    await idSpecProviderNameEqual(await deserializedPublicKey, id, spec, providerName);
                 });
 
                 // eslint-disable-next-line jest/expect-expect
@@ -54,12 +57,13 @@ export class CryptoSignaturePublicKeyHandleTest {
                     const id = publicKeyHandle.id;
                     const providerName = publicKeyHandle.providerName;
 
-                    const loadedpublicKeyHandle = await CryptoSignaturePublicKeyHandle.from({
+                    const loadedPublicKeyHandle = await CryptoSignaturePublicKeyHandle.from({
                         spec: spec,
                         id: id,
                         providerName: providerName
                     });
-                    await expectCryptoSignatureAsymmetricKeyHandle(loadedpublicKeyHandle, id, spec, providerName);
+                    assertCryptoAsymmetricKeyHandle(loadedPublicKeyHandle);
+                    await idSpecProviderNameEqual(loadedPublicKeyHandle, id, spec, providerName);
                 });
 
                 // eslint-disable-next-line jest/expect-expect
@@ -69,8 +73,9 @@ export class CryptoSignaturePublicKeyHandleTest {
                     const id = publicKeyHandle.id;
                     const providerName = publicKeyHandle.providerName;
 
-                    const loadedpublicKeyHandle = await CryptoSignaturePublicKeyHandle.from(publicKeyHandle);
-                    await expectCryptoSignatureAsymmetricKeyHandle(loadedpublicKeyHandle, id, spec, providerName);
+                    const loadedPublicKeyHandle = await CryptoSignaturePublicKeyHandle.from(publicKeyHandle);
+                    assertCryptoAsymmetricKeyHandle(loadedPublicKeyHandle);
+                    await idSpecProviderNameEqual(loadedPublicKeyHandle, id, spec, providerName);
                 });
             });
         });

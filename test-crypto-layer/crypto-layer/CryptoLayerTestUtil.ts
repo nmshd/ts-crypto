@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-import { CryptoAsymmetricKeyHandle } from "@nmshd/crypto";
 import { AsymmetricKeySpec, Cipher, CryptoHash, KeyPairSpec } from "@nmshd/rs-crypto-types";
 import { expect } from "chai";
 import { defaults } from "lodash";
@@ -48,18 +47,50 @@ export function parameterizedKeyPairSpec(
     });
 }
 
-export async function expectCryptoSignatureAsymmetricKeyHandle<T extends CryptoAsymmetricKeyHandle>(
-    value: T,
-    id: string,
-    spec: KeyPairSpec,
-    providerName: string
-): Promise<void> {
-    expect(value).to.be.instanceOf(CryptoAsymmetricKeyHandle);
-    expect(value.id).to.equal(id);
-    expect(value.providerName).to.equal(providerName);
+export async function specEquals<T>(
+    value: { keyPairHandle: { spec: () => Promise<T> }; spec: T } | { keyHandle: { spec: () => Promise<T> }; spec: T },
+    spec: T
+) {
     expect(value.spec).to.deep.equal(spec);
-    expect(value.keyPairHandle).to.be.ok;
-    expect(value.provider).to.be.ok;
-    expect(await value.keyPairHandle.id()).to.equal(id);
-    expect(await value.provider.providerName()).to.equal(providerName);
+    if ("keyPairHandle" in value) {
+        expect(await value.keyPairHandle.spec()).to.deep.equal(spec);
+    } else {
+        expect(await value.keyHandle.spec()).to.deep.equal(spec);
+    }
+}
+
+export async function idEquals(
+    value:
+        | { keyPairHandle: { id: () => Promise<string> }; id: string }
+        | { keyHandle: { id: () => Promise<string> }; id: string },
+    id: string
+) {
+    expect(value.id).to.eq(id);
+    if ("keyPairHandle" in value) {
+        expect(await value.keyPairHandle.id()).to.deep.equal(id);
+    } else {
+        expect(await value.keyHandle.id()).to.deep.equal(id);
+    }
+}
+
+export async function idSpecProviderNameEqual<T>(
+    value:
+        | {
+              keyPairHandle: { id: () => Promise<string>; spec: () => Promise<T> };
+              id: string;
+              spec: T;
+              providerName: string;
+          }
+        | {
+              keyHandle: { id: () => Promise<string>; spec: () => Promise<T> };
+              id: string;
+              spec: T;
+              providerName: string;
+          },
+    id: string,
+    spec: T,
+    providerName: string
+) {
+    await Promise.all([specEquals(value, spec), idEquals(value, id)]);
+    expect(value.providerName).to.eq(providerName);
 }
