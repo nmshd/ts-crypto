@@ -162,6 +162,7 @@ export class CryptoExchangeSecretsHandle
         const rxKeyHandle = await CryptoSecretKeyHandle.importRawKeyIntoHandle(
             { providerName },
             receivingKey,
+            // eslint-disable-next-line @typescript-eslint/naming-convention
             { cipher: "XChaCha20Poly1305", signing_hash: "Sha2_256", ephemeral: true },
             algorithm
         );
@@ -169,6 +170,7 @@ export class CryptoExchangeSecretsHandle
         const txKeyHandle = await CryptoSecretKeyHandle.importRawKeyIntoHandle(
             { providerName },
             transmissionKey,
+            // eslint-disable-next-line @typescript-eslint/naming-convention
             { cipher: "XChaCha20Poly1305", signing_hash: "Sha2_256", ephemeral: true },
             algorithm
         );

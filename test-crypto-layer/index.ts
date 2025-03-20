@@ -8,7 +8,10 @@ import {
 import chai from "chai";
 import { CryptoExportedPublicKeyTest } from "./crypto-layer/CryptoExportedPublicKey.test";
 import { CryptoLayerProviderTest } from "./crypto-layer/CryptoLayerProviderTest.test";
+import { CryptoExchangeKeypairHandleTest } from "./crypto-layer/exchange/CryptoExchangeKeypairHandle.test";
 import { CryptoExchangePrivateKeyHandleTest } from "./crypto-layer/exchange/CryptoExchangePrivateKeyHandle.test";
+import { CryptoExchangePublicKeyHandleTest } from "./crypto-layer/exchange/CryptoExchangePublicKeyHandle.test";
+import { CryptoExchangeSecretsHandleTest } from "./crypto-layer/exchange/CryptoExchangeSecretsHandle.test";
 import { CryptoSignatureKeypairHandleTest } from "./crypto-layer/signature/CryptoSignatureKeypairHandle.test";
 import { CryptoSignaturePrivateKeyHandleTest } from "./crypto-layer/signature/CryptoSignaturePrivateKeyHandle.test";
 import { CryptoSignaturePublicKeyHandleTest } from "./crypto-layer/signature/CryptoSignaturePublicKeyHandle.test";
@@ -30,11 +33,18 @@ chai.config.truncateThreshold = 0;
         SodiumWrapper.ready()
     ]);
     CryptoLayerProviderTest.run();
+    CryptoExportedPublicKeyTest.run();
+
+    // Signature
     CryptoSignatureKeypairHandleTest.run();
     CryptoSignaturePrivateKeyHandleTest.run();
     CryptoSignaturePublicKeyHandleTest.run();
-    CryptoExportedPublicKeyTest.run();
+
+    // Exchange
     CryptoExchangePrivateKeyHandleTest.run();
+    CryptoExchangePublicKeyHandleTest.run();
+    await CryptoExchangeSecretsHandleTest.run();
+    CryptoExchangeKeypairHandleTest.run();
 
     run();
 })();

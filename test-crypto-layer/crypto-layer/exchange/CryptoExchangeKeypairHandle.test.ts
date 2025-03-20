@@ -1,0 +1,34 @@
+import { CryptoExchangeKeypairHandle, CryptoExchangeWithCryptoLayer } from "@nmshd/crypto";
+import { KeyPairSpec } from "@nmshd/rs-crypto-types";
+import {
+    assertCryptoAsymmetricKeyHandleWithUse,
+    TestSerializeDeserializeOfCryptoKeyPairHandle
+} from "../CommonSerialize";
+
+async function assertCryptoExchangeKeypairHandle(value: CryptoExchangeKeypairHandle): Promise<void> {
+    await assertCryptoAsymmetricKeyHandleWithUse(value.privateKey);
+    await assertCryptoAsymmetricKeyHandleWithUse(value.publicKey);
+}
+
+export class CryptoExchangeKeypairHandleTest {
+    static run() {
+        const providerIdent = "SoftwareProvider";
+        const spec: KeyPairSpec = {
+            asym_spec: "P256",
+            cipher: null,
+            signing_hash: "Sha2_512",
+            ephemeral: false,
+            non_exportable: false
+        };
+
+        describe("CryptoExchangeKeypairHandle", () => {
+            TestSerializeDeserializeOfCryptoKeyPairHandle(
+                "CryptoExchangeKeypairHandle",
+                async () => {
+                    return await CryptoExchangeWithCryptoLayer.generateKeypair({ providerName: providerIdent }, spec);
+                },
+                CryptoExchangeKeypairHandle
+            );
+        });
+    }
+}

@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { CryptoAsymmetricKeyHandle, CryptoSecretKeyHandle } from "src/crypto-layer";
+import { CryptoAsymmetricKeyHandle } from "src/crypto-layer";
 import { assertCryptoAsymmetricKeyHandle } from "./CryptoAsymmetricKeyHandle";
 
 type SerializePair<ClassToTest, IntermediaryFormat> = [
@@ -18,7 +18,7 @@ type SerializerVec<T> = [SerializePair<T, string> | SerializePair<T, Object>, st
  * @param validator A function that validates that the class is correct. Uses expect from chai and type guards, which throw.
  * @param beforeAfterValidator A function that validates that the deserialized result has expected values compared to the original (like `spec()`).
  */
-async function CommonSerializeTest<T extends CryptoAsymmetricKeyHandle | CryptoSecretKeyHandle>(
+async function CommonSerializeTest<T>(
     name: string,
     create: () => Promise<T>,
     serializers: SerializerVec<T>,
@@ -56,9 +56,13 @@ type FromJson<T> = {
     fromJSON(value: Object): Promise<T>;
 };
 
-export async function TestSerializeDeserializeOfAsymmetricKeyPairHandle<
-    T extends CryptoAsymmetricKeyHandle & ToBase64<T> & ToJson<T>
->(name: string, create: () => Promise<T>, constructor: { new (): T } & FromBase64<T> & FromJson<T>) {
+export async function TestSerializeDeserializeOfBase64AndJson<T extends ToBase64<T> & ToJson<T>>(
+    name: string,
+    create: () => Promise<T>,
+    constructor: { new (): T } & FromBase64<T> & FromJson<T>,
+    validator: (value: T) => Promise<void>,
+    beforeAfterValidator: (beforeSerialization: T, afterSerialization: T) => Promise<void>
+) {
     const objectForStaticCalls = await create();
 
     const toAndFromBase64: SerializePair<T, string> = [
@@ -74,15 +78,51 @@ export async function TestSerializeDeserializeOfAsymmetricKeyPairHandle<
         [toAndFromBase64, "toBase64() and fromBase64()"]
     ];
 
+    CommonSerializeTest(name, create, serializers, validator, beforeAfterValidator);
+}
+
+/**
+ * Tests AsymmetricKeyPairHandle for validity and executes the id function.
+ */
+export async function assertCryptoAsymmetricKeyHandleWithUse<T extends CryptoAsymmetricKeyHandle>(handle: T) {
+    assertCryptoAsymmetricKeyHandle(handle);
+    expect(await handle.keyPairHandle.id()).to.exist.and.to.be.a("string").and.to.be.not.empty;
+    expect(await handle.keyPairHandle.spec()).to.deep.equal(handle.spec);
+}
+
+export async function assertBeforeAfterAsymmetricKeyHandle<T extends CryptoAsymmetricKeyHandle>(before: T, after: T) {
+    expect(before.spec).to.deep.equal(after.spec);
+}
+
+/**
+ * Tests CryptoAsymmetricKeyHandle for serialization and deserialization.
+ */
+export async function TestSerializeDeserializeOfAsymmetricKeyPairHandle<
+    T extends CryptoAsymmetricKeyHandle & ToBase64<T> & ToJson<T>
+>(name: string, create: () => Promise<T>, constructor: { new (): T } & FromBase64<T> & FromJson<T>) {
     const validator = async (handle: T) => {
-        assertCryptoAsymmetricKeyHandle(handle);
-        expect(await handle.keyPairHandle.id()).to.exist.and.to.be.a("string").and.to.be.not.empty;
-        expect(await handle.keyPairHandle.spec()).to.deep.equal(handle.spec);
+        await assertCryptoAsymmetricKeyHandleWithUse(handle);
+    };
+
+    TestSerializeDeserializeOfBase64AndJson(name, create, constructor, validator, assertBeforeAfterAsymmetricKeyHandle);
+}
+
+/**
+ * Tests KeyPairHandle holding CryptoAsymmetricKeyHandle for serialization and deserialization.
+ */
+export async function TestSerializeDeserializeOfCryptoKeyPairHandle<
+    I extends CryptoAsymmetricKeyHandle & ToBase64<I> & ToJson<I>,
+    T extends { publicKey: I; privateKey: I } & ToBase64<T> & ToJson<T>
+>(name: string, create: () => Promise<T>, constructor: { new (): T } & FromBase64<T> & FromJson<T>) {
+    const validator = async (handle: T) => {
+        await assertCryptoAsymmetricKeyHandleWithUse(handle.privateKey);
+        await assertCryptoAsymmetricKeyHandleWithUse(handle.publicKey);
     };
 
     const beforeAfterValidator = async (before: T, after: T) => {
-        expect(before.spec).to.deep.equal(after.spec);
+        await assertBeforeAfterAsymmetricKeyHandle(before.privateKey, after.privateKey);
+        await assertBeforeAfterAsymmetricKeyHandle(before.publicKey, after.privateKey);
     };
 
-    CommonSerializeTest(name, create, serializers, validator, beforeAfterValidator);
+    TestSerializeDeserializeOfBase64AndJson(name, create, constructor, validator, beforeAfterValidator);
 }
