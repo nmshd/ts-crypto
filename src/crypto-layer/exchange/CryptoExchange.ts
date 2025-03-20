@@ -55,8 +55,10 @@ export class CryptoExchangeWithCryptoLayer {
     private static createDHExchangeSpec(algorithm: CryptoExchangeAlgorithm): KeyPairSpec {
         return defaults(
             {
+                // eslint-disable-next-line @typescript-eslint/naming-convention
                 asym_spec: asymSpecFromCryptoAlgorithm(algorithm),
                 ephemeral: true,
+                // eslint-disable-next-line @typescript-eslint/naming-convention
                 non_exportable: false
             },
             DEFAULT_KEY_PAIR_SPEC

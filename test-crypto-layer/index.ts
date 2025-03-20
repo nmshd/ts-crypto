@@ -8,6 +8,7 @@ import {
 import chai from "chai";
 import { CryptoExportedPublicKeyTest } from "./crypto-layer/CryptoExportedPublicKey.test";
 import { CryptoLayerProviderTest } from "./crypto-layer/CryptoLayerProviderTest.test";
+import { CryptoExchangePrivateKeyHandleTest } from "./crypto-layer/exchange/CryptoExchangePrivateKeyHandle.test";
 import { CryptoSignatureKeypairHandleTest } from "./crypto-layer/signature/CryptoSignatureKeypairHandle.test";
 import { CryptoSignaturePrivateKeyHandleTest } from "./crypto-layer/signature/CryptoSignaturePrivateKeyHandle.test";
 import { CryptoSignaturePublicKeyHandleTest } from "./crypto-layer/signature/CryptoSignaturePublicKeyHandle.test";
@@ -33,6 +34,7 @@ chai.config.truncateThreshold = 0;
     CryptoSignaturePrivateKeyHandleTest.run();
     CryptoSignaturePublicKeyHandleTest.run();
     CryptoExportedPublicKeyTest.run();
+    CryptoExchangePrivateKeyHandleTest.run();
 
     run();
 })();
