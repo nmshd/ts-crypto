@@ -10,8 +10,8 @@ import {
 } from "@nmshd/crypto";
 import { KeyPairSpec } from "@nmshd/rs-crypto-types";
 import { expect } from "chai";
-import { assertCryptoAsymmetricKeyHandle } from "./CryptoAsymmetricKeyHandle.test";
-import { parameterizedKeyPairSpec } from "./CryptoLayerTestUtil";
+import { assertCryptoAsymmetricKeyHandle } from "../CryptoAsymmetricKeyHandle.test";
+import { parameterizedKeyPairSpec } from "../CryptoLayerTestUtil";
 
 export async function expectCryptoSignatureKeypairHandle(
     cryptoKeyPairHandle: CryptoSignatureKeypairHandle,

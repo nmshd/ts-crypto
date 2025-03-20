@@ -1,7 +1,7 @@
 {
-  "extends": "@istanbuljs/nyc-config-typescript",
-  "all": true,
-  "check-coverage": true,
-  "exclude": ["dist*", "lib*", "**/*.test.*", "**/*.config.*"],
-  "reporter": ["html", "text"]
+    "extends": "@istanbuljs/nyc-config-typescript",
+    "all": true,
+    "check-coverage": true,
+    "exclude": ["dist*", "lib*", "**/*.test.*", "**/*.config.*", "coverage"],
+    "reporter": ["html", "text"]
 }

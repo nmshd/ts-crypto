@@ -2,8 +2,8 @@
 import { CryptoSignaturePublicKeyHandle, CryptoSignatures } from "@nmshd/crypto";
 import { KeyPairSpec } from "@nmshd/rs-crypto-types";
 import { expect } from "chai";
-import { assertCryptoAsymmetricKeyHandle } from "./CryptoAsymmetricKeyHandle.test";
-import { idSpecProviderNameEqual } from "./CryptoLayerTestUtil";
+import { assertCryptoAsymmetricKeyHandle } from "../CryptoAsymmetricKeyHandle.test";
+import { idSpecProviderNameEqual } from "../CryptoLayerTestUtil";
 
 export class CryptoSignaturePublicKeyHandleTest {
     public static run(): void {
