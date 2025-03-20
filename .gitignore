@@ -11,3 +11,5 @@ lib-web
 lib-esm
 test_cal_db
 .nyc_output
+.nycrc
+coverage
