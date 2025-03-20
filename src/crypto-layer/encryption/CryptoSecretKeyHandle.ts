@@ -1,6 +1,6 @@
 import { ISerializable, ISerialized, SerializableAsync, serialize, type, validate } from "@js-soft/ts-serval";
 import { KeyHandle, KeySpec, Provider } from "@nmshd/rs-crypto-types";
-import { CoreBuffer, Encoding } from "../../CoreBuffer";
+import { CoreBuffer, Encoding, IClearable } from "../../CoreBuffer";
 import { CryptoError } from "../../CryptoError";
 import { CryptoErrorCode } from "../../CryptoErrorCode";
 import { CryptoSerializableAsync } from "../../CryptoSerializable";
@@ -33,7 +33,7 @@ export interface ICryptoSecretKeyHandle extends ISerializable {
  * without exposing the raw key material directly.
  */
 @type("CryptoSecretKeyHandle")
-export class CryptoSecretKeyHandle extends CryptoSerializableAsync implements ICryptoSecretKeyHandle {
+export class CryptoSecretKeyHandle extends CryptoSerializableAsync implements ICryptoSecretKeyHandle, IClearable {
     @validate()
     @serialize()
     public algorithm: CryptoEncryptionAlgorithm;

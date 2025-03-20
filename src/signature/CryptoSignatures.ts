@@ -1,5 +1,5 @@
 import { KeyPairSpec } from "@nmshd/rs-crypto-types";
-import { CoreBuffer } from "../CoreBuffer";
+import { CoreBuffer, IClearable } from "../CoreBuffer";
 import { ProviderIdentifier } from "../crypto-layer/CryptoLayerProviders";
 import { cryptoHashFromCryptoHashAlgorithm } from "../crypto-layer/CryptoLayerUtils";
 import { CryptoSignatureKeypairHandle } from "../crypto-layer/signature/CryptoSignatureKeypair";
@@ -17,7 +17,9 @@ import { CryptoSignaturePrivateKey } from "./CryptoSignaturePrivateKey";
 import { CryptoSignaturePublicKey } from "./CryptoSignaturePublicKey";
 import { CryptoSignatureValidation } from "./CryptoSignatureValidation";
 
-export class CryptoSignaturesWithLibsodium {
+export class CryptoSignaturesWithLibsodium implements IClearable {
+    public clear(): void {}
+
     public static async privateKeyToPublicKey(
         privateKey: CryptoSignaturePrivateKey
     ): Promise<CryptoSignaturePublicKey> {
