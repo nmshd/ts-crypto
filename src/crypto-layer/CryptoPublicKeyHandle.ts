@@ -1,5 +1,6 @@
 import { type } from "@js-soft/ts-serval";
 import { KeyPairHandle, KeyPairSpec } from "@nmshd/rs-crypto-types";
+import deasync from "deasync";
 import { CoreBuffer, Encoding } from "../CoreBuffer";
 import { CryptoAsymmetricKeyHandle } from "./CryptoAsymmetricKeyHandle";
 import { getProviderOrThrow, ProviderIdentifier } from "./CryptoLayerProviders";
@@ -9,7 +10,7 @@ export interface ICryptoPublicKeyHandle {
     spec: KeyPairSpec;
     providerName: string;
     toSerializedString(): Promise<string>;
-    toPEM(): Promise<string>;
+    toPEM(): string;
     toJSON(): Object;
 }
 
@@ -49,9 +50,30 @@ export class CryptoPublicKeyHandle extends CryptoAsymmetricKeyHandle implements 
      *
      * @returns A Promise that resolves to the PEM-encoded string representation of the public key.
      */
-    public async toPEM(): Promise<string> {
-        const raw = await this.keyPairHandle.getPublicKey();
-        return CoreBuffer.from(raw).toString(Encoding.Pem, "PRIVATE KEY");
+    public toPEM(): string {
+        let done = false;
+        let result: string;
+        let error: any;
+
+        this.keyPairHandle
+            .getPublicKey()
+            .then((raw) => {
+                result = CoreBuffer.from(raw).toString(Encoding.Pem, "PRIVATE KEY");
+                done = true;
+            })
+            .catch((err) => {
+                error = err;
+                done = true;
+            });
+
+        // Block the event loop until async operation completes
+        deasync.loopWhile(() => !done);
+
+        if (error) {
+            throw error;
+        }
+
+        return result!;
     }
 
     /**

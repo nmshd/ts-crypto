@@ -112,18 +112,6 @@ export class CryptoExchangePublicKeyWithLibsodium
 }
 
 /**
- * A simple flag indicating if handle-based usage is available.
- */
-let publicKeyProviderInitialized = false;
-
-/**
- * Call this during initialization if you have a crypto-layer provider for exchange public keys.
- */
-export function initCryptoExchangePublicKey(): void {
-    publicKeyProviderInitialized = true;
-}
-
-/**
  * Extended class that supports handle-based keys if the crypto-layer provider is available.
  * Otherwise, it falls back to the libsodium-based implementation.
  */
@@ -141,14 +129,6 @@ export class CryptoExchangePublicKey extends CryptoExchangePublicKeyWithLibsodiu
             pub: this.publicKey.toBase64URL(),
             alg: this.algorithm
         };
-    }
-
-    /**
-     * Checks if this is a crypto-layer handle.
-     * @returns True if using crypto-layer, false if libsodium-based.
-     */
-    public isUsingCryptoLayer(): boolean {
-        return this instanceof CryptoExchangePublicKeyHandle;
     }
 
     /**

@@ -1,5 +1,6 @@
 import { type } from "@js-soft/ts-serval";
 import { KeyPairHandle, KeyPairSpec } from "@nmshd/rs-crypto-types";
+import deasync from "deasync";
 import { CoreBuffer, Encoding } from "../CoreBuffer";
 import { CryptoAsymmetricKeyHandle } from "./CryptoAsymmetricKeyHandle";
 import { getProviderOrThrow, ProviderIdentifier } from "./CryptoLayerProviders";
@@ -8,7 +9,7 @@ export interface ICryptoPrivateKeyHandle {
     keyPairHandle: KeyPairHandle;
     spec: KeyPairSpec;
     toSerializedString(): Promise<string>;
-    toPEM(): Promise<string>;
+    toPEM(): string;
 }
 
 export interface ICryptoPrivateKeyHandleStatic {
@@ -30,9 +31,30 @@ export class CryptoPrivateKeyHandle extends CryptoAsymmetricKeyHandle implements
         return CoreBuffer.from(raw).toString(Encoding.Base64_UrlSafe_NoPadding);
     }
 
-    public async toPEM(): Promise<string> {
-        const raw = await this.keyPairHandle.extractKey();
-        return CoreBuffer.from(raw).toString(Encoding.Pem, "PRIVATE KEY");
+    public toPEM(): string {
+        let done = false;
+        let result: string;
+        let error: any;
+
+        this.keyPairHandle
+            .extractKey()
+            .then((raw) => {
+                result = CoreBuffer.from(raw).toString(Encoding.Pem, "PRIVATE KEY");
+                done = true;
+            })
+            .catch((err) => {
+                error = err;
+                done = true;
+            });
+
+        // Block the event loop until the async operation completes
+        deasync.loopWhile(() => !done);
+
+        if (error) {
+            throw error;
+        }
+
+        return result!;
     }
 
     public static async fromString(
