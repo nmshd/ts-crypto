@@ -37,11 +37,14 @@ export function asymSpecFromCryptoAlgorithm(
 }
 
 export function cryptoHashAlgorithmFromAsymSpec(hashFunction: CryptoHash): CryptoHashAlgorithm {
+    // eslint-disable-next-line @typescript-eslint/switch-exhaustiveness-check
     switch (hashFunction) {
         case "Sha2_256":
             return CryptoHashAlgorithm.SHA256;
         case "Sha2_512":
             return CryptoHashAlgorithm.SHA512;
+        case "Blake2b":
+            return CryptoHashAlgorithm.BLAKE2B;
         default:
             throw new CryptoError(
                 CryptoErrorCode.CalUnsupportedAlgorithm,
@@ -57,7 +60,7 @@ export function cryptoHashFromCryptoHashAlgorithm(algorithm: CryptoHashAlgorithm
         case CryptoHashAlgorithm.SHA512:
             return "Sha2_512";
         case CryptoHashAlgorithm.BLAKE2B:
-            throw new CryptoError(CryptoErrorCode.CalUnsupportedAlgorithm);
+            return "Blake2b";
     }
 }
 

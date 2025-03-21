@@ -62,6 +62,7 @@ export class CryptoHashWithLibsodium {
         const sodium = await SodiumWrapper.ready();
         let hashBuffer: Uint8Array;
 
+        // eslint-disable-next-line @typescript-eslint/switch-exhaustiveness-check
         switch (algorithm) {
             case CryptoHashAlgorithm.SHA256:
                 hashBuffer = sodium.crypto_hash_sha256(content.buffer);
@@ -167,7 +168,7 @@ export class CryptoHash extends CryptoHashWithLibsodium {
                 algorithm
             );
         }
-        return super.verify(content, hash, algorithm);
+        return await super.verify(content, hash, algorithm);
     }
 
     /**
@@ -177,7 +178,7 @@ export class CryptoHash extends CryptoHashWithLibsodium {
         if (providerInitialized) {
             return await CryptoHashWithCryptoLayer.hash({ providerName: "SoftwareProvider" }, content, algorithm);
         }
-        return super.hash(content, algorithm);
+        return await super.hash(content, algorithm);
     }
 
     /**
@@ -187,7 +188,7 @@ export class CryptoHash extends CryptoHashWithLibsodium {
         if (providerInitialized) {
             return await CryptoHashWithCryptoLayer.sha256(content, hash);
         }
-        return super.sha256(content, hash);
+        return await super.sha256(content, hash);
     }
 
     /**
@@ -197,6 +198,6 @@ export class CryptoHash extends CryptoHashWithLibsodium {
         if (providerInitialized) {
             return await CryptoHashWithCryptoLayer.sha512(content, hash);
         }
-        return super.sha512(content, hash);
+        return await super.sha512(content, hash);
     }
 }
