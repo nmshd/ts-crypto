@@ -49,7 +49,7 @@ export class CryptoExchangeWithCryptoLayer {
         );
         const publicKey = await privateKey.toPublicKey();
 
-        return await CryptoExchangeKeypairHandle.from({ publicKey, privateKey });
+        return CryptoExchangeKeypairHandle.fromPublicAndPrivateKeys(publicKey, privateKey);
     }
 
     private static createDHExchangeSpec(algorithm: CryptoExchangeAlgorithm): KeyPairSpec {

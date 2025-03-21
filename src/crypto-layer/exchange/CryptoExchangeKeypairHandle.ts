@@ -56,6 +56,23 @@ export class CryptoExchangeKeypairHandle
     public privateKey: CryptoExchangePrivateKeyHandle;
 
     /**
+     * Creates a new {@link CryptoExchangeKeypairHandle} using the provided public and private keys.
+     *
+     * @param publicKey - The public key handle to associate with the keypair.
+     * @param privateKey - The private key handle to associate with the keypair.
+     * @returns A new instance of CryptoExchangeKeypairHandle with the specified keys.
+     */
+    public static fromPublicAndPrivateKeys(
+        publicKey: CryptoExchangePublicKeyHandle,
+        privateKey: CryptoExchangePrivateKeyHandle
+    ): CryptoExchangeKeypairHandle {
+        const keyPair = new this();
+        keyPair.privateKey = privateKey;
+        keyPair.publicKey = publicKey;
+        return keyPair;
+    }
+
+    /**
      * Clears sensitive data associated with this key pair.
      * Since this class only contains handles to keys managed by the crypto provider,
      * no actual clearing of raw key material is performed here.
