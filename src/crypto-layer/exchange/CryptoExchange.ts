@@ -83,12 +83,6 @@ export class CryptoExchangeWithCryptoLayer {
     ): Promise<CryptoExchangeSecrets> {
         const exchangeAlgorithm = requestorKeypair.privateKey.spec.asym_spec;
 
-        if (asymSpecFromCryptoAlgorithm(CryptoExchangeAlgorithm.ECDH_X25519) !== exchangeAlgorithm) {
-            throw new CryptoError(
-                CryptoErrorCode.ExchangeWrongAlgorithm,
-                `Algorithm ${exchangeAlgorithm} != the algorithm the private key was initialized with.`
-            );
-        }
         if (templatorPublicKey.spec.asym_spec !== exchangeAlgorithm) {
             throw new CryptoError(
                 CryptoErrorCode.ExchangeWrongAlgorithm,
