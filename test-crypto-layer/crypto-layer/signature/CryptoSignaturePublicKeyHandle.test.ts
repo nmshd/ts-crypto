@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import { CryptoSignaturePublicKeyHandle, CryptoSignatures } from "@nmshd/crypto";
 import { KeyPairSpec } from "@nmshd/rs-crypto-types";
-import { expect } from "chai";
-import { assertCryptoAsymmetricKeyHandle } from "../CryptoAsymmetricKeyHandle";
+import { TestSerializeDeserializeOfAsymmetricKeyPairHandle } from "../CommonSerialize";
 import { idSpecProviderNameEqual } from "../CryptoLayerTestUtil";
+import { assertAsymmetricKeyHandleValid } from "../KeyValidation";
 
 export class CryptoSignaturePublicKeyHandleTest {
     public static run(): void {
@@ -18,37 +18,11 @@ export class CryptoSignaturePublicKeyHandleTest {
                 };
                 const providerIdent = { providerName: "SoftwareProvider" };
 
-                it("toJSON() and fromJSON()", async function () {
-                    const cryptoKeyPairHandle = await CryptoSignatures.generateKeypairHandle(providerIdent, spec);
-                    const publicKeyHandle = cryptoKeyPairHandle.publicKey;
-                    const id = publicKeyHandle.id;
-                    const providerName = publicKeyHandle.providerName;
-
-                    const serializedPublicKeyHandle = publicKeyHandle.toJSON();
-                    expect(serializedPublicKeyHandle).to.be.instanceOf(Object);
-                    expect(serializedPublicKeyHandle.cid).to.equal(id);
-                    expect(serializedPublicKeyHandle.pnm).to.equal(providerName);
-                    expect(serializedPublicKeyHandle.spc).to.deep.equal(spec);
-                    expect(serializedPublicKeyHandle["@type"]).to.equal("CryptoSignaturePublicKeyHandle");
-
-                    const loadedPublicKeyHandle =
-                        await CryptoSignaturePublicKeyHandle.fromJSON(serializedPublicKeyHandle);
-                    assertCryptoAsymmetricKeyHandle(loadedPublicKeyHandle);
-                    await idSpecProviderNameEqual(loadedPublicKeyHandle, id, spec, providerName);
-                });
-
-                it("toBase64() and fromBase64()", async function () {
-                    const cryptoKeyPairHandle = await CryptoSignatures.generateKeypairHandle(providerIdent, spec);
-                    const publicKeyHandle = cryptoKeyPairHandle.publicKey;
-                    const id = publicKeyHandle.id;
-                    const providerName = publicKeyHandle.providerName;
-
-                    const serializedPublicKey = publicKeyHandle.toBase64();
-                    expect(serializedPublicKey).to.be.ok;
-                    const deserializedPublicKey = CryptoSignaturePublicKeyHandle.fromBase64(serializedPublicKey);
-                    assertCryptoAsymmetricKeyHandle(await deserializedPublicKey);
-                    await idSpecProviderNameEqual(await deserializedPublicKey, id, spec, providerName);
-                });
+                TestSerializeDeserializeOfAsymmetricKeyPairHandle(
+                    "CryptoSignaturePublicKeyHandle",
+                    async () => (await CryptoSignatures.generateKeypairHandle(providerIdent, spec)).publicKey,
+                    CryptoSignaturePublicKeyHandle
+                );
 
                 // eslint-disable-next-line jest/expect-expect
                 it("from() ICryptoSignaturePublicKeyHandle", async function () {
@@ -62,7 +36,7 @@ export class CryptoSignaturePublicKeyHandleTest {
                         id: id,
                         providerName: providerName
                     });
-                    assertCryptoAsymmetricKeyHandle(loadedPublicKeyHandle);
+                    assertAsymmetricKeyHandleValid(loadedPublicKeyHandle);
                     await idSpecProviderNameEqual(loadedPublicKeyHandle, id, spec, providerName);
                 });
 
@@ -74,7 +48,7 @@ export class CryptoSignaturePublicKeyHandleTest {
                     const providerName = publicKeyHandle.providerName;
 
                     const loadedPublicKeyHandle = await CryptoSignaturePublicKeyHandle.from(publicKeyHandle);
-                    assertCryptoAsymmetricKeyHandle(loadedPublicKeyHandle);
+                    assertAsymmetricKeyHandleValid(loadedPublicKeyHandle);
                     await idSpecProviderNameEqual(loadedPublicKeyHandle, id, spec, providerName);
                 });
             });

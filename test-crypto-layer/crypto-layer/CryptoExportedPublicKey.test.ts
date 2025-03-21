@@ -1,8 +1,8 @@
 import { CoreBuffer, CryptoExportedPublicKey, CryptoPublicKeyHandle, CryptoSignatures } from "@nmshd/crypto";
 import { KeyPairSpec } from "@nmshd/rs-crypto-types";
 import { expect } from "chai";
-import { assertCryptoAsymmetricKeyHandle } from "./CryptoAsymmetricKeyHandle";
 import { idSpecProviderNameEqual, specEquals } from "./CryptoLayerTestUtil";
+import { assertAsymmetricKeyHandleValid } from "./KeyValidation";
 
 /* eslint-disable @typescript-eslint/naming-convention */
 export class CryptoExportedPublicKeyTest {
@@ -21,7 +21,7 @@ export class CryptoExportedPublicKeyTest {
                 const cryptoKeyPairHandle = await CryptoSignatures.generateKeypairHandle(providerIdent, spec);
                 const publicKeyHandle = cryptoKeyPairHandle.publicKey;
                 const id = publicKeyHandle.id;
-                assertCryptoAsymmetricKeyHandle(publicKeyHandle);
+                assertAsymmetricKeyHandleValid(publicKeyHandle);
                 await idSpecProviderNameEqual(publicKeyHandle, id, spec, providerIdent.providerName);
 
                 const exportedPublicKey = await CryptoExportedPublicKey.from(publicKeyHandle);
@@ -29,7 +29,7 @@ export class CryptoExportedPublicKeyTest {
                 expect(exportedPublicKey.spec).to.be.deep.equal(publicKeyHandle.spec);
 
                 const importedPublicKey = await exportedPublicKey.into(CryptoPublicKeyHandle, providerIdent);
-                assertCryptoAsymmetricKeyHandle(importedPublicKey);
+                assertAsymmetricKeyHandleValid(importedPublicKey);
                 expect(importedPublicKey).to.be.instanceOf(CryptoPublicKeyHandle);
                 expect(await importedPublicKey.keyPairHandle.getPublicKey()).to.deep.equal(
                     await publicKeyHandle.keyPairHandle.getPublicKey()

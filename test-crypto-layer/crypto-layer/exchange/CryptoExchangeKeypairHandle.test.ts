@@ -1,14 +1,6 @@
 import { CryptoExchangeKeypairHandle, CryptoExchangeWithCryptoLayer } from "@nmshd/crypto";
 import { KeyPairSpec } from "@nmshd/rs-crypto-types";
-import {
-    assertCryptoAsymmetricKeyHandleWithUse,
-    TestSerializeDeserializeOfCryptoKeyPairHandle
-} from "../CommonSerialize";
-
-async function assertCryptoExchangeKeypairHandle(value: CryptoExchangeKeypairHandle): Promise<void> {
-    await assertCryptoAsymmetricKeyHandleWithUse(value.privateKey);
-    await assertCryptoAsymmetricKeyHandleWithUse(value.publicKey);
-}
+import { TestSerializeDeserializeOfCryptoKeyPairHandle } from "../CommonSerialize";
 
 export class CryptoExchangeKeypairHandleTest {
     static run() {

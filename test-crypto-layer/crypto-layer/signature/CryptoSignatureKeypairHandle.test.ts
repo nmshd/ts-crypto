@@ -4,31 +4,13 @@ import {
     CryptoHashAlgorithm,
     CryptoSignature,
     CryptoSignatureKeypairHandle,
-    CryptoSignaturePrivateKeyHandle,
-    CryptoSignaturePublicKeyHandle,
     CryptoSignatures
 } from "@nmshd/crypto";
 import { KeyPairSpec } from "@nmshd/rs-crypto-types";
 import { expect } from "chai";
-import { assertCryptoAsymmetricKeyHandle } from "../CryptoAsymmetricKeyHandle";
+import { TestSerializeDeserializeOfCryptoKeyPairHandle } from "../CommonSerialize";
 import { parameterizedKeyPairSpec } from "../CryptoLayerTestUtil";
-
-export async function expectCryptoSignatureKeypairHandle(
-    cryptoKeyPairHandle: CryptoSignatureKeypairHandle,
-    expectedProvider: string,
-    spec: KeyPairSpec
-): Promise<void> {
-    expect(cryptoKeyPairHandle).to.be.instanceOf(CryptoSignatureKeypairHandle);
-    expect(cryptoKeyPairHandle.privateKey).to.be.instanceOf(CryptoSignaturePrivateKeyHandle);
-    expect(cryptoKeyPairHandle.publicKey).to.be.instanceOf(CryptoSignaturePublicKeyHandle);
-
-    assertCryptoAsymmetricKeyHandle(cryptoKeyPairHandle.privateKey);
-    assertCryptoAsymmetricKeyHandle(cryptoKeyPairHandle.publicKey);
-
-    expect(cryptoKeyPairHandle.privateKey.keyPairHandle).to.be.ok.and.deep.equal(
-        cryptoKeyPairHandle.publicKey.keyPairHandle
-    );
-}
+import { assertCryptoKeyPairHandleValid } from "../KeyValidation";
 
 export class CryptoSignatureKeypairHandleTest {
     public static run(): void {
@@ -48,12 +30,12 @@ export class CryptoSignatureKeypairHandleTest {
                         { providerName: "SoftwareProvider" },
                         spec
                     );
-                    await expectCryptoSignatureKeypairHandle(cryptoKeyPairHandle, "SoftwareProvider", spec);
+                    await assertCryptoKeyPairHandleValid(cryptoKeyPairHandle);
                 });
 
                 it("from() ICryptoSignatureKeypairHandle", async function () {
                     const cryptoKeyPairHandle = await CryptoSignatures.generateKeypairHandle(providerIdent, spec);
-                    await expectCryptoSignatureKeypairHandle(cryptoKeyPairHandle, "SoftwareProvider", spec);
+                    await assertCryptoKeyPairHandleValid(cryptoKeyPairHandle);
 
                     const loadedKeyPairHandle = await CryptoSignatureKeypairHandle.fromAny({
                         publicKey: {
@@ -67,7 +49,7 @@ export class CryptoSignatureKeypairHandleTest {
                             providerName: cryptoKeyPairHandle.publicKey.providerName
                         }
                     });
-                    await expectCryptoSignatureKeypairHandle(loadedKeyPairHandle, "SoftwareProvider", spec);
+                    await assertCryptoKeyPairHandleValid(loadedKeyPairHandle);
 
                     expect(loadedKeyPairHandle.privateKey.id).to.equal(cryptoKeyPairHandle.privateKey.id);
                     expect(loadedKeyPairHandle.publicKey.id).to.equal(cryptoKeyPairHandle.publicKey.id);
@@ -78,13 +60,13 @@ export class CryptoSignatureKeypairHandleTest {
                         { providerName: "SoftwareProvider" },
                         spec
                     );
-                    await expectCryptoSignatureKeypairHandle(cryptoKeyPairHandle, "SoftwareProvider", spec);
+                    await assertCryptoKeyPairHandleValid(cryptoKeyPairHandle);
 
                     const loadedKeyPairHandle = await CryptoSignatureKeypairHandle.fromAny({
                         publicKey: cryptoKeyPairHandle.publicKey,
                         privateKey: cryptoKeyPairHandle.privateKey
                     });
-                    await expectCryptoSignatureKeypairHandle(loadedKeyPairHandle, "SoftwareProvider", spec);
+                    await assertCryptoKeyPairHandleValid(loadedKeyPairHandle);
 
                     expect(loadedKeyPairHandle.privateKey.id).to.equal(cryptoKeyPairHandle.privateKey.id);
                     expect(loadedKeyPairHandle.publicKey.id).to.equal(cryptoKeyPairHandle.publicKey.id);
@@ -92,38 +74,20 @@ export class CryptoSignatureKeypairHandleTest {
 
                 it("from() CryptoSignatureKeypairHandle", async function () {
                     const cryptoKeyPairHandle = await CryptoSignatures.generateKeypairHandle(providerIdent, spec);
-                    await expectCryptoSignatureKeypairHandle(cryptoKeyPairHandle, "SoftwareProvider", spec);
+                    await assertCryptoKeyPairHandleValid(cryptoKeyPairHandle);
 
                     const loadedKeyPairHandle = await CryptoSignatureKeypairHandle.from(cryptoKeyPairHandle);
-                    await expectCryptoSignatureKeypairHandle(loadedKeyPairHandle, "SoftwareProvider", spec);
+                    await assertCryptoKeyPairHandleValid(loadedKeyPairHandle);
 
                     expect(loadedKeyPairHandle.privateKey.id).to.equal(cryptoKeyPairHandle.privateKey.id);
                     expect(loadedKeyPairHandle.publicKey.id).to.equal(cryptoKeyPairHandle.publicKey.id);
                 });
 
-                it("toJSON() and fromJSON()", async function () {
-                    const cryptoKeyPairHandle = await CryptoSignatures.generateKeypairHandle(providerIdent, spec);
-                    await expectCryptoSignatureKeypairHandle(cryptoKeyPairHandle, "SoftwareProvider", spec);
-
-                    const jsonKeyPairHandle = cryptoKeyPairHandle.toJSON();
-                    expect(jsonKeyPairHandle).to.be.ok;
-                    expect(jsonKeyPairHandle.prv).to.be.ok;
-                    expect(jsonKeyPairHandle.pub).to.be.ok;
-
-                    const loadedKeyPairHandle = await CryptoSignatureKeypairHandle.fromJSON(jsonKeyPairHandle);
-                    await expectCryptoSignatureKeypairHandle(loadedKeyPairHandle, "SoftwareProvider", spec);
-                });
-
-                it("toBase64() and fromBase64()", async function () {
-                    const cryptoKeyPairHandle = await CryptoSignatures.generateKeypairHandle(providerIdent, spec);
-                    await expectCryptoSignatureKeypairHandle(cryptoKeyPairHandle, "SoftwareProvider", spec);
-
-                    const encodedKeyPairHandle = cryptoKeyPairHandle.toBase64();
-                    expect(encodedKeyPairHandle).to.be.ok.and.be.a("string");
-
-                    const loadedKeyPairHandle = await CryptoSignatureKeypairHandle.fromBase64(encodedKeyPairHandle);
-                    await expectCryptoSignatureKeypairHandle(loadedKeyPairHandle, "SoftwareProvider", spec);
-                });
+                TestSerializeDeserializeOfCryptoKeyPairHandle(
+                    "CryptoSignatureKeypairHandle",
+                    async () => await CryptoSignatures.generateKeypairHandle(providerIdent, spec),
+                    CryptoSignatureKeypairHandle
+                );
 
                 it("sign() and verify()", async function () {
                     const cryptoKeyPairHandle = await CryptoSignatures.generateKeypairHandle(providerIdent, spec);
