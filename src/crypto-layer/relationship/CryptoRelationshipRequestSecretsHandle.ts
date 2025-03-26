@@ -1,5 +1,4 @@
 import { serialize, type, validate } from "@js-soft/ts-serval";
-// Import necessary types from rs-crypto-types
 import { DHExchange, KeyPairSpec, KeySpec, Provider, KeyHandle as ProviderKeyHandle } from "@nmshd/rs-crypto-types";
 import { CryptoExchangeSecrets } from "src/exchange/CryptoExchangeSecrets";
 import { CoreBuffer } from "../../CoreBuffer";
@@ -9,12 +8,11 @@ import { getProviderOrThrow, ProviderIdentifier } from "../CryptoLayerProviders"
 import { CryptoEncryptionWithCryptoLayer } from "../encryption/CryptoEncryption";
 import { CryptoSecretKeyHandle } from "../encryption/CryptoSecretKeyHandle";
 import { CryptoExchangeWithCryptoLayer } from "../exchange/CryptoExchange";
-import { CryptoExchangeKeypairHandle } from "../exchange/CryptoExchangeKeypairHandle"; // Still needed for persistent keys
+import { CryptoExchangeKeypairHandle } from "../exchange/CryptoExchangeKeypairHandle";
 import { CryptoExchangePublicKeyHandle } from "../exchange/CryptoExchangePublicKeyHandle";
 import { CryptoSignaturePublicKeyHandle } from "../signature/CryptoSignaturePublicKeyHandle";
 import { CryptoSignaturesWithCryptoLayer } from "../signature/CryptoSignatures";
 import { CryptoRelationshipPublicRequestHandle } from "./CryptoRelationshipPublicRequestHandle";
-// No need for CryptoError
 
 /**
  * Represents relationship request secrets, managing keys and derivation.
@@ -25,7 +23,6 @@ export class CryptoRelationshipRequestSecretsHandle {
     @serialize()
     public id?: string;
 
-    // Persistent keys remain as KeypairHandles
     @validate()
     @serialize()
     public exchangeKeypair: CryptoExchangeKeypairHandle;
@@ -34,7 +31,6 @@ export class CryptoRelationshipRequestSecretsHandle {
     @serialize()
     public signatureKeypair: CryptoExchangeKeypairHandle;
 
-    // Store only the ephemeral public key handle directly
     @validate()
     @serialize()
     public ephemeralPublicKey: CryptoExchangePublicKeyHandle;
@@ -95,7 +91,7 @@ export class CryptoRelationshipRequestSecretsHandle {
         // 4. Derive secrets using DH context and peer key bytes
         const peerExchangeKeyBytes = await peerExchangeKey.keyPairHandle.getPublicKey();
         const masterKey: CryptoExchangeSecrets = await CryptoExchangeWithCryptoLayer.deriveRequestor(
-            ephemeralDHHandle, // Use the DH context here
+            ephemeralDHHandle,
             peerExchangeKeyBytes
         );
 
@@ -171,7 +167,7 @@ export class CryptoRelationshipRequestSecretsHandle {
         requestHandle.id = this.id;
         requestHandle.exchangeKey = this.exchangeKeypair.publicKey;
         requestHandle.signatureKey = this.signatureKeypair.publicKey as any;
-        requestHandle.ephemeralKey = this.ephemeralPublicKey; // <-- USE DIRECT PROPERTY
+        requestHandle.ephemeralKey = this.ephemeralPublicKey;
         requestHandle.nonce = this.nonce;
         return requestHandle;
     }
