@@ -1,4 +1,7 @@
 import { ISerializable, ISerialized, serialize, type, validate } from "@js-soft/ts-serval";
+import { KeyPairSpec } from "@nmshd/rs-crypto-types";
+import { CryptoExchangeAlgorithm } from "src/exchange/CryptoExchange";
+import { CryptoExchangeSecrets } from "src/exchange/CryptoExchangeSecrets";
 import { CoreBuffer } from "../../CoreBuffer";
 import { CryptoDerivation } from "../../CryptoDerivation";
 import { CryptoError } from "../../CryptoError";
@@ -10,6 +13,8 @@ import { CryptoHashAlgorithm } from "../../hash/CryptoHash";
 import { CryptoRelationshipType } from "../../relationship/CryptoRelationshipType";
 import { CryptoSignature } from "../../signature/CryptoSignature";
 import { CryptoStateType } from "../../state/CryptoStateType";
+import { getProviderOrThrow } from "../CryptoLayerProviders";
+import { asymSpecFromCryptoAlgorithm } from "../CryptoLayerUtils";
 import { CryptoEncryptionWithCryptoLayer } from "../encryption/CryptoEncryption";
 import { CryptoSecretKeyHandle } from "../encryption/CryptoSecretKeyHandle";
 import { CryptoExchangeWithCryptoLayer } from "../exchange/CryptoExchange";
@@ -188,6 +193,85 @@ export class CryptoRelationshipSecretsHandle
     }
 
     /**
+     * Internal helper to derive secrets using persistent keypair handles.
+     * Replicates the logic previously in deriveRequestor/deriveTemplator before
+     * they were specialized for DHExchange handles.
+     */
+    private static async _deriveSecretsFromPersistentKeys(
+        localKeyPair: CryptoExchangeKeypairHandle,
+        peerPublicKey: CryptoExchangePublicKeyHandle,
+        role: "Requestor" | "Templator",
+        algorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.AES256_GCM
+    ): Promise<CryptoExchangeSecrets> {
+        const exchangeAlgorithm = localKeyPair.privateKey.spec.asym_spec;
+        if (peerPublicKey.spec.asym_spec !== exchangeAlgorithm) {
+            throw new Error(
+                `Algorithm mismatch: Peer public key (${peerPublicKey.spec.asym_spec}) vs Local private key (${exchangeAlgorithm}).`
+            );
+        }
+
+        let exchangeAlgorithmMapped: CryptoExchangeAlgorithm;
+        // eslint-disable-next-line @typescript-eslint/switch-exhaustiveness-check
+        switch (exchangeAlgorithm) {
+            case "P256":
+                exchangeAlgorithmMapped = CryptoExchangeAlgorithm.ECDH_P256;
+                break;
+            case "Curve25519":
+                exchangeAlgorithmMapped = CryptoExchangeAlgorithm.ECDH_X25519;
+                break;
+            default:
+                throw new Error(`Unsupported key exchange algorithm: ${exchangeAlgorithm}`);
+        }
+
+        // Get provider using info from the local key handle
+        const provider = getProviderOrThrow({ providerName: localKeyPair.privateKey.providerName });
+
+        // Create the spec needed for dhExchangeFromKeys
+        // Assuming createDHExchangeSpec is accessible or recreate its logic
+        const dhExchangeSpec: KeyPairSpec = {
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            asym_spec: asymSpecFromCryptoAlgorithm(exchangeAlgorithmMapped),
+            ephemeral: true,
+            cipher: null,
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            signing_hash: "Sha2_256",
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            non_exportable: false
+        };
+
+        // Extract necessary key bytes
+        const localPrivateKeyBytes = await localKeyPair.privateKey.keyPairHandle.extractKey();
+        const localPublicKeyBytes = await localKeyPair.publicKey.keyPairHandle.getPublicKey();
+        const peerPublicKeyBytes = await peerPublicKey.keyPairHandle.getPublicKey();
+
+        try {
+            // Create temporary DH context from persistent keys
+            const tempDHExchange = await provider.dhExchangeFromKeys(
+                localPublicKeyBytes,
+                localPrivateKeyBytes,
+                dhExchangeSpec
+            );
+
+            // Derive session keys based on role
+            const [rx, tx] =
+                role === "Requestor"
+                    ? await tempDHExchange.deriveServerSessionKeys(peerPublicKeyBytes)
+                    : await tempDHExchange.deriveClientSessionKeys(peerPublicKeyBytes);
+
+            // Create secrets object
+            const secrets = CryptoExchangeSecrets.from({
+                receivingKey: CoreBuffer.from(rx),
+                transmissionKey: CoreBuffer.from(tx),
+                algorithm: algorithm
+            });
+
+            return secrets;
+        } catch (e) {
+            throw new Error(`Derivation from persistent keys failed: ${e instanceof Error ? e.message : String(e)}`);
+        }
+    }
+
+    /**
      * Deserializes a JSON object into a {@link CryptoRelationshipSecretsHandle} instance.
      *
      * @param value - The JSON object conforming to {@link ICryptoRelationshipSecretsHandleSerialized}.
@@ -340,7 +424,11 @@ export class CryptoRelationshipSecretsHandle
         const peerTemplateKey = request.peerExchangeKey;
         const ownType = CryptoRelationshipType.Requestor;
 
-        const derivedKey = await CryptoExchangeWithCryptoLayer.deriveRequestor(exchangeKeypair, peerExchangeKey);
+        const derivedKey = await CryptoRelationshipSecretsHandle._deriveSecretsFromPersistentKeys(
+            exchangeKeypair, // Local persistent keypair handle
+            peerExchangeKey, // Peer public key handle
+            "Requestor" // Role for key derivation
+        );
 
         const [derivedTx, derivedRx] = await Promise.all([
             CryptoDerivation.deriveKeyFromBase(derivedKey.transmissionKey, 1, "RELREQ01"),
@@ -396,21 +484,23 @@ export class CryptoRelationshipSecretsHandle
         const peerTemplateKey = request.ephemeralKey;
         const peerSignatureKey = request.signatureKey;
 
+        const providerName = templateExchangeKeypair.privateKey.providerName;
+
         const signatureKeypair = await CryptoSignaturesWithCryptoLayer.generateKeypair(
-            {
-                providerName: peerTemplateKey.providerName
-            },
+            { providerName: providerName },
             peerSignatureKey.spec
         );
         const exchangeKeypair = await CryptoExchangeWithCryptoLayer.generateKeypair(
-            {
-                providerName: peerTemplateKey.providerName
-            },
+            { providerName: providerName },
             peerExchangeKey.spec
         );
 
-        // Ephemeral derivation for templator role.
-        const derivedKey = await CryptoExchangeWithCryptoLayer.deriveTemplator(exchangeKeypair, peerExchangeKey);
+        // Deriving persistent relationship keys
+        const derivedKey = await CryptoRelationshipSecretsHandle._deriveSecretsFromPersistentKeys(
+            exchangeKeypair, // Local generated persistent keypair handle
+            peerExchangeKey, // Peer persistent public key handle
+            "Templator" // Role for key derivation
+        );
 
         const [derivedTx, derivedRx] = await Promise.all([
             CryptoDerivation.deriveKeyFromBase(derivedKey.transmissionKey, 1, "RELTEM01"),
@@ -433,7 +523,12 @@ export class CryptoRelationshipSecretsHandle
             secretKeyHandle: await CryptoSecretKeyHandle.from(derivedTx.secretKey)
         });
 
-        const masterKey = await CryptoExchangeWithCryptoLayer.deriveTemplator(templateExchangeKeypair, peerTemplateKey);
+        // Deriving ephemeral request secret key (Templator receives)
+        const masterKey = await CryptoRelationshipSecretsHandle._deriveSecretsFromPersistentKeys(
+            templateExchangeKeypair, // Local template keypair handle (persistent)
+            peerTemplateKey, // Peer ephemeral public key handle
+            "Templator" // Role for key derivation (Templator = Client in DH)
+        );
         const ephemeralKey = await CryptoDerivation.deriveKeyFromBase(masterKey.receivingKey, 1, "REQTMP01");
 
         const relationshipSecretHandle = new CryptoRelationshipSecretsHandle();
@@ -447,7 +542,7 @@ export class CryptoRelationshipSecretsHandle
         relationshipSecretHandle.peerSignatureKey = peerSignatureKey;
         relationshipSecretHandle.peerTemplateKey = peerTemplateKey;
         relationshipSecretHandle.peerIdentityKey = request.signatureKey;
-        relationshipSecretHandle.requestSecretKey = CoreBuffer.from(ephemeralKey.secretKey);
+        relationshipSecretHandle.requestSecretKey = ephemeralKey.secretKey;
 
         return relationshipSecretHandle;
     }
@@ -464,25 +559,25 @@ export class CryptoRelationshipSecretsHandle
      * @param peerIdentityKey - Optional peer identity {@link CryptoSignaturePublicKeyHandle}.
      * @param peerType - The type of peer relationship (defaults to Requestor).
      * @returns A Promise that resolves to a new instance of {@link CryptoRelationshipSecretsHandle}.
-     * @throws {@link CryptoError} if the peer type is not Requestor or Templator.
+     * @throws {@link Error} if the peer type is not Requestor or Templator.
      */
     public static async fromPeerNonce(
         peerExchangeKey: CryptoExchangePublicKeyHandle,
-        peerTemplateKey: CryptoExchangePublicKeyHandle,
+        peerTemplateKey: CryptoExchangePublicKeyHandle, // Peer's ephemeral key in this context?
         peerSignatureKey: CryptoSignaturePublicKeyHandle,
         peerGeneratedNonce: CoreBuffer,
         templateExchangeKeypair: CryptoExchangeKeypairHandle,
         peerIdentityKey?: CryptoSignaturePublicKeyHandle,
         peerType: CryptoRelationshipType = CryptoRelationshipType.Requestor
     ): Promise<CryptoRelationshipSecretsHandle> {
+        const providerName = templateExchangeKeypair.privateKey.providerName;
+
         const signatureKeypair = await CryptoSignaturesWithCryptoLayer.generateKeypair(
-            { providerName: peerSignatureKey.providerName },
+            { providerName: providerName },
             peerSignatureKey.spec
         );
         const exchangeKeypair = await CryptoExchangeWithCryptoLayer.generateKeypair(
-            {
-                providerName: peerExchangeKey.providerName
-            },
+            { providerName: providerName },
             peerExchangeKey.spec
         );
 
@@ -490,20 +585,34 @@ export class CryptoRelationshipSecretsHandle
         let ownType;
         switch (peerType) {
             case CryptoRelationshipType.Requestor:
-                derivedKey = await CryptoExchangeWithCryptoLayer.deriveTemplator(exchangeKeypair, peerExchangeKey);
+                // If peer is Requestor, we derive as Templator
+                derivedKey = await CryptoRelationshipSecretsHandle._deriveSecretsFromPersistentKeys(
+                    exchangeKeypair, // Local persistent keypair
+                    peerExchangeKey, // Peer persistent key
+                    "Templator" // Derive as Templator if peer is Requestor
+                );
                 ownType = CryptoRelationshipType.Templator;
                 break;
             case CryptoRelationshipType.Templator:
-                derivedKey = await CryptoExchangeWithCryptoLayer.deriveRequestor(exchangeKeypair, peerExchangeKey);
+                // If peer is Templator, we derive as Requestor
+                derivedKey = await CryptoRelationshipSecretsHandle._deriveSecretsFromPersistentKeys(
+                    exchangeKeypair, // Local persistent keypair
+                    peerExchangeKey, // Peer persistent key
+                    "Requestor" // Derive as Requestor if peer is Templator
+                );
                 ownType = CryptoRelationshipType.Requestor;
                 break;
             default:
-                throw new CryptoError(CryptoErrorCode.RelationshipNoRequestorNorTemplator);
+                throw new Error("Invalid relationship peer type specified.");
         }
 
+        // Derive state keys based on OWN role (Templator derives TEM, Requestor derives REQ)
+        const txDerivationString = ownType === CryptoRelationshipType.Templator ? "RELTEM01" : "RELREQ01";
+        const rxDerivationString = ownType === CryptoRelationshipType.Templator ? "RELREQ01" : "RELTEM01";
+
         const [derivedTx, derivedRx] = await Promise.all([
-            CryptoDerivation.deriveKeyFromBase(derivedKey.transmissionKey, 1, "RELTEM01"),
-            CryptoDerivation.deriveKeyFromBase(derivedKey.receivingKey, 1, "RELREQ01")
+            CryptoDerivation.deriveKeyFromBase(derivedKey.transmissionKey, 1, txDerivationString),
+            CryptoDerivation.deriveKeyFromBase(derivedKey.receivingKey, 1, rxDerivationString)
         ]);
 
         const receiveState = await CryptoPrivateStateHandle.from({
@@ -515,17 +624,23 @@ export class CryptoRelationshipSecretsHandle
         });
 
         const transmitState = await CryptoPrivateStateHandle.from({
-            nonce: peerGeneratedNonce.clone(),
+            nonce: CoreBuffer.random(24),
             counter: 0,
             algorithm: CryptoEncryptionAlgorithm.XCHACHA20_POLY1305,
             stateType: CryptoStateType.Transmit,
             secretKeyHandle: await CryptoSecretKeyHandle.from(derivedTx.secretKey)
         });
 
-        const masterKey = await CryptoExchangeWithCryptoLayer.deriveTemplator(templateExchangeKeypair, peerTemplateKey);
+        // Derive ephemeral request key (Templator receives)
+        const masterKey = await CryptoRelationshipSecretsHandle._deriveSecretsFromPersistentKeys(
+            templateExchangeKeypair, // Local template keypair handle
+            peerTemplateKey, // Peer's ephemeral public key handle
+            "Templator" // Role for key derivation (Templator receives)
+        );
         const ephemeralKey = await CryptoDerivation.deriveKeyFromBase(masterKey.receivingKey, 1, "REQTMP01");
 
         return await CryptoRelationshipSecretsHandle.from({
+            id: exchangeKeypair.publicKey.id,
             exchangeKeypair,
             signatureKeypair,
             receiveState,

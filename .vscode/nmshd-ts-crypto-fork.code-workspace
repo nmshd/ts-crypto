@@ -12,8 +12,11 @@
                 "name": "Debug Mocha Tests",
                 "type": "node-terminal",
                 "request": "launch",
-                "command": "npm run test:node",
-                "cwd": "${workspaceFolder}"
+                "command": "npm run test:node:cal",
+                "cwd": "${workspaceFolder}",
+                "env": {
+                    "RUST_LOG": "trace,sled=off"
+                }
             }
         ]
     }

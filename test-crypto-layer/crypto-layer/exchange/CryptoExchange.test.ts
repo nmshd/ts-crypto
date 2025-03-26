@@ -1,5 +1,5 @@
 import { CryptoEncryptionAlgorithm } from "@nmshd/crypto";
-import { KeyPairSpec } from "@nmshd/rs-crypto-types";
+import { DHExchange, KeyPairSpec } from "@nmshd/rs-crypto-types";
 import { expect } from "chai";
 import { CryptoExchangeWithCryptoLayer, ProviderIdentifier } from "src/crypto-layer";
 import { parameterizedKeyPairSpec } from "../CryptoLayerTestUtil";
@@ -41,23 +41,26 @@ export class CryptoExchangeTest {
             parameterizedKeyPairSpec(
                 "key exchange",
                 async (spec: KeyPairSpec) => {
-                    const keyPairHandleClient = await CryptoExchangeWithCryptoLayer.generateKeypair(
+                    const dhHandleClient: DHExchange = await CryptoExchangeWithCryptoLayer.generateDHExchange(
                         providerIdent,
                         spec
                     );
-                    const keyPairHandleServer = await CryptoExchangeWithCryptoLayer.generateKeypair(
+                    const dhHandleServer: DHExchange = await CryptoExchangeWithCryptoLayer.generateDHExchange(
                         providerIdent,
                         spec
                     );
 
+                    const clientPublicKeyBytes: Uint8Array = await dhHandleClient.getPublicKey();
+                    const serverPublicKeyBytes: Uint8Array = await dhHandleServer.getPublicKey();
+
                     const clientKey = await CryptoExchangeWithCryptoLayer.deriveRequestor(
-                        keyPairHandleClient,
-                        keyPairHandleServer.publicKey,
+                        dhHandleClient,
+                        serverPublicKeyBytes,
                         CryptoEncryptionAlgorithm.AES256_GCM
                     );
                     const serverKey = await CryptoExchangeWithCryptoLayer.deriveTemplator(
-                        keyPairHandleServer,
-                        keyPairHandleClient.publicKey,
+                        dhHandleServer,
+                        clientPublicKeyBytes,
                         CryptoEncryptionAlgorithm.AES256_GCM
                     );
 

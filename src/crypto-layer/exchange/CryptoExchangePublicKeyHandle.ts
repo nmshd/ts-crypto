@@ -1,5 +1,5 @@
 import { ISerializable, ISerialized, type } from "@js-soft/ts-serval";
-import { KeyPairSpec } from "@nmshd/rs-crypto-types";
+import { KeyPairHandle, KeyPairSpec, Provider } from "@nmshd/rs-crypto-types";
 import { CoreBuffer, IClearable } from "../../CoreBuffer";
 import { CryptoPublicKeyHandle } from "../CryptoPublicKeyHandle";
 
@@ -40,6 +40,40 @@ export class CryptoExchangePublicKeyHandle
     public clear(): void {
         // No-op for handle objects as they don't contain the actual key material
         // The actual key material is managed by the crypto provider
+    }
+
+    /**
+     * Asynchronously creates a {@link CryptoExchangePublicKeyHandle} from raw public key bytes.
+     * This method relies on the provider having an `importPublicKey` method that returns
+     * a KeyPairHandle containing the key's ID. Allows promise rejection on failure.
+     *
+     * @param provider - The Provider instance (must have a 'name' property).
+     * @param bytes - The raw public key bytes as a Uint8Array.
+     * @param spec - The KeyPairSpec defining the key's algorithm and properties.
+     * @returns A Promise resolving to a new {@link CryptoExchangePublicKeyHandle}.
+     * @throws {Error} If the provider returns a KeyPairHandle without a valid ID.
+     */
+    public static async fromBytes(
+        provider: Provider,
+        bytes: Uint8Array,
+        spec: KeyPairSpec
+    ): Promise<CryptoExchangePublicKeyHandle> {
+        // Call the provider method which returns a KeyPairHandle
+        const keyPairHandle: KeyPairHandle = await provider.importPublicKey(spec, bytes);
+
+        const keyId: string = await keyPairHandle.id();
+
+        // Construct the object expected by the static 'from' method
+        const handleInput: ICryptoExchangePublicKeyHandle = {
+            id: keyId,
+            spec: spec,
+            providerName: await provider.providerName()
+        };
+
+        // Call the static 'from' method with the correctly structured object
+        const publicKeyHandle = await CryptoExchangePublicKeyHandle.from(handleInput);
+
+        return publicKeyHandle;
     }
 
     /**

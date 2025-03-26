@@ -1,13 +1,10 @@
-import { KeyPairSpec } from "@nmshd/rs-crypto-types";
-import { defaults } from "lodash";
+import { DHExchange, KeyPairSpec } from "@nmshd/rs-crypto-types";
 import { CoreBuffer } from "../../CoreBuffer";
 import { CryptoError } from "../../CryptoError";
 import { CryptoErrorCode } from "../../CryptoErrorCode";
 import { CryptoEncryptionAlgorithm } from "../../encryption/CryptoEncryption";
-import { CryptoExchangeAlgorithm } from "../../exchange/CryptoExchange";
 import { CryptoExchangeSecrets } from "../../exchange/CryptoExchangeSecrets";
 import { getProviderOrThrow, ProviderIdentifier } from "../CryptoLayerProviders";
-import { asymSpecFromCryptoAlgorithm, DEFAULT_KEY_PAIR_SPEC } from "../CryptoLayerUtils";
 import { CryptoExchangeKeypairHandle } from "./CryptoExchangeKeypairHandle";
 import { CryptoExchangePrivateKeyHandle } from "./CryptoExchangePrivateKeyHandle";
 import { CryptoExchangePublicKeyHandle } from "./CryptoExchangePublicKeyHandle";
@@ -48,68 +45,41 @@ export class CryptoExchangeWithCryptoLayer {
             rawKeyPairHandle
         );
         const publicKey = await privateKey.toPublicKey();
-
         return CryptoExchangeKeypairHandle.fromPublicAndPrivateKeys(publicKey, privateKey);
     }
 
-    private static createDHExchangeSpec(algorithm: CryptoExchangeAlgorithm): KeyPairSpec {
-        return defaults(
-            {
-                // eslint-disable-next-line @typescript-eslint/naming-convention
-                asym_spec: asymSpecFromCryptoAlgorithm(algorithm),
-                ephemeral: true,
-                // eslint-disable-next-line @typescript-eslint/naming-convention
-                non_exportable: false
-            },
-            DEFAULT_KEY_PAIR_SPEC
-        );
+    /**
+     * Asynchronously starts an ephemeral Diffie-Hellman exchange.
+     * This generates an internal ephemeral key pair within the returned DHExchange context.
+     *
+     * @param providerIdent - Identifier for the crypto provider to be used.
+     * @param spec - Specification for the ephemeral key pair to be generated (algorithm, curve).
+     * @returns A Promise that resolves to a {@link DHExchange} handle for the exchange context.
+     */
+    public static async generateDHExchange(providerIdent: ProviderIdentifier, spec: KeyPairSpec): Promise<DHExchange> {
+        const provider = getProviderOrThrow(providerIdent);
+        const dhHandle = await provider.startEphemeralDhExchange(spec);
+        return dhHandle;
     }
 
     /**
-     * Asynchronously derives shared secrets for key exchange in the 'requestor' role using the crypto layer.
-     * This method is called by the entity initiating the key exchange (e.g., client).
-     *
-     * @param requestorKeypair - The {@link CryptoExchangeKeypairHandle} of the requestor.
-     * @param templatorPublicKey - The {@link CryptoExchangePublicKeyHandle} of the templator (counterparty).
-     * @param algorithm - The {@link CryptoEncryptionAlgorithm} to be used for the derived secrets. Defaults to XCHACHA20_POLY1305.
-     * @returns A Promise that resolves to a {@link CryptoExchangeSecrets} object containing the derived transmission and receiving keys.
-     * @throws {@link CryptoError} with {@link CryptoErrorCode.ExchangeWrongAlgorithm} if the key exchange algorithm is not supported.
-     * @throws {@link CryptoError} with {@link CryptoErrorCode.ExchangeKeyDerivation} if key derivation fails.
+     * Asynchronously derives shared secrets using an existing DHExchange context in the 'requestor' role.
+     * Accepts the requestor's DHExchange handle and the templator's PublicKey handle.
      */
     public static async deriveRequestor(
-        requestorKeypair: CryptoExchangeKeypairHandle,
-        templatorPublicKey: CryptoExchangePublicKeyHandle,
-        algorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.XCHACHA20_POLY1305
+        requestorDHHandle: DHExchange,
+        templatorPublicKeyBytes: Uint8Array,
+        algorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.AES256_GCM
     ): Promise<CryptoExchangeSecrets> {
-        const exchangeAlgorithm = requestorKeypair.privateKey.spec.asym_spec;
-
-        if (templatorPublicKey.spec.asym_spec !== exchangeAlgorithm) {
-            throw new CryptoError(
-                CryptoErrorCode.ExchangeWrongAlgorithm,
-                `Algorithm of public key ${templatorPublicKey.spec.asym_spec} does not match algorithm of private key ${exchangeAlgorithm}.`
-            );
-        }
-
         try {
-            const provider = getProviderOrThrow({
-                providerName: requestorKeypair.privateKey.providerName
-            });
-            const dhExchangeSpec: KeyPairSpec = CryptoExchangeWithCryptoLayer.createDHExchangeSpec(
-                CryptoExchangeAlgorithm.ECDH_X25519
-            );
-
-            const dhExchange = await provider.startEphemeralDhExchange(dhExchangeSpec);
-
-            // Use deriveServerSessionKeys for the requestor (server role)
-            const [sharedRx, sharedTx] = await dhExchange.deriveServerSessionKeys(
-                await templatorPublicKey.keyPairHandle.getPublicKey()
-            );
+            const [rx, tx] = await requestorDHHandle.deriveServerSessionKeys(templatorPublicKeyBytes); // Pass bytes here
 
             const secrets = CryptoExchangeSecrets.from({
-                receivingKey: CoreBuffer.from(sharedRx),
-                transmissionKey: CoreBuffer.from(sharedTx),
+                receivingKey: CoreBuffer.from(rx),
+                transmissionKey: CoreBuffer.from(tx),
                 algorithm: algorithm
             });
+
             return secrets;
         } catch (e) {
             throw new CryptoError(CryptoErrorCode.ExchangeKeyDerivation, `${e}`);
@@ -117,56 +87,23 @@ export class CryptoExchangeWithCryptoLayer {
     }
 
     /**
-     * Asynchronously derives shared secrets for key exchange in the 'templator' role using the crypto layer.
-     * This method is called by the entity responding to the key exchange request (e.g., server).
-     *
-     * @param templatorKeypair - The {@link CryptoExchangeKeypairHandle} of the templator.
-     * @param requestorPublicKey - The {@link CryptoExchangePublicKeyHandle} of the requestor (counterparty).
-     * @param algorithm - The {@link CryptoEncryptionAlgorithm} to be used for the derived secrets. Defaults to XCHACHA20_POLY1305.
-     * @returns A Promise that resolves to a {@link CryptoExchangeSecrets} object containing the derived transmission and receiving keys.
-     * @throws {@link CryptoError} with {@link CryptoErrorCode.ExchangeWrongAlgorithm} if the key exchange algorithm is not supported or mismatched.
-     * @throws {@link CryptoError} with {@link CryptoErrorCode.ExchangeKeyDerivation} if key derivation fails.
+     * Asynchronously derives shared secrets using an existing DHExchange context in the 'templator' role.
+     * Accepts the templator's DHExchange handle and the requestor's PublicKey handle.
      */
     public static async deriveTemplator(
-        templatorKeypair: CryptoExchangeKeypairHandle,
-        requestorPublicKey: CryptoExchangePublicKeyHandle,
-        algorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.XCHACHA20_POLY1305
+        templatorDHHandle: DHExchange,
+        requestorPublicKeyBytes: Uint8Array,
+        algorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.AES256_GCM
     ): Promise<CryptoExchangeSecrets> {
-        const exchangeAlgorithm = templatorKeypair.privateKey.spec.asym_spec;
-
-        if (asymSpecFromCryptoAlgorithm(CryptoExchangeAlgorithm.ECDH_X25519) !== exchangeAlgorithm) {
-            throw new CryptoError(
-                CryptoErrorCode.ExchangeWrongAlgorithm,
-                `Algorithm ${exchangeAlgorithm} != the algorithm the private key was initialized with.`
-            );
-        }
-        if (requestorPublicKey.spec.asym_spec !== exchangeAlgorithm) {
-            throw new CryptoError(
-                CryptoErrorCode.ExchangeWrongAlgorithm,
-                `Algorithm of public key ${requestorPublicKey.spec.asym_spec} does not match algorithm of private key ${exchangeAlgorithm}.`
-            );
-        }
-
         try {
-            const provider = getProviderOrThrow({
-                providerName: templatorKeypair.privateKey.providerName
-            });
-            const dhExchangeSpec: KeyPairSpec = CryptoExchangeWithCryptoLayer.createDHExchangeSpec(
-                CryptoExchangeAlgorithm.ECDH_X25519
-            );
-
-            const dhExchange = await provider.startEphemeralDhExchange(dhExchangeSpec);
-
-            // Use deriveClientSessionKeys for the templator (client role)
-            const [sharedRx, sharedTx] = await dhExchange.deriveClientSessionKeys(
-                await requestorPublicKey.keyPairHandle.getPublicKey()
-            );
+            const [rx, tx] = await templatorDHHandle.deriveClientSessionKeys(requestorPublicKeyBytes); // Pass bytes here
 
             const secrets = CryptoExchangeSecrets.from({
-                receivingKey: CoreBuffer.from(sharedRx),
-                transmissionKey: CoreBuffer.from(sharedTx),
+                receivingKey: CoreBuffer.from(rx),
+                transmissionKey: CoreBuffer.from(tx),
                 algorithm: algorithm
             });
+
             return secrets;
         } catch (e) {
             throw new CryptoError(CryptoErrorCode.ExchangeKeyDerivation, `${e}`);

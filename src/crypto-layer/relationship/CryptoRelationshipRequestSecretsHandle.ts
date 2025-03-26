@@ -1,20 +1,23 @@
 import { serialize, type, validate } from "@js-soft/ts-serval";
-import { KeySpec } from "@nmshd/rs-crypto-types";
+// Import necessary types from rs-crypto-types
+import { DHExchange, KeyPairSpec, KeySpec, Provider, KeyHandle as ProviderKeyHandle } from "@nmshd/rs-crypto-types";
+import { CryptoExchangeSecrets } from "src/exchange/CryptoExchangeSecrets";
 import { CoreBuffer } from "../../CoreBuffer";
 import { CryptoCipher } from "../../encryption/CryptoCipher";
 import { CryptoSignature } from "../../signature/CryptoSignature";
-import { getProvider } from "../CryptoLayerProviders";
+import { getProviderOrThrow, ProviderIdentifier } from "../CryptoLayerProviders";
 import { CryptoEncryptionWithCryptoLayer } from "../encryption/CryptoEncryption";
 import { CryptoSecretKeyHandle } from "../encryption/CryptoSecretKeyHandle";
 import { CryptoExchangeWithCryptoLayer } from "../exchange/CryptoExchange";
-import { CryptoExchangeKeypairHandle } from "../exchange/CryptoExchangeKeypairHandle";
+import { CryptoExchangeKeypairHandle } from "../exchange/CryptoExchangeKeypairHandle"; // Still needed for persistent keys
 import { CryptoExchangePublicKeyHandle } from "../exchange/CryptoExchangePublicKeyHandle";
 import { CryptoSignaturePublicKeyHandle } from "../signature/CryptoSignaturePublicKeyHandle";
 import { CryptoSignaturesWithCryptoLayer } from "../signature/CryptoSignatures";
 import { CryptoRelationshipPublicRequestHandle } from "./CryptoRelationshipPublicRequestHandle";
+// No need for CryptoError
 
 /**
- * Represents a handle-based implementation of relationship request secrets.
+ * Represents relationship request secrets, managing keys and derivation.
  */
 @type("CryptoRelationshipRequestSecretsHandle")
 export class CryptoRelationshipRequestSecretsHandle {
@@ -22,18 +25,21 @@ export class CryptoRelationshipRequestSecretsHandle {
     @serialize()
     public id?: string;
 
+    // Persistent keys remain as KeypairHandles
     @validate()
     @serialize()
     public exchangeKeypair: CryptoExchangeKeypairHandle;
 
     @validate()
     @serialize()
-    public ephemeralKeypair: CryptoExchangeKeypairHandle;
-
-    @validate()
-    @serialize()
     public signatureKeypair: CryptoExchangeKeypairHandle;
 
+    // Store only the ephemeral public key handle directly
+    @validate()
+    @serialize()
+    public ephemeralPublicKey: CryptoExchangePublicKeyHandle;
+
+    // Peer keys
     @validate()
     @serialize()
     public peerIdentityKey: CryptoSignaturePublicKeyHandle;
@@ -42,106 +48,130 @@ export class CryptoRelationshipRequestSecretsHandle {
     @serialize()
     public peerExchangeKey: CryptoExchangePublicKeyHandle;
 
+    // Derived secret
     @validate()
     @serialize()
     public secretKey: CryptoSecretKeyHandle;
 
+    // Nonce
     @validate()
     @serialize()
     public nonce: CoreBuffer;
 
     /**
-     * Creates request secrets from peer public keys (handle-based).
+     * Creates request secrets from peer public keys.
      */
     public static async fromPeer(
-        providerName: string,
+        providerIdent: ProviderIdentifier,
         peerExchangeKey: CryptoExchangePublicKeyHandle,
         peerIdentityKey: CryptoSignaturePublicKeyHandle
     ): Promise<CryptoRelationshipRequestSecretsHandle> {
-        // Generate keypairs and nonce
-        const [exchangeKeypair, ephemeralKeypair, signatureKeypair, nonce] = await Promise.all([
-            CryptoExchangeWithCryptoLayer.generateKeypair({ providerName }, peerExchangeKey.spec),
-            CryptoExchangeWithCryptoLayer.generateKeypair({ providerName }, peerExchangeKey.spec),
-            CryptoSignaturesWithCryptoLayer.generateKeypair({ providerName }, peerIdentityKey.spec),
+        const provider: Provider = getProviderOrThrow(providerIdent);
+
+        const [exchangeKeypair, signatureKeypair, nonce] = await Promise.all([
+            CryptoExchangeWithCryptoLayer.generateKeypair(providerIdent, peerExchangeKey.spec),
+            CryptoSignaturesWithCryptoLayer.generateKeypair(providerIdent, peerIdentityKey.spec),
             CoreBuffer.random(24)
         ]);
 
-        // Get the provider
-        const provider = getProvider({ providerName });
-        if (!provider) {
-            throw new Error(`Provider ${providerName} not found`);
-        }
+        const ephemeralSpec: KeyPairSpec = { ...peerExchangeKey.spec, ephemeral: true };
 
-        // Derive the master key
-        const masterKey = await CryptoExchangeWithCryptoLayer.deriveRequestor(ephemeralKeypair, peerExchangeKey);
+        // 1. Generate ephemeral DH context
+        const ephemeralDHHandle: DHExchange = await CryptoExchangeWithCryptoLayer.generateDHExchange(
+            providerIdent,
+            ephemeralSpec
+        );
 
-        // Create a key spec for the derived key
-        const keySpec: KeySpec = {
+        // 2. Get ephemeral public key bytes
+        const ephemeralPublicKeyBytes: Uint8Array = await ephemeralDHHandle.getPublicKey();
+
+        // 3. Create the ephemeral public key handle
+        const ephemeralPublicKeyHandle = await CryptoExchangePublicKeyHandle.fromBytes(
+            provider,
+            ephemeralPublicKeyBytes,
+            ephemeralSpec
+        );
+
+        // 4. Derive secrets using DH context and peer key bytes
+        const peerExchangeKeyBytes = await peerExchangeKey.keyPairHandle.getPublicKey();
+        const masterKey: CryptoExchangeSecrets = await CryptoExchangeWithCryptoLayer.deriveRequestor(
+            ephemeralDHHandle, // Use the DH context here
+            peerExchangeKeyBytes
+        );
+
+        // 5. Derive final secret key
+        const derivedKeySpec: KeySpec = {
             cipher: "XChaCha20Poly1305",
             signing_hash: "Sha2_256",
             ephemeral: true
         };
-
-        // Derive the secret key using the provider, following the same pattern as libsodium implementation
-        const secretKey = await provider.deriveKeyFromBase(
-            masterKey.receivingKey.buffer, // Using receivingKey as base, matching libsodium implementation
-            1, // Using 1 as keyId, matching the original
-            "REQTMP01", // Using the same context as the original
-            keySpec // Providing the key spec required by the CAL interface
+        const derivedKeyHandle: ProviderKeyHandle = await provider.deriveKeyFromBase(
+            masterKey.receivingKey.buffer,
+            1,
+            "REQTMP01",
+            derivedKeySpec
         );
 
-        const secretKeyNew = await CryptoSecretKeyHandle.importRawKeyIntoHandle(
-            { providerName },
-            CoreBuffer.from(await secretKey.extractKey()),
-            await secretKey.spec(),
-            masterKey.algorithm
-        );
+        // 6. Wrap derived secret key into app-level handle
+        let finalSecretKeyHandle: CryptoSecretKeyHandle;
+        try {
+            const derivedKeyBytes = await derivedKeyHandle.extractKey();
+            const derivedKeySpecFromHandle = await derivedKeyHandle.spec();
+            finalSecretKeyHandle = await CryptoSecretKeyHandle.importRawKeyIntoHandle(
+                providerIdent,
+                CoreBuffer.from(derivedKeyBytes),
+                derivedKeySpecFromHandle,
+                masterKey.algorithm
+            );
+        } catch (e) {
+            throw new Error(`Failed to handle derived secret key: ${e instanceof Error ? e.message : String(e)}`);
+        }
 
-        // Create and return the secrets
+        // 7. Construct the final secrets object
         const secrets = new CryptoRelationshipRequestSecretsHandle();
+        secrets.id = undefined;
         secrets.exchangeKeypair = exchangeKeypair;
-        secrets.ephemeralKeypair = ephemeralKeypair;
         secrets.signatureKeypair = signatureKeypair;
+        secrets.ephemeralPublicKey = ephemeralPublicKeyHandle;
         secrets.peerExchangeKey = peerExchangeKey;
         secrets.peerIdentityKey = peerIdentityKey;
-        secrets.secretKey = secretKeyNew;
+        secrets.secretKey = finalSecretKeyHandle;
         secrets.nonce = nonce;
 
         return secrets;
     }
 
-    /** Signs content with the private signature key. */
     public async sign(content: CoreBuffer): Promise<CryptoSignature> {
-        return await CryptoSignaturesWithCryptoLayer.sign(content, this.signatureKeypair.privateKey);
+        return await CryptoSignaturesWithCryptoLayer.sign(content, this.signatureKeypair.privateKey as any);
     }
 
-    /** Verifies content with the public key of the own signature keypair. */
     public async verifyOwn(content: CoreBuffer, signature: CryptoSignature): Promise<boolean> {
-        return await CryptoSignaturesWithCryptoLayer.verify(content, signature, this.signatureKeypair.publicKey);
+        return await CryptoSignaturesWithCryptoLayer.verify(content, signature, this.signatureKeypair.publicKey as any);
     }
 
-    /** Verifies content with the peer’s identity public key. */
     public async verifyPeerIdentity(content: CoreBuffer, signature: CryptoSignature): Promise<boolean> {
         return await CryptoSignaturesWithCryptoLayer.verify(content, signature, this.peerIdentityKey);
     }
 
-    /** Encrypts request content using the handle-based secret key. */
     public async encryptRequest(content: CoreBuffer): Promise<CryptoCipher> {
         return await CryptoEncryptionWithCryptoLayer.encrypt(content, this.secretKey);
     }
 
-    /** Decrypts request content using the handle-based secret key. */
     public async decryptRequest(cipher: CryptoCipher): Promise<CoreBuffer> {
         return await CryptoEncryptionWithCryptoLayer.decrypt(cipher, this.secretKey);
     }
 
-    /** Converts secrets to a public request handle. */
+    /**
+     * Creates a public handle containing only the public keys and nonce.
+     * Uses the directly stored ephemeral public key handle.
+     * @returns A {@link CryptoRelationshipPublicRequestHandle} instance.
+     */
     public toPublicRequest(): CryptoRelationshipPublicRequestHandle {
         const requestHandle = new CryptoRelationshipPublicRequestHandle();
         requestHandle.id = this.id;
         requestHandle.exchangeKey = this.exchangeKeypair.publicKey;
-        requestHandle.signatureKey = this.signatureKeypair.publicKey;
-        requestHandle.ephemeralKey = this.ephemeralKeypair.publicKey;
+        requestHandle.signatureKey = this.signatureKeypair.publicKey as any;
+        requestHandle.ephemeralKey = this.ephemeralPublicKey; // <-- USE DIRECT PROPERTY
         requestHandle.nonce = this.nonce;
         return requestHandle;
     }
