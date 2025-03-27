@@ -46,5 +46,11 @@ export enum CryptoErrorCode {
     StateWrongNonce = "error.crypto.state.wrongNonce",
     StateWrongCounter = "error.crypto.state.wrongCounter",
     StateWrongOrder = "error.crypto.state.orderDoesNotMatch",
-    StateWrongType = "error.crypto.state.wrongType"
+    StateWrongType = "error.crypto.state.wrongType",
+
+    CalNonExtractable = "error.crypto.cal.nonExtractable",
+    CalUnsupportedAlgorithm = "error.crypto.cal.unsupportedAlgorithm",
+    CalWrongProvider = "error.crypto.cal.wrongProvider",
+    CalUninitializedKey = "error.crypto.cal.uninitializedKey",
+    CalFailedLoadingProvider = "error.crypto.cal.failedLoadingProvider"
 }

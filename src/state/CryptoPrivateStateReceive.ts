@@ -1,5 +1,8 @@
 import { type } from "@js-soft/ts-serval";
 import { CoreBuffer } from "../CoreBuffer";
+import { ProviderIdentifier, getProvider } from "../crypto-layer/CryptoLayerProviders";
+import { CryptoEncryptionWithCryptoLayer } from "../crypto-layer/encryption/CryptoEncryption";
+import { CryptoSecretKeyHandle } from "../crypto-layer/encryption/CryptoSecretKeyHandle";
 import { CryptoError } from "../CryptoError";
 import { CryptoErrorCode } from "../CryptoErrorCode";
 import { CryptoValidation } from "../CryptoValidation";
@@ -9,39 +12,69 @@ import { CryptoPrivateState, ICryptoPrivateState, ICryptoPrivateStateSerialized 
 import { CryptoPublicState } from "./CryptoPublicState";
 import { CryptoStateType } from "./CryptoStateType";
 
-@type("CryptoPrivateStateReceive")
-export class CryptoPrivateStateReceive extends CryptoPrivateState {
-    public override toJSON(): ICryptoPrivateStateSerialized {
-        const obj = super.toJSON();
-        obj["@type"] = "CryptoPrivateStateReceive";
+/**
+ * Indicates if a cryptographic provider for state operations is available.
+ */
+let stateProviderInitialized = false;
+
+/**
+ * Configures the state subsystem to use a specified provider.
+ * If the provider is found, handle-based operations become available.
+ *
+ * @param providerIdent - Identifier of the cryptographic provider to initialize.
+ */
+export function initCryptoState(providerIdent: ProviderIdentifier): void {
+    if (getProvider(providerIdent)) {
+        stateProviderInitialized = true;
+    }
+}
+
+/**
+ * Original receive-only class using libsodium-based cryptography.
+ * This class offers basic functionality for decrypting content with a persistent counter.
+ */
+@type("CryptoPrivateStateReceiveWithLibsodium")
+export class CryptoPrivateStateReceiveWithLibsodium extends CryptoPrivateState {
+    public override toJSON(verbose = true): ICryptoPrivateStateSerialized {
+        const obj = super.toJSON(verbose);
+        obj["@type"] = verbose ? "CryptoPrivateStateReceiveWithLibsodium" : undefined;
         return obj;
     }
 
-    public async decrypt(cipher: CryptoCipher, omitCounterCheck = false): Promise<CoreBuffer> {
-        let plaintext;
-
+    public override async decrypt(cipher: CryptoCipher, omitCounterCheck = false): Promise<CoreBuffer> {
         CryptoValidation.checkCounter(cipher.counter);
-        if (typeof cipher.counter === "undefined") throw new CryptoError(CryptoErrorCode.Unknown);
+        if (typeof cipher.counter === "undefined") {
+            throw new CryptoError(CryptoErrorCode.Unknown, "Cipher is missing a counter.");
+        }
 
-        if (omitCounterCheck) {
-            plaintext = await CryptoEncryption.decryptWithCounter(cipher, this.secretKey, this.nonce, cipher.counter);
-        } else {
-            if (this.counter !== cipher.counter) {
-                throw new CryptoError(
-                    CryptoErrorCode.StateWrongOrder,
-                    `The current message seems to be out of order. The in order number would be ${this.counter} and message is ${cipher.counter}.`
-                );
-            }
-            plaintext = await CryptoEncryption.decryptWithCounter(cipher, this.secretKey, this.nonce, this.counter);
-            const newCounter = this.counter + 1;
-            this.setCounter(newCounter);
+        if (!omitCounterCheck && this.counter !== cipher.counter) {
+            throw new CryptoError(
+                CryptoErrorCode.StateWrongOrder,
+                `Expected counter ${this.counter} but got ${cipher.counter}.`
+            );
+        }
+
+        const plaintext = await CryptoEncryption.decryptWithCounter(
+            cipher,
+            this.secretKey,
+            this.nonce,
+            cipher.counter ?? this.counter,
+            this.algorithm
+        );
+
+        if (!omitCounterCheck) {
+            this.setCounter(this.counter + 1);
         }
 
         return plaintext;
     }
 
-    public static fromNonce(nonce: CoreBuffer, secretKey: CoreBuffer, counter = 0): CryptoPrivateStateReceive {
-        return CryptoPrivateStateReceive.from({
+    public static fromNonce(
+        nonce: CoreBuffer,
+        secretKey: CoreBuffer,
+        counter = 0
+    ): CryptoPrivateStateReceiveWithLibsodium {
+        return this.from({
             nonce: nonce.clone(),
             counter,
             secretKey,
@@ -54,8 +87,8 @@ export class CryptoPrivateStateReceive extends CryptoPrivateState {
         publicState: CryptoPublicState,
         secretKey: CoreBuffer,
         counter = 0
-    ): CryptoPrivateStateReceive {
-        return CryptoPrivateStateReceive.from({
+    ): CryptoPrivateStateReceiveWithLibsodium {
+        return this.from({
             nonce: publicState.nonce.clone(),
             counter,
             secretKey,
@@ -67,22 +100,92 @@ export class CryptoPrivateStateReceive extends CryptoPrivateState {
 
     protected static override preFrom(value: any): any {
         value = super.preFrom(value);
-
         CryptoValidation.checkBufferAsStringOrBuffer(value.nonce, 0, 24, "nonce");
         CryptoValidation.checkSecretKeyForAlgorithm(value.secretKey, value.algorithm);
-
         if (value.stateType) {
             CryptoValidation.checkStateType(value.stateType);
         }
-
         return value;
     }
 
-    public static override from(obj: CryptoPrivateState | ICryptoPrivateState): CryptoPrivateStateReceive {
+    public static override from(obj: CryptoPrivateState | ICryptoPrivateState): CryptoPrivateStateReceiveWithLibsodium {
         return this.fromAny(obj);
     }
 
-    public static override fromJSON(value: ICryptoPrivateStateSerialized): CryptoPrivateStateReceive {
+    public static override fromJSON(value: ICryptoPrivateStateSerialized): CryptoPrivateStateReceiveWithLibsodium {
         return this.fromAny(value);
+    }
+}
+
+/**
+ * Extended receive-only class that supports both handle-based and libsodium-based decryption.
+ * If a handle-based provider is initialized and a handle key is present, this class delegates
+ * decryption to the cryptographic provider. Otherwise, it falls back to libsodium logic.
+ */
+@type("CryptoPrivateStateReceive")
+export class CryptoPrivateStateReceive extends CryptoPrivateStateReceiveWithLibsodium {
+    public override toJSON(verbose = true): ICryptoPrivateStateSerialized {
+        const obj = super.toJSON(false);
+        obj["@type"] = verbose ? "CryptoPrivateStateReceive" : undefined;
+        return obj;
+    }
+
+    /**
+     * Decrypts a cipher using the cryptographic handle if available and initialized;
+     * otherwise, uses libsodium-based decryption. Maintains and checks the counter to ensure
+     * proper message order, unless `omitCounterCheck` is true.
+     */
+    public override async decrypt(cipher: CryptoCipher, omitCounterCheck = false): Promise<CoreBuffer> {
+        if (stateProviderInitialized && this.secretKey instanceof CryptoSecretKeyHandle) {
+            const plaintext = await CryptoEncryptionWithCryptoLayer.decryptWithCounter(
+                cipher,
+                this.secretKey,
+                this.nonce
+            );
+
+            if (!omitCounterCheck) {
+                if (typeof cipher.counter === "undefined") {
+                    throw new CryptoError(CryptoErrorCode.Unknown, "Cipher is missing a counter.");
+                }
+                if (this.counter !== cipher.counter) {
+                    throw new CryptoError(
+                        CryptoErrorCode.StateWrongOrder,
+                        `Expected counter ${this.counter} but got ${cipher.counter}.`
+                    );
+                }
+                this.setCounter(this.counter + 1);
+            }
+            return plaintext;
+        }
+
+        return await super.decrypt(cipher, omitCounterCheck);
+    }
+
+    public static override fromNonce(nonce: CoreBuffer, secretKey: CoreBuffer, counter = 0): CryptoPrivateStateReceive {
+        const base = super.fromNonce(nonce, secretKey, counter);
+        return this.from(base);
+    }
+
+    public static override fromPublicState(
+        publicState: CryptoPublicState,
+        secretKey: CoreBuffer,
+        counter = 0
+    ): CryptoPrivateStateReceive {
+        const base = super.fromPublicState(publicState, secretKey, counter);
+        return this.from(base);
+    }
+
+    public static override from(obj: CryptoPrivateState | ICryptoPrivateState): CryptoPrivateStateReceive {
+        const base = super.fromAny(obj); // parent parses into CryptoPrivateStateReceiveWithLibsodium
+
+        const extended = new CryptoPrivateStateReceive();
+        extended.id = base.id;
+        extended.nonce = base.nonce;
+        extended.counter = base.counter;
+        extended.secretKey = base.secretKey;
+        extended.algorithm = base.algorithm;
+        extended.stateType = base.stateType;
+
+        return extended;
     }
 }

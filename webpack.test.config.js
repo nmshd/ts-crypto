@@ -1,4 +1,6 @@
 const path = require("path");
+const { IgnorePlugin } = require("webpack");
+const { plugins } = require("./webpack.config");
 
 module.exports = {
     mode: "development",
@@ -27,5 +29,6 @@ module.exports = {
         chai: "chai",
         "@nmshd/crypto": "NMSHDCrypto",
         "@js-soft/ts-serval": "TSServal"
-    }
+    },
+    plugins: [new IgnorePlugin({ resourceRegExp: /rs\-crypto\-node/g })]
 };

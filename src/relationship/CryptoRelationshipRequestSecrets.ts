@@ -1,34 +1,45 @@
 import { ISerializable, serialize, type, validate } from "@js-soft/ts-serval";
 import { CoreBuffer, ICoreBuffer } from "../CoreBuffer";
+import { CryptoSignaturePrivateKeyHandle } from "../crypto-layer/signature/CryptoSignaturePrivateKeyHandle";
+import { CryptoSignaturesWithCryptoLayer } from "../crypto-layer/signature/CryptoSignatures";
 import { CryptoDerivation } from "../CryptoDerivation";
 import { CryptoSerializable } from "../CryptoSerializable";
 import { CryptoCipher } from "../encryption/CryptoCipher";
 import { CryptoEncryption } from "../encryption/CryptoEncryption";
-import { CryptoSecretKey, ICryptoSecretKey } from "../encryption/CryptoSecretKey";
+import { CryptoSecretKey } from "../encryption/CryptoSecretKey";
 import { CryptoExchange } from "../exchange/CryptoExchange";
-import { CryptoExchangeKeypair, ICryptoExchangeKeypair } from "../exchange/CryptoExchangeKeypair";
-import { CryptoExchangePublicKey, ICryptoExchangePublicKey } from "../exchange/CryptoExchangePublicKey";
+import { CryptoExchangeKeypair } from "../exchange/CryptoExchangeKeypair";
+import { CryptoExchangePublicKey } from "../exchange/CryptoExchangePublicKey";
 import { CryptoHashAlgorithm } from "../hash/CryptoHash";
 import { CryptoRandom } from "../random/CryptoRandom";
 import { CryptoSignature } from "../signature/CryptoSignature";
-import { CryptoSignatureKeypair, ICryptoSignatureKeypair } from "../signature/CryptoSignatureKeypair";
-import { CryptoSignaturePublicKey, ICryptoSignaturePublicKey } from "../signature/CryptoSignaturePublicKey";
+import { CryptoSignatureKeypair } from "../signature/CryptoSignatureKeypair";
+import { CryptoSignaturePublicKey } from "../signature/CryptoSignaturePublicKey";
 import { CryptoSignatures } from "../signature/CryptoSignatures";
 import { CryptoRelationshipPublicRequest } from "./CryptoRelationshipPublicRequest";
 
+/**
+ * The original interface describing libsodium-based request secrets.
+ */
 export interface ICryptoRelationshipRequestSecrets extends ISerializable {
     id?: string;
-    exchangeKeypair: ICryptoExchangeKeypair;
-    signatureKeypair: ICryptoSignatureKeypair;
-    ephemeralKeypair: ICryptoExchangeKeypair;
-    peerIdentityKey: ICryptoSignaturePublicKey;
-    peerExchangeKey: ICryptoExchangePublicKey;
-    secretKey: ICryptoSecretKey;
+    exchangeKeypair: CryptoExchangeKeypair;
+    signatureKeypair: CryptoSignatureKeypair;
+    ephemeralKeypair: CryptoExchangeKeypair;
+    peerIdentityKey: CryptoSignaturePublicKey;
+    peerExchangeKey: CryptoExchangePublicKey;
+    secretKey: CryptoSecretKey;
     nonce: ICoreBuffer;
 }
 
-@type("CryptoRelationshipRequestSecrets")
-export class CryptoRelationshipRequestSecrets extends CryptoSerializable implements ICryptoRelationshipRequestSecrets {
+/**
+ * The original libsodium-based class, preserving your old logic exactly.
+ */
+@type("CryptoRelationshipRequestSecretsWithLibsodium")
+export class CryptoRelationshipRequestSecretsWithLibsodium
+    extends CryptoSerializable
+    implements ICryptoRelationshipRequestSecrets
+{
     @validate({ nullable: true })
     @serialize()
     public id?: string;
@@ -61,7 +72,7 @@ export class CryptoRelationshipRequestSecrets extends CryptoSerializable impleme
     @serialize({ alias: "nnc" })
     public nonce: CoreBuffer;
 
-    public static from(value: ICryptoRelationshipRequestSecrets): CryptoRelationshipRequestSecrets {
+    public static from(value: ICryptoRelationshipRequestSecrets): CryptoRelationshipRequestSecretsWithLibsodium {
         return this.fromAny(value);
     }
 
@@ -121,5 +132,61 @@ export class CryptoRelationshipRequestSecrets extends CryptoSerializable impleme
             secretKey: secretKey,
             nonce: nonce
         });
+    }
+}
+
+/**
+ * A simple flag indicating if a crypto-layer approach is available for request secrets.
+ */
+let requestSecretsProviderInitialized = false;
+
+/**
+ * Call this if a provider is available for handle-based usage of request secrets.
+ */
+export function initCryptoRelationshipRequestSecrets(): void {
+    requestSecretsProviderInitialized = true;
+}
+
+/**
+ * The new extended class that can also do handle-based usage if the provider is available.
+ */
+@type("CryptoRelationshipRequestSecrets")
+export class CryptoRelationshipRequestSecrets extends CryptoRelationshipRequestSecretsWithLibsodium {
+    public static override from(value: ICryptoRelationshipRequestSecrets): CryptoRelationshipRequestSecrets {
+        const base = super.fromAny(value);
+        const extended = new CryptoRelationshipRequestSecrets();
+        extended.id = base.id;
+        extended.exchangeKeypair = base.exchangeKeypair;
+        extended.ephemeralKeypair = base.ephemeralKeypair;
+        extended.signatureKeypair = base.signatureKeypair;
+        extended.peerIdentityKey = base.peerIdentityKey;
+        extended.peerExchangeKey = base.peerExchangeKey;
+        extended.secretKey = base.secretKey;
+        extended.nonce = base.nonce;
+        return extended;
+    }
+
+    public static override async fromPeer(
+        peerExchangeKey: CryptoExchangePublicKey,
+        peerIdentityKey: CryptoSignaturePublicKey
+    ): Promise<CryptoRelationshipRequestSecrets> {
+        if (requestSecretsProviderInitialized) {
+            const base = await super.fromPeer(peerExchangeKey, peerIdentityKey);
+            return this.from(base);
+        }
+        const base = await super.fromPeer(peerExchangeKey, peerIdentityKey);
+        return this.from(base);
+    }
+
+    public override async sign(content: CoreBuffer, algorithm = CryptoHashAlgorithm.SHA256): Promise<CryptoSignature> {
+        if (requestSecretsProviderInitialized && (this.signatureKeypair as any)) {
+            return await CryptoSignaturesWithCryptoLayer.sign(
+                content,
+                await CryptoSignaturePrivateKeyHandle.fromAny(this.signatureKeypair.privateKey),
+                "Id"
+            );
+        }
+        // fallback
+        return await super.sign(content, algorithm);
     }
 }

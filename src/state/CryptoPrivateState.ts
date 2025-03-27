@@ -1,10 +1,19 @@
 import { ISerializable, ISerialized, Serializable, serialize, validate } from "@js-soft/ts-serval";
 import { CoreBuffer, IClearable, ICoreBuffer } from "../CoreBuffer";
+import { CryptoSecretKeyHandle } from "../crypto-layer/encryption/CryptoSecretKeyHandle";
+import { CryptoPrivateStateHandle } from "../crypto-layer/state/CryptoPrivateStateHandle";
+import { CryptoPublicStateHandle } from "../crypto-layer/state/CryptoPublicStateHandle";
+import { CryptoError } from "../CryptoError";
+import { CryptoErrorCode } from "../CryptoErrorCode";
 import { CryptoValidation } from "../CryptoValidation";
-import { CryptoEncryptionAlgorithm } from "../encryption/CryptoEncryption";
+import { CryptoCipher } from "../encryption/CryptoCipher";
+import { CryptoEncryption, CryptoEncryptionAlgorithm } from "../encryption/CryptoEncryption";
 import { CryptoPublicState } from "./CryptoPublicState";
 import { CryptoStateType } from "./CryptoStateType";
 
+/**
+ * Describes how a private state is serialized.
+ */
 export interface ICryptoPrivateStateSerialized extends ISerialized {
     key: string;
     nnc: string;
@@ -14,6 +23,9 @@ export interface ICryptoPrivateStateSerialized extends ISerialized {
     typ: number;
 }
 
+/**
+ * Interface for a private state in cryptographic operations.
+ */
 export interface ICryptoPrivateState extends ISerializable {
     secretKey: ICoreBuffer;
     nonce: ICoreBuffer;
@@ -23,7 +35,11 @@ export interface ICryptoPrivateState extends ISerializable {
     stateType: CryptoStateType;
 }
 
-export class CryptoPrivateState extends Serializable implements ICryptoPrivateState, IClearable {
+/**
+ * The original libsodium-based implementation for private state, providing
+ * direct encryption and decryption with a raw secret key.
+ */
+export class CryptoPrivateStateWithLibsodium extends Serializable implements ICryptoPrivateState, IClearable {
     @validate({ nullable: true })
     @serialize()
     public id?: string;
@@ -48,10 +64,16 @@ export class CryptoPrivateState extends Serializable implements ICryptoPrivateSt
     @serialize()
     public stateType: CryptoStateType;
 
+    /**
+     * Updates the state's internal counter.
+     */
     protected setCounter(value: number): void {
         this.counter = value;
     }
 
+    /**
+     * Clears sensitive fields in memory.
+     */
     public clear(): void {
         this.secretKey.clear();
         this.nonce.clear();
@@ -61,6 +83,9 @@ export class CryptoPrivateState extends Serializable implements ICryptoPrivateSt
         return this.serialize();
     }
 
+    /**
+     * Returns a public variant of this state (nonce, algorithm, etc., but not the secret key).
+     */
     public toPublicState(): CryptoPublicState {
         return CryptoPublicState.from({
             nonce: this.nonce.clone(),
@@ -70,6 +95,9 @@ export class CryptoPrivateState extends Serializable implements ICryptoPrivateSt
         });
     }
 
+    /**
+     * Serializes the private state to JSON.
+     */
     public override toJSON(verbose = true): ICryptoPrivateStateSerialized {
         return {
             nnc: this.nonce.toBase64URL(),
@@ -78,7 +106,7 @@ export class CryptoPrivateState extends Serializable implements ICryptoPrivateSt
             alg: this.algorithm,
             typ: this.stateType,
             id: this.id,
-            "@type": verbose ? "CryptoPrivateState" : undefined
+            "@type": verbose ? "CryptoPrivateStateWithLibsodium" : undefined
         };
     }
 
@@ -103,15 +131,122 @@ export class CryptoPrivateState extends Serializable implements ICryptoPrivateSt
         if (value.id) {
             CryptoValidation.checkId(value.id);
         }
-
         return value;
     }
 
-    public static from(obj: CryptoPrivateState | ICryptoPrivateState): CryptoPrivateState {
+    public static from(obj: ICryptoPrivateState): CryptoPrivateStateWithLibsodium {
         return this.fromAny(obj);
     }
 
-    public static fromJSON(value: ICryptoPrivateStateSerialized): CryptoPrivateState {
+    public static fromJSON(value: any): CryptoPrivateStateWithLibsodium {
         return this.fromAny(value);
+    }
+
+    /**
+     * Encrypts the given plaintext, automatically incrementing the counter.
+     */
+    public async encrypt(plaintext: CoreBuffer): Promise<CryptoCipher> {
+        const cipher = await CryptoEncryption.encryptWithCounter(
+            plaintext,
+            this.secretKey,
+            this.nonce,
+            this.counter,
+            this.algorithm
+        );
+        this.counter++;
+        return cipher;
+    }
+
+    /**
+     * Decrypts the given cipher, verifying the counter (unless omitted).
+     */
+    public async decrypt(cipher: CryptoCipher, omitCounterCheck = false): Promise<CoreBuffer> {
+        if (!omitCounterCheck) {
+            if (typeof cipher.counter === "undefined") {
+                throw new CryptoError(CryptoErrorCode.StateWrongCounter, "Cipher has no counter set.");
+            }
+            if (this.counter !== cipher.counter) {
+                throw new CryptoError(
+                    CryptoErrorCode.StateWrongOrder,
+                    `Expected counter=${this.counter}, got ${cipher.counter}.`
+                );
+            }
+        }
+
+        const plaintext = await CryptoEncryption.decryptWithCounter(
+            cipher,
+            this.secretKey,
+            this.nonce,
+            cipher.counter ?? this.counter,
+            this.algorithm
+        );
+
+        if (!omitCounterCheck) {
+            this.counter++;
+        }
+        return plaintext;
+    }
+}
+
+/**
+ * Indicates if handle-based cryptographic operations (via a provider) are available.
+ */
+let privateStateProviderInitialized = false;
+
+/**
+ * Activates handle-based usage for private states if a corresponding crypto provider is set up.
+ */
+export function initCryptoPrivateState(): void {
+    privateStateProviderInitialized = true;
+}
+
+/**
+ * Extended private state that delegates encryption and decryption to a handle
+ * if available; otherwise, falls back to libsodium-based operations.
+ */
+export class CryptoPrivateState extends CryptoPrivateStateWithLibsodium {
+    /**
+     * Encrypts plaintext using either the handle-based approach or libsodium, depending on initialization and key type.
+     */
+    public override async encrypt(plaintext: CoreBuffer): Promise<CryptoCipher> {
+        if (privateStateProviderInitialized && this.secretKey instanceof CryptoSecretKeyHandle) {
+            // When using a handle-based key, cast to the handle class for custom logic.
+            const handleState = this as unknown as CryptoPrivateStateHandle;
+            return await handleState.encrypt(plaintext);
+        }
+        return await super.encrypt(plaintext);
+    }
+
+    /**
+     * Decrypts ciphertext using either the handle-based approach or libsodium, depending on initialization and key type.
+     */
+    public override async decrypt(cipher: CryptoCipher, omitCounterCheck = false): Promise<CoreBuffer> {
+        if (privateStateProviderInitialized && this.secretKey instanceof CryptoSecretKeyHandle) {
+            const handleState = this as unknown as CryptoPrivateStateHandle;
+            return await handleState.decrypt(cipher, omitCounterCheck);
+        }
+        return await super.decrypt(cipher, omitCounterCheck);
+    }
+
+    /**
+     * Creates a public-state object. If handle-based usage is active, returns a handle-based public state.
+     * Otherwise, provides the standard libsodium public state.
+     */
+    public override toPublicState(): CryptoPublicState | CryptoPublicStateHandle {
+        if (privateStateProviderInitialized && this.secretKey instanceof CryptoSecretKeyHandle) {
+            const handleState = this as unknown as CryptoPrivateStateHandle;
+            return handleState.toPublicState();
+        }
+        return super.toPublicState();
+    }
+
+    /**
+     * Ensures serialization returns `@type: "CryptoPrivateState"`.
+     */
+    public override toJSON(verbose = true): ICryptoPrivateStateSerialized {
+        const json = super.toJSON(verbose);
+        // Override the @type to ensure proper identification
+        json["@type"] = verbose ? "CryptoPrivateState" : undefined;
+        return json;
     }
 }
