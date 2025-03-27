@@ -164,11 +164,12 @@ export class CryptoDerivation extends CryptoDerivationWithLibsodium {
         memlimit = 8192
     ): Promise<CryptoSecretKey> {
         if (derivationProviderInitialized) {
-            const derivedKey = await CryptoDerivationHandle.deriveKeyFromPasswordHandle(
+            const derivedKey = await CryptoDerivationHandle.deriveKeyFromPassword(
                 { providerName: "SoftwareProvider" },
                 password,
                 salt,
-                keyAlgorithm
+                keyAlgorithm,
+                derivationAlgorithm
             );
             return await CryptoSecretKey.fromHandle(derivedKey);
         }
@@ -183,7 +184,7 @@ export class CryptoDerivation extends CryptoDerivationWithLibsodium {
         keyAlgorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.XCHACHA20_POLY1305
     ): Promise<CryptoSecretKey> {
         if (derivationProviderInitialized) {
-            const derivedKey = await CryptoDerivationHandle.deriveKeyFromBaseHandle(
+            const derivedKey = await CryptoDerivationHandle.deriveKeyFromBase(
                 { providerName: "SoftwareProvider" },
                 baseKey,
                 keyId,

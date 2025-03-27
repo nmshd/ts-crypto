@@ -1,4 +1,5 @@
 import { Cipher, CryptoHash, KDF, KeySpec } from "@nmshd/rs-crypto-types";
+import { CryptoDerivationAlgorithm } from "src/CryptoDerivation";
 import { ICoreBuffer } from "../CoreBuffer";
 import { CryptoError } from "../CryptoError";
 import { CryptoErrorCode } from "../CryptoErrorCode";
@@ -42,11 +43,12 @@ export class CryptoDerivationHandle extends CryptoSerializableAsync {
      * @throws {@link CryptoError} with {@link CryptoErrorCode.CalUninitializedKey} if the derivation system is not initialized.
      * @throws {@link CryptoError} with {@link CryptoErrorCode.EncryptionWrongAlgorithm} if the key algorithm is not supported.
      */
-    public static async deriveKeyFromPasswordHandle(
+    public static async deriveKeyFromPassword(
         providerIdent: ProviderIdentifier,
         password: ICoreBuffer,
         salt: ICoreBuffer,
         keyAlgorithm: CryptoEncryptionAlgorithm,
+        derivationAlgorithm: CryptoDerivationAlgorithm,
         opslimit = 100000,
         memlimit = 8192
     ): Promise<CryptoSecretKeyHandle> {
@@ -63,8 +65,16 @@ export class CryptoDerivationHandle extends CryptoSerializableAsync {
             signing_hash: signingHash
         };
 
-        // Create the KDF options using Argon2id.
-        const kdfOptions: KDF = { Argon2id: { memory: memlimit, iterations: opslimit, parallelism: 1 } };
+        // Create the KDF options
+        let kdfOptions: KDF;
+        switch (derivationAlgorithm) {
+            case CryptoDerivationAlgorithm.ARGON2I: {
+                kdfOptions = { Argon2i: { memory: memlimit, iterations: opslimit, parallelism: 1 } };
+            }
+            case CryptoDerivationAlgorithm.ARGON2ID: {
+                kdfOptions = { Argon2id: { memory: memlimit, iterations: opslimit, parallelism: 1 } };
+            }
+        }
 
         // Now call deriveKeyFromPassword with the additional kdf parameter.
         const keyHandle = await provider.deriveKeyFromPassword(password.toUtf8(), salt.buffer, spec, kdfOptions);
@@ -86,7 +96,7 @@ export class CryptoDerivationHandle extends CryptoSerializableAsync {
      * @throws {@link CryptoError} with {@link CryptoErrorCode.CalUninitializedKey} if the derivation system is not initialized.
      * @throws {@link CryptoError} with {@link CryptoErrorCode.EncryptionWrongAlgorithm} if the key algorithm is not supported.
      */
-    public static async deriveKeyFromBaseHandle(
+    public static async deriveKeyFromBase(
         providerIdent: ProviderIdentifier,
         baseKey: ICoreBuffer,
         keyId: number,
