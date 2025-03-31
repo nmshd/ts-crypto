@@ -152,13 +152,13 @@ export class CryptoDerivation extends CryptoDerivationWithLibsodium {
     ): Promise<CryptoSecretKey> {
         if (provider) {
             const derivedKey = await CryptoDerivationHandle.deriveKeyFromPassword(
-                { providerName: "SoftwareProvider" },
+                provider,
                 password,
                 salt,
                 keyAlgorithm,
                 derivationAlgorithm
             );
-            return await CryptoSecretKey.fromHandle(derivedKey);
+            return CryptoSecretKey.fromHandle(derivedKey);
         }
         // fallback to libsodium
         return await super.deriveKeyFromPassword(password, salt, keyAlgorithm, derivationAlgorithm, opslimit, memlimit);
@@ -173,13 +173,13 @@ export class CryptoDerivation extends CryptoDerivationWithLibsodium {
     ): Promise<CryptoSecretKey> {
         if (provider) {
             const derivedKey = await CryptoDerivationHandle.deriveKeyFromBase(
-                { providerName: "SoftwareProvider" },
+                provider,
                 baseKey,
                 keyId,
                 context,
                 keyAlgorithm
             );
-            return await CryptoSecretKey.fromHandle(derivedKey);
+            return CryptoSecretKey.fromHandle(derivedKey);
         }
         // fallback
         return await super.deriveKeyFromBase(baseKey, keyId, context, keyAlgorithm);
