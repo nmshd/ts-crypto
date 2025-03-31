@@ -1,5 +1,6 @@
 import { CoreBuffer, ICoreBuffer } from "./CoreBuffer";
-import { CryptoDerivationHandle, initCryptoDerivationHandle } from "./crypto-layer/CryptoDerivationHandle";
+import { ProviderIdentifier } from "./crypto-layer";
+import { CryptoDerivationHandle } from "./crypto-layer/CryptoDerivationHandle";
 import { CryptoEncryptionAlgorithm } from "./encryption/CryptoEncryption";
 import { CryptoSecretKey } from "./encryption/CryptoSecretKey";
 import { SodiumWrapper } from "./SodiumWrapper";
@@ -132,21 +133,6 @@ export class CryptoDerivationWithLibsodium implements ICryptoDerivation {
 }
 
 /**
- * A simple boolean for whether handle-based usage is available for derivation.
- */
-let derivationProviderInitialized = false;
-
-/**
- * Call this if you have a provider for handle-based derivation.
- * Also calls initCryptoDerivationHandle() if needed.
- */
-export function initCryptoDerivation(): void {
-    derivationProviderInitialized = true;
-    // If you want, you can also call initCryptoDerivationHandle() or do it externally
-    initCryptoDerivationHandle();
-}
-
-/**
  * The new extended class that can do handle-based derivation if a provider is available,
  * or fall back to libsodium if not.
  */
@@ -161,9 +147,10 @@ export class CryptoDerivation extends CryptoDerivationWithLibsodium {
         keyAlgorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.XCHACHA20_POLY1305,
         derivationAlgorithm: CryptoDerivationAlgorithm = CryptoDerivationAlgorithm.ARGON2ID,
         opslimit = 100000,
-        memlimit = 8192
+        memlimit = 8192,
+        provider?: ProviderIdentifier
     ): Promise<CryptoSecretKey> {
-        if (derivationProviderInitialized) {
+        if (provider) {
             const derivedKey = await CryptoDerivationHandle.deriveKeyFromPassword(
                 { providerName: "SoftwareProvider" },
                 password,
@@ -181,9 +168,10 @@ export class CryptoDerivation extends CryptoDerivationWithLibsodium {
         baseKey: ICoreBuffer,
         keyId: number,
         context: string,
-        keyAlgorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.XCHACHA20_POLY1305
+        keyAlgorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.XCHACHA20_POLY1305,
+        provider?: ProviderIdentifier
     ): Promise<CryptoSecretKey> {
-        if (derivationProviderInitialized) {
+        if (provider) {
             const derivedKey = await CryptoDerivationHandle.deriveKeyFromBase(
                 { providerName: "SoftwareProvider" },
                 baseKey,

@@ -63,6 +63,7 @@ export class CryptoSecretKeyWithLibsodium extends CryptoSerializable implements 
         CryptoValidation.checkEncryptionAlgorithm(algorithm);
 
         let buffer: CoreBuffer;
+        // eslint-disable-next-line @typescript-eslint/switch-exhaustiveness-check
         switch (algorithm) {
             case CryptoEncryptionAlgorithm.XCHACHA20_POLY1305:
                 try {
@@ -108,32 +109,6 @@ export class CryptoSecretKeyWithLibsodium extends CryptoSerializable implements 
     public static fromBase64(value: string): CryptoSecretKeyWithLibsodium {
         return this.deserialize(CoreBuffer.base64_utf8(value));
     }
-
-    /**
-     * If a user forcibly wants to build a libsodium-based raw key from a handle, we
-     * do that by extracting the handle's key bits. (Legacy approach.)
-     */
-    public static async fromHandle(handle: CryptoSecretKeyHandle): Promise<CryptoSecretKeyWithLibsodium> {
-        const serializedKey = await handle.toSerializedString();
-        return CryptoSecretKeyWithLibsodium.from({
-            algorithm: handle.algorithm,
-            secretKey: CoreBuffer.from(serializedKey)
-        });
-    }
-}
-
-/**
- * A simple boolean indicating if the crypto-layer approach is available.
- * If false, we do everything purely with libsodium, preserving old test behavior.
- */
-let secretKeyProviderInitialized = false;
-
-/**
- * Call this if you have a crypto-layer provider for secret keys.
- * If not called, all old code paths remain identical to the legacy version.
- */
-export function initCryptoSecretKey(): void {
-    secretKeyProviderInitialized = true;
 }
 
 /**
@@ -151,16 +126,10 @@ export class CryptoSecretKey extends CryptoSecretKeyWithLibsodium {
         providerIdent: ProviderIdentifier,
         spec: KeySpec
     ): Promise<CryptoSecretKey> {
-        if (!secretKeyProviderInitialized) {
-            throw new CryptoError(
-                CryptoErrorCode.CalUninitializedKey,
-                "No crypto-layer provider is initialized. Cannot generate handle-based key."
-            );
-        }
         // Build a handle-based key
         const handle = await CryptoSecretKeyHandle.generateKeyHandle(providerIdent, spec, algorithm);
         // Wrap that handle in a new extended CryptoSecretKey
-        return await CryptoSecretKey.fromHandle(handle);
+        return CryptoSecretKey.fromHandle(handle);
     }
 
     public override toJSON(verbose = true): ICryptoSecretKeySerialized {
@@ -175,7 +144,7 @@ export class CryptoSecretKey extends CryptoSecretKeyWithLibsodium {
      * ask the provider to revoke the handle. Otherwise, fallback to zeroing raw memory.
      */
     public override clear(): void {
-        if (secretKeyProviderInitialized && this.secretKey instanceof CryptoSecretKeyHandle) {
+        if (this.secretKey instanceof CryptoSecretKeyHandle) {
             // For handle-based keys, there's no raw data in memory to clear.
             // Possibly do "this.keyHandle = null" or call the provider's deletion method.
             return;
@@ -186,21 +155,13 @@ export class CryptoSecretKey extends CryptoSecretKeyWithLibsodium {
     /**
      * If the provider is available, we store a handle-based reference; otherwise, fallback to raw extraction.
      */
-    public static override async fromHandle(handle: CryptoSecretKeyHandle): Promise<CryptoSecretKey> {
-        if (secretKeyProviderInitialized) {
-            // Create a handle-based instance with minimal raw data
-            const key = new CryptoSecretKey();
-            key.algorithm = handle.algorithm;
-            // We store a dummy buffer so the base class doesn't break, but we don't store real raw data
-            key.secretKey = CoreBuffer.fromUtf8("handle-based key, no raw data in memory");
-            (key as any).keyHandle = handle;
-            return key;
-        }
-        // fallback to libsodium approach
-        const baseRaw = await super.fromHandle(handle);
-        // baseRaw is CryptoSecretKeyWithLibsodium
-        // now create a new CryptoSecretKey from that
-        return this.from(baseRaw);
+    public static fromHandle(handle: CryptoSecretKeyHandle): CryptoSecretKey {
+        const key = new CryptoSecretKey();
+        key.algorithm = handle.algorithm;
+
+        key.secretKey = CoreBuffer.fromUtf8("handle-based key, no raw data in memory");
+        (key as any).keyHandle = handle;
+        return key;
     }
 
     /**

@@ -26,18 +26,6 @@ export interface ICryptoPublicState extends ISerializable {
 }
 
 /**
- * Tracks whether a handle-based crypto provider is available for public states.
- */
-let publicStateProviderInitialized = false;
-
-/**
- * Call this to enable handle-based usage for public states if a provider is available.
- */
-export function initCryptoPublicState(): void {
-    publicStateProviderInitialized = true;
-}
-
-/**
  * Original libsodium-based public state logic, renamed to preserve
  * functionality when no handle-based provider is used.
  */
@@ -131,16 +119,13 @@ export class CryptoPublicState extends CryptoPublicStateWithLibsodium {
      * Example method that converts this instance to a handle-based public state, if available.
      * If no provider is initialized, returns the current instance.
      */
-    public toHandle(): CryptoPublicStateHandle | this {
-        if (publicStateProviderInitialized) {
-            const handleState = new CryptoPublicStateHandle();
-            handleState.id = this.id;
-            handleState.nonce = this.nonce.clone();
-            handleState.algorithm = this.algorithm;
-            handleState.stateType = this.stateType;
-            return handleState;
-        }
-        return this;
+    public toHandle(): CryptoPublicStateHandle {
+        const handleState = new CryptoPublicStateHandle();
+        handleState.id = this.id;
+        handleState.nonce = this.nonce.clone();
+        handleState.algorithm = this.algorithm;
+        handleState.stateType = this.stateType;
+        return handleState;
     }
 
     /**

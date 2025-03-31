@@ -1,5 +1,6 @@
 import { ISerializable, serialize, type, validate } from "@js-soft/ts-serval";
 import { CoreBuffer, ICoreBuffer } from "../CoreBuffer";
+import { ProviderIdentifier } from "../crypto-layer";
 import { CryptoSignaturePrivateKeyHandle } from "../crypto-layer/signature/CryptoSignaturePrivateKeyHandle";
 import { CryptoSignaturesWithCryptoLayer } from "../crypto-layer/signature/CryptoSignatures";
 import { CryptoDerivation } from "../CryptoDerivation";
@@ -136,18 +137,6 @@ export class CryptoRelationshipRequestSecretsWithLibsodium
 }
 
 /**
- * A simple flag indicating if a crypto-layer approach is available for request secrets.
- */
-let requestSecretsProviderInitialized = false;
-
-/**
- * Call this if a provider is available for handle-based usage of request secrets.
- */
-export function initCryptoRelationshipRequestSecrets(): void {
-    requestSecretsProviderInitialized = true;
-}
-
-/**
  * The new extended class that can also do handle-based usage if the provider is available.
  */
 @type("CryptoRelationshipRequestSecrets")
@@ -168,9 +157,10 @@ export class CryptoRelationshipRequestSecrets extends CryptoRelationshipRequestS
 
     public static override async fromPeer(
         peerExchangeKey: CryptoExchangePublicKey,
-        peerIdentityKey: CryptoSignaturePublicKey
+        peerIdentityKey: CryptoSignaturePublicKey,
+        provider?: ProviderIdentifier
     ): Promise<CryptoRelationshipRequestSecrets> {
-        if (requestSecretsProviderInitialized) {
+        if (provider) {
             const base = await super.fromPeer(peerExchangeKey, peerIdentityKey);
             return this.from(base);
         }
@@ -178,8 +168,12 @@ export class CryptoRelationshipRequestSecrets extends CryptoRelationshipRequestS
         return this.from(base);
     }
 
-    public override async sign(content: CoreBuffer, algorithm = CryptoHashAlgorithm.SHA256): Promise<CryptoSignature> {
-        if (requestSecretsProviderInitialized && (this.signatureKeypair as any)) {
+    public override async sign(
+        content: CoreBuffer,
+        algorithm = CryptoHashAlgorithm.SHA256,
+        provider?: ProviderIdentifier
+    ): Promise<CryptoSignature> {
+        if (provider) {
             return await CryptoSignaturesWithCryptoLayer.sign(
                 content,
                 await CryptoSignaturePrivateKeyHandle.fromAny(this.signatureKeypair.privateKey),

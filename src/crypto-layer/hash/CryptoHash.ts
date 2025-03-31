@@ -90,26 +90,21 @@ export class CryptoHashWithCryptoLayer {
      * @returns A Promise object, either resolving to the SHA-256 hash of the given string (if the
      * hash parameter is omitted) or true/false depending if the hashes match (if the hash parameter is specified).
      */
-    public static async sha256(content: string, hash?: string): Promise<string | boolean> {
+    public static async sha256(
+        content: string,
+        provider: ProviderIdentifier,
+        hash?: string
+    ): Promise<string | boolean> {
         const bufferContent = CoreBuffer.fromString(content, Encoding.Utf8);
 
         // If a hash is given, verify it
         if (hash) {
             const bufferHash = CoreBuffer.fromString(hash, Encoding.Hex);
-            return await this.verify(
-                { providerName: "SoftwareProvider" },
-                bufferContent,
-                bufferHash,
-                CryptoHashAlgorithm.SHA256
-            );
+            return await this.verify(provider, bufferContent, bufferHash, CryptoHashAlgorithm.SHA256);
         }
 
         // Otherwise produce a new SHA-256 hash
-        const created = await this.hash(
-            { providerName: "SoftwareProvider" },
-            bufferContent,
-            CryptoHashAlgorithm.SHA256
-        );
+        const created = await this.hash(provider, bufferContent, CryptoHashAlgorithm.SHA256);
         return created.toString(Encoding.Hex);
     }
 
@@ -125,24 +120,19 @@ export class CryptoHashWithCryptoLayer {
      * @returns A Promise object, either resolving to the SHA-512 hash of the given string (if the
      * hash parameter is omitted) or true/false depending if the hashes match (if the hash parameter is specified).
      */
-    public static async sha512(content: string, hash?: string): Promise<string | boolean> {
+    public static async sha512(
+        content: string,
+        provider: ProviderIdentifier,
+        hash?: string
+    ): Promise<string | boolean> {
         const bufferContent = CoreBuffer.fromString(content, Encoding.Utf8);
 
         if (hash) {
             const bufferHash = CoreBuffer.fromString(hash, Encoding.Hex);
-            return await this.verify(
-                { providerName: "SoftwareProvider" },
-                bufferContent,
-                bufferHash,
-                CryptoHashAlgorithm.SHA512
-            );
+            return await this.verify(provider, bufferContent, bufferHash, CryptoHashAlgorithm.SHA512);
         }
 
-        const created = await this.hash(
-            { providerName: "SoftwareProvider" },
-            bufferContent,
-            CryptoHashAlgorithm.SHA512
-        );
+        const created = await this.hash(provider, bufferContent, CryptoHashAlgorithm.SHA512);
         return created.toString(Encoding.Hex);
     }
 }

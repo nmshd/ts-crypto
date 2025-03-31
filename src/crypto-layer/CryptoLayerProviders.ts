@@ -83,7 +83,7 @@ async function createProviderFromProviderFilter(
 }
 
 /**
- * Intializes global providers with the given configuration.
+ * Initializes global providers with the given configuration.
  *
  * This enables the crypto layer functionality.
  *
@@ -109,7 +109,8 @@ export async function initCryptoLayerProviders(config: CryptoLayerConfig): Promi
         );
 
         if (!provider) {
-            throw new CryptoError(CryptoErrorCode.CalFailedLoadingProvider, `Failed loading provider.`);
+            continue;
+            // throw new CryptoError(CryptoErrorCode.CalFailedLoadingProvider, `Failed loading provider.`);
         }
 
         providers.set(await provider.providerName(), provider);

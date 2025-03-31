@@ -10,12 +10,6 @@ import { CryptoEncryption, CryptoEncryptionAlgorithm } from "../encryption/Crypt
 import { CryptoPrivateState, ICryptoPrivateState, ICryptoPrivateStateSerialized } from "./CryptoPrivateState";
 import { CryptoStateType } from "./CryptoStateType";
 
-let stateTransmitProviderInitialized = false;
-
-export function initCryptoStateTransmit(): void {
-    stateTransmitProviderInitialized = true;
-}
-
 @type("CryptoPrivateStateTransmitWithLibsodium")
 export class CryptoPrivateStateTransmitWithLibsodium extends CryptoPrivateState {
     public override toJSON(verbose = true): ICryptoPrivateStateSerialized {
@@ -93,7 +87,7 @@ export class CryptoPrivateStateTransmit extends CryptoPrivateStateTransmitWithLi
     }
 
     public override async encrypt(plaintext: CoreBuffer): Promise<CryptoCipher> {
-        if (stateTransmitProviderInitialized && this.secretKey instanceof CryptoSecretKeyHandle) {
+        if (this.secretKey instanceof CryptoSecretKeyHandle) {
             const cipher = await CryptoEncryptionWithCryptoLayer.encrypt(
                 plaintext,
                 await CryptoSecretKeyHandle.from(this.secretKey)
@@ -105,7 +99,7 @@ export class CryptoPrivateStateTransmit extends CryptoPrivateStateTransmitWithLi
     }
 
     public override async decrypt(cipher: CryptoCipher): Promise<CoreBuffer> {
-        if (stateTransmitProviderInitialized && this.secretKey instanceof CryptoSecretKeyHandle) {
+        if (this.secretKey instanceof CryptoSecretKeyHandle) {
             CryptoValidation.checkCounter(cipher.counter);
             if (typeof cipher.counter === "undefined") {
                 throw new CryptoError(CryptoErrorCode.StateWrongCounter);

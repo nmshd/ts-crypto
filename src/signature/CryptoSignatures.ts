@@ -18,11 +18,14 @@ import { CryptoSignaturePublicKey } from "./CryptoSignaturePublicKey";
 import { CryptoSignatureValidation } from "./CryptoSignatureValidation";
 
 export class CryptoSignaturesWithLibsodium implements IClearable {
-    public clear(): void {}
+    public clear(): void {
+        // NoOp
+    }
 
     public static async privateKeyToPublicKey(
         privateKey: CryptoSignaturePrivateKey
     ): Promise<CryptoSignaturePublicKey> {
+        // eslint-disable-next-line @typescript-eslint/switch-exhaustiveness-check
         switch (privateKey.algorithm) {
             case CryptoSignatureAlgorithm.ECDSA_ED25519:
                 try {
@@ -51,6 +54,7 @@ export class CryptoSignaturesWithLibsodium implements IClearable {
         CryptoSignatureValidation.checkSignatureAlgorithm(algorithm);
 
         let pair;
+        // eslint-disable-next-line @typescript-eslint/switch-exhaustiveness-check
         switch (algorithm) {
             case CryptoSignatureAlgorithm.ECDSA_ED25519:
                 try {

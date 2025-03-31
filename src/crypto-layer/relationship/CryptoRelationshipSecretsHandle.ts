@@ -1,7 +1,5 @@
 import { ISerializable, ISerialized, serialize, type, validate } from "@js-soft/ts-serval";
 import { KeyPairSpec } from "@nmshd/rs-crypto-types";
-import { CryptoExchangeAlgorithm } from "src/exchange/CryptoExchange";
-import { CryptoExchangeSecrets } from "src/exchange/CryptoExchangeSecrets";
 import { CoreBuffer } from "../../CoreBuffer";
 import { CryptoDerivation } from "../../CryptoDerivation";
 import { CryptoError } from "../../CryptoError";
@@ -9,6 +7,8 @@ import { CryptoErrorCode } from "../../CryptoErrorCode";
 import { CryptoSerializableAsync } from "../../CryptoSerializable";
 import { CryptoCipher } from "../../encryption/CryptoCipher";
 import { CryptoEncryptionAlgorithm } from "../../encryption/CryptoEncryption";
+import { CryptoExchangeAlgorithm } from "../../exchange/CryptoExchange";
+import { CryptoExchangeSecrets } from "../../exchange/CryptoExchangeSecrets";
 import { CryptoHashAlgorithm } from "../../hash/CryptoHash";
 import { CryptoRelationshipType } from "../../relationship/CryptoRelationshipType";
 import { CryptoSignature } from "../../signature/CryptoSignature";

@@ -189,18 +189,6 @@ export class CryptoPrivateStateWithLibsodium extends Serializable implements ICr
 }
 
 /**
- * Indicates if handle-based cryptographic operations (via a provider) are available.
- */
-let privateStateProviderInitialized = false;
-
-/**
- * Activates handle-based usage for private states if a corresponding crypto provider is set up.
- */
-export function initCryptoPrivateState(): void {
-    privateStateProviderInitialized = true;
-}
-
-/**
  * Extended private state that delegates encryption and decryption to a handle
  * if available; otherwise, falls back to libsodium-based operations.
  */
@@ -209,7 +197,7 @@ export class CryptoPrivateState extends CryptoPrivateStateWithLibsodium {
      * Encrypts plaintext using either the handle-based approach or libsodium, depending on initialization and key type.
      */
     public override async encrypt(plaintext: CoreBuffer): Promise<CryptoCipher> {
-        if (privateStateProviderInitialized && this.secretKey instanceof CryptoSecretKeyHandle) {
+        if (this.secretKey instanceof CryptoSecretKeyHandle) {
             // When using a handle-based key, cast to the handle class for custom logic.
             const handleState = this as unknown as CryptoPrivateStateHandle;
             return await handleState.encrypt(plaintext);
@@ -221,7 +209,7 @@ export class CryptoPrivateState extends CryptoPrivateStateWithLibsodium {
      * Decrypts ciphertext using either the handle-based approach or libsodium, depending on initialization and key type.
      */
     public override async decrypt(cipher: CryptoCipher, omitCounterCheck = false): Promise<CoreBuffer> {
-        if (privateStateProviderInitialized && this.secretKey instanceof CryptoSecretKeyHandle) {
+        if (this.secretKey instanceof CryptoSecretKeyHandle) {
             const handleState = this as unknown as CryptoPrivateStateHandle;
             return await handleState.decrypt(cipher, omitCounterCheck);
         }
@@ -233,7 +221,7 @@ export class CryptoPrivateState extends CryptoPrivateStateWithLibsodium {
      * Otherwise, provides the standard libsodium public state.
      */
     public override toPublicState(): CryptoPublicState | CryptoPublicStateHandle {
-        if (privateStateProviderInitialized && this.secretKey instanceof CryptoSecretKeyHandle) {
+        if (this.secretKey instanceof CryptoSecretKeyHandle) {
             const handleState = this as unknown as CryptoPrivateStateHandle;
             return handleState.toPublicState();
         }

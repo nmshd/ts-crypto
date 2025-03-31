@@ -132,18 +132,6 @@ export class CryptoExchangeKeypairWithLibsodium
 }
 
 /**
- * A simple flag indicating if handle-based usage is available.
- */
-let keypairProviderInitialized = false;
-
-/**
- * Call this during initialization if you have a crypto-layer provider for exchange keypairs.
- */
-export function initCryptoExchangeKeypair(): void {
-    keypairProviderInitialized = true;
-}
-
-/**
  * Extended class that supports handle-based keys if the crypto-layer provider is available.
  * Otherwise, it falls back to the libsodium-based implementation.
  */
@@ -165,14 +153,6 @@ export class CryptoExchangeKeypair extends CryptoExchangeKeypairWithLibsodium {
         }
 
         return obj;
-    }
-
-    /**
-     * Checks if this is a crypto-layer handle.
-     * @returns True if using crypto-layer, false if libsodium-based.
-     */
-    public isUsingCryptoLayer(): boolean {
-        return this instanceof CryptoExchangeKeypairHandle;
     }
 
     /**

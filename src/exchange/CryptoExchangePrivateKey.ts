@@ -80,6 +80,7 @@ export class CryptoExchangePrivateKeyWithLibsodium
      */
     public async toPublicKey(): Promise<CryptoExchangePublicKey> {
         let publicKey: Uint8Array;
+        // eslint-disable-next-line @typescript-eslint/switch-exhaustiveness-check
         switch (this.algorithm) {
             case CryptoExchangeAlgorithm.ECDH_X25519:
                 try {
@@ -149,18 +150,6 @@ export class CryptoExchangePrivateKeyWithLibsodium
 }
 
 /**
- * A simple flag indicating if handle-based usage is available.
- */
-let privateKeyProviderInitialized = false;
-
-/**
- * Call this during initialization if you have a crypto-layer provider for exchange private keys.
- */
-export function initCryptoExchangePrivateKey(): void {
-    privateKeyProviderInitialized = true;
-}
-
-/**
  * Extended class that supports handle-based keys if the crypto-layer provider is available.
  * Otherwise, it falls back to the libsodium-based implementation.
  */
@@ -181,22 +170,13 @@ export class CryptoExchangePrivateKey extends CryptoExchangePrivateKeyWithLibsod
     }
 
     /**
-     * Checks if this is a crypto-layer handle.
-     * @returns True if using crypto-layer, false if libsodium-based.
-     */
-    public isUsingCryptoLayer(): boolean {
-        return this instanceof CryptoExchangePrivateKeyHandle;
-    }
-
-    /**
      * Overridden method that checks if a crypto-layer provider is active
      * and if this key is a crypto-layer handle. If so, it delegates to the
      * crypto-layer handle. Otherwise, it calls the parent implementation.
      */
     public override async toPublicKey(): Promise<CryptoExchangePublicKey> {
-        if (privateKeyProviderInitialized && this.isUsingCryptoLayer()) {
-            // Delegate to the handle-based implementation
-            const handle = this as unknown as CryptoExchangePrivateKeyHandle;
+        if (this instanceof CryptoExchangePrivateKeyHandle) {
+            const handle = this as CryptoExchangePrivateKeyHandle;
             return CryptoExchangePublicKey.fromHandle(await handle.toPublicKey());
         }
         // Fallback to the libsodium-based method

@@ -1,5 +1,6 @@
 import { ISerializable, ISerialized, serialize, type, validate } from "@js-soft/ts-serval";
 import { CoreBuffer, IClearable } from "../CoreBuffer";
+import { ProviderIdentifier } from "../crypto-layer";
 import { CryptoExchangePublicKeyHandle } from "../crypto-layer/exchange/CryptoExchangePublicKeyHandle";
 import { CryptoRelationshipPublicResponseHandle } from "../crypto-layer/relationship/CryptoRelationshipPublicResponseHandle";
 import { CryptoSignaturePublicKeyHandle } from "../crypto-layer/signature/CryptoSignaturePublicKeyHandle";
@@ -187,23 +188,6 @@ export class CryptoRelationshipPublicResponseWithLibsodium
     }
 }
 
-/* ----------------------------------------------------------------
-   The combined class below extends the libsodium-based class,
-   but can also handle crypto-layer 'handles' for each field.
-   ---------------------------------------------------------------- */
-
-let providerInitialized = false;
-
-/**
- * Optional initialization function to set up the provider (crypto-layer).
- */
-export function initCryptoRelationshipPublicResponse(/* providerIdent: ProviderIdentifier */): void {
-    // In a real scenario, you'd do something like:
-    //   if (getProvider(providerIdent)) { providerInitialized = true }
-    // For demonstration, just set it to true:
-    providerInitialized = true;
-}
-
 /**
  * The new combined class that can work with both libsodium-based objects
  * and crypto-layer handles for the keys and state.
@@ -216,8 +200,12 @@ export class CryptoRelationshipPublicResponse extends CryptoRelationshipPublicRe
      * @param content The message to verify.
      * @param signature The signature to check.
      */
-    public override async verify(content: CoreBuffer, signature: CryptoSignature): Promise<boolean> {
-        if (providerInitialized && this.isUsingCryptoLayer()) {
+    public override async verify(
+        content: CoreBuffer,
+        signature: CryptoSignature,
+        provider?: ProviderIdentifier
+    ): Promise<boolean> {
+        if (provider && this.isUsingCryptoLayer()) {
             try {
                 // Use the universal method which might handle both:
                 return await CryptoSignatures.verify(content, signature, this.signatureKey);

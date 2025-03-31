@@ -9,20 +9,6 @@ import { getProviderOrThrow, ProviderIdentifier } from "./CryptoLayerProviders";
 import { CryptoSecretKeyHandle } from "./encryption/CryptoSecretKeyHandle";
 
 /**
- * Flag to track whether the derivation module has been initialized.
- * This ensures proper initialization before any cryptographic operations.
- */
-let handleDerivationInitialized = false;
-
-/**
- * Initializes the cryptographic derivation handle system.
- * Must be called before any derivation operations are performed.
- */
-export function initCryptoDerivationHandle(): void {
-    handleDerivationInitialized = true;
-}
-
-/**
  * Provides handle-based key derivation methods using the crypto layer.
  * This class implements secure key derivation functions for generating
  * cryptographic keys from passwords or base keys.
@@ -52,16 +38,13 @@ export class CryptoDerivationHandle extends CryptoSerializableAsync {
         opslimit = 100000,
         memlimit = 8192
     ): Promise<CryptoSecretKeyHandle> {
-        if (!handleDerivationInitialized) {
-            throw new CryptoError(CryptoErrorCode.CalUninitializedKey, "CryptoDerivationHandle not initialized.");
-        }
-
         const provider = getProviderOrThrow(providerIdent);
         const signingHash: CryptoHash = "Sha2_512";
 
         const spec: KeySpec = {
             cipher: CryptoDerivationHandle.mapAlgorithmToCipherName(keyAlgorithm),
             ephemeral: true,
+            // eslint-disable-next-line @typescript-eslint/naming-convention
             signing_hash: signingHash
         };
 
@@ -69,9 +52,11 @@ export class CryptoDerivationHandle extends CryptoSerializableAsync {
         let kdfOptions: KDF;
         switch (derivationAlgorithm) {
             case CryptoDerivationAlgorithm.ARGON2I: {
+                // eslint-disable-next-line @typescript-eslint/naming-convention
                 kdfOptions = { Argon2i: { memory: memlimit, iterations: opslimit, parallelism: 1 } };
             }
             case CryptoDerivationAlgorithm.ARGON2ID: {
+                // eslint-disable-next-line @typescript-eslint/naming-convention
                 kdfOptions = { Argon2id: { memory: memlimit, iterations: opslimit, parallelism: 1 } };
             }
         }
@@ -103,16 +88,13 @@ export class CryptoDerivationHandle extends CryptoSerializableAsync {
         context: string,
         keyAlgorithm: CryptoEncryptionAlgorithm
     ): Promise<CryptoSecretKeyHandle> {
-        if (!handleDerivationInitialized) {
-            throw new CryptoError(CryptoErrorCode.CalUninitializedKey, "CryptoDerivationHandle not initialized.");
-        }
-
         const provider = getProviderOrThrow(providerIdent);
         const cipherName = CryptoDerivationHandle.mapAlgorithmToCipherName(keyAlgorithm);
 
         const spec: KeySpec = {
             cipher: cipherName,
             ephemeral: true,
+            // eslint-disable-next-line @typescript-eslint/naming-convention
             signing_hash: "Sha2_512"
         };
 

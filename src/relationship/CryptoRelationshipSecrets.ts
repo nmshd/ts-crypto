@@ -281,25 +281,13 @@ export class CryptoRelationshipSecretsWithLibsodium extends CryptoSerializable i
 }
 
 /**
- * A simple flag indicating if handle-based usage is available.
- */
-let relationshipSecretsProviderInitialized = false;
-
-/**
- * Call this during initialization if you have a crypto-layer provider for relationship secrets.
- */
-export function initCryptoRelationshipSecrets(): void {
-    relationshipSecretsProviderInitialized = true;
-}
-
-/**
  * The "unified" class that checks if the object is handle-based and calls the handle-based code if so,
  * or calls libsodium fallback if not.
  */
 @type("CryptoRelationshipSecrets")
 export class CryptoRelationshipSecrets extends CryptoRelationshipSecretsWithLibsodium {
     public override async sign(content: CoreBuffer, algorithm = CryptoHashAlgorithm.SHA256): Promise<CryptoSignature> {
-        if (relationshipSecretsProviderInitialized && this.exchangeKeypair instanceof CryptoExchangeKeypairHandle) {
+        if (this.exchangeKeypair instanceof CryptoExchangeKeypairHandle) {
             // Delegate to the handle-based instance
             const handle = this as unknown as CryptoRelationshipSecretsHandle;
             return await handle.sign(content, algorithm);
@@ -308,49 +296,49 @@ export class CryptoRelationshipSecrets extends CryptoRelationshipSecretsWithLibs
     }
 
     public override async verifyOwn(content: CoreBuffer, signature: CryptoSignature): Promise<boolean> {
-        if (relationshipSecretsProviderInitialized && this.exchangeKeypair instanceof CryptoExchangeKeypairHandle) {
+        if (this.exchangeKeypair instanceof CryptoExchangeKeypairHandle) {
             return await (this as unknown as CryptoRelationshipSecretsHandle).verifyOwn(content, signature);
         }
         return await super.verifyOwn(content, signature);
     }
 
     public override async verifyPeer(content: CoreBuffer, signature: CryptoSignature): Promise<boolean> {
-        if (relationshipSecretsProviderInitialized && this.exchangeKeypair instanceof CryptoExchangeKeypairHandle) {
+        if (this.exchangeKeypair instanceof CryptoExchangeKeypairHandle) {
             return await (this as unknown as CryptoRelationshipSecretsHandle).verifyPeer(content, signature);
         }
         return await super.verifyPeer(content, signature);
     }
 
     public override async verifyPeerIdentity(content: CoreBuffer, signature: CryptoSignature): Promise<boolean> {
-        if (relationshipSecretsProviderInitialized && this.exchangeKeypair instanceof CryptoExchangeKeypairHandle) {
+        if (this.exchangeKeypair instanceof CryptoExchangeKeypairHandle) {
             return await (this as unknown as CryptoRelationshipSecretsHandle).verifyPeerIdentity(content, signature);
         }
         return await super.verifyPeerIdentity(content, signature);
     }
 
     public override async encrypt(content: CoreBuffer): Promise<CryptoCipher> {
-        if (relationshipSecretsProviderInitialized && this.exchangeKeypair instanceof CryptoExchangeKeypairHandle) {
+        if (this.exchangeKeypair instanceof CryptoExchangeKeypairHandle) {
             return await (this as unknown as CryptoRelationshipSecretsHandle).encrypt(content);
         }
         return await super.encrypt(content);
     }
 
     public override async decryptOwn(cipher: CryptoCipher): Promise<CoreBuffer> {
-        if (relationshipSecretsProviderInitialized && this.exchangeKeypair instanceof CryptoExchangeKeypairHandle) {
+        if (this.exchangeKeypair instanceof CryptoExchangeKeypairHandle) {
             return await (this as unknown as CryptoRelationshipSecretsHandle).decryptOwn(cipher);
         }
         return await super.decryptOwn(cipher);
     }
 
     public override async decryptPeer(cipher: CryptoCipher, omitCounterCheck = false): Promise<CoreBuffer> {
-        if (relationshipSecretsProviderInitialized && this.exchangeKeypair instanceof CryptoExchangeKeypairHandle) {
+        if (this.exchangeKeypair instanceof CryptoExchangeKeypairHandle) {
             return await (this as unknown as CryptoRelationshipSecretsHandle).decryptPeer(cipher, omitCounterCheck);
         }
         return await super.decryptPeer(cipher, omitCounterCheck);
     }
 
     public override async decryptRequest(cipher: CryptoCipher): Promise<CoreBuffer> {
-        if (relationshipSecretsProviderInitialized && this.exchangeKeypair instanceof CryptoExchangeKeypairHandle) {
+        if (this.exchangeKeypair instanceof CryptoExchangeKeypairHandle) {
             return await (this as unknown as CryptoRelationshipSecretsHandle).decryptRequest(cipher);
         }
         return await super.decryptRequest(cipher);
@@ -361,7 +349,7 @@ export class CryptoRelationshipSecrets extends CryptoRelationshipSecretsWithLibs
      * Otherwise, call the libsodium-based method from the parent class.
      */
     public override toPublicResponse(): CryptoRelationshipPublicResponse {
-        if (relationshipSecretsProviderInitialized && this.exchangeKeypair instanceof CryptoExchangeKeypairHandle) {
+        if (this.exchangeKeypair instanceof CryptoExchangeKeypairHandle) {
             // If handle-based usage is active, cast to the handle-based secrets class
             // and call its async `toPublicResponse()` method.
             const handle = this as unknown as CryptoRelationshipSecretsHandle;
@@ -379,7 +367,7 @@ export class CryptoRelationshipSecrets extends CryptoRelationshipSecretsWithLibs
         request: CryptoRelationshipRequestSecrets
     ): Promise<CryptoRelationshipSecrets> {
         // If the exchangeKeypair in the request is handle-based, do handle-based
-        if (relationshipSecretsProviderInitialized && (request.exchangeKeypair as any)?.keyPairHandle) {
+        if ((request.exchangeKeypair as any)?.keyPairHandle) {
             const handle = await CryptoRelationshipSecretsHandle.fromRelationshipResponse(
                 response as unknown as CryptoRelationshipPublicResponseHandle,
                 request as unknown as CryptoRelationshipRequestSecretsHandle
@@ -395,7 +383,7 @@ export class CryptoRelationshipSecrets extends CryptoRelationshipSecretsWithLibs
         request: CryptoRelationshipPublicRequest,
         templateExchangeKeypair: CryptoExchangeKeypair
     ): Promise<CryptoRelationshipSecrets> {
-        if (relationshipSecretsProviderInitialized && (templateExchangeKeypair as any)?.keyPairHandle) {
+        if ((templateExchangeKeypair as any)?.keyPairHandle) {
             const handle = await CryptoRelationshipSecretsHandle.fromRelationshipRequest(
                 request as unknown as CryptoRelationshipPublicRequestHandle,
                 templateExchangeKeypair as unknown as CryptoExchangeKeypairHandle
@@ -414,7 +402,7 @@ export class CryptoRelationshipSecrets extends CryptoRelationshipSecretsWithLibs
         peerIdentityKey?: CryptoSignaturePublicKey,
         peerType: CryptoRelationshipType = CryptoRelationshipType.Requestor
     ): Promise<CryptoRelationshipSecrets> {
-        if (relationshipSecretsProviderInitialized && (templateExchangeKeypair as any)?.keyPairHandle) {
+        if ((templateExchangeKeypair as any)?.keyPairHandle) {
             const handle = await CryptoRelationshipSecretsHandle.fromPeerNonce(
                 peerExchangeKey as unknown as CryptoExchangePublicKeyHandle,
                 peerTemplateKey as unknown as CryptoExchangePublicKeyHandle,

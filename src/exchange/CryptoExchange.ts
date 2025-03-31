@@ -1,6 +1,7 @@
 import { DHExchange, KeyPairSpec } from "@nmshd/rs-crypto-types";
+import { CryptoPublicKey } from "src/CryptoPublicKey";
 import { CoreBuffer } from "../CoreBuffer";
-import { getProvider, ProviderIdentifier } from "../crypto-layer/CryptoLayerProviders";
+import { ProviderIdentifier } from "../crypto-layer/CryptoLayerProviders";
 import { CryptoExchangeWithCryptoLayer } from "../crypto-layer/exchange/CryptoExchange";
 import { CryptoExchangeKeypairHandle } from "../crypto-layer/exchange/CryptoExchangeKeypairHandle";
 import { CryptoError } from "../CryptoError";
@@ -102,14 +103,6 @@ export class CryptoExchangeWithLibsodium {
     }
 }
 
-let providerInitialized = false;
-
-export function initCryptoExchange(providerIdent: ProviderIdentifier): void {
-    if (getProvider(providerIdent)) {
-        providerInitialized = true;
-    }
-}
-
 /**
  * Extended CryptoExchange class.
  *
@@ -147,11 +140,7 @@ export class CryptoExchange extends CryptoExchangeWithLibsodium {
         templatorPublicKey: CryptoExchangePublicKey | Uint8Array,
         algorithm?: CryptoEncryptionAlgorithm
     ): Promise<CryptoExchangeSecrets> {
-        if (
-            providerInitialized &&
-            !(requestorKeypair instanceof CryptoExchangeKeypair) &&
-            templatorPublicKey instanceof Uint8Array
-        ) {
+        if (!(requestorKeypair instanceof CryptoExchangeKeypair) && templatorPublicKey instanceof Uint8Array) {
             try {
                 const effectiveAlgorithm = algorithm ?? CryptoEncryptionAlgorithm.AES256_GCM;
                 return await CryptoExchangeWithCryptoLayer.deriveRequestor(
@@ -168,10 +157,7 @@ export class CryptoExchange extends CryptoExchangeWithLibsodium {
             }
         }
 
-        if (
-            requestorKeypair instanceof CryptoExchangeKeypair &&
-            templatorPublicKey instanceof CryptoExchangePublicKey
-        ) {
+        if (requestorKeypair instanceof CryptoExchangeKeypair && templatorPublicKey instanceof CryptoPublicKey) {
             const effectiveAlgorithm = algorithm ?? CryptoEncryptionAlgorithm.XCHACHA20_POLY1305;
             return await super.deriveRequestor(requestorKeypair, templatorPublicKey, effectiveAlgorithm);
         }
@@ -203,11 +189,7 @@ export class CryptoExchange extends CryptoExchangeWithLibsodium {
         requestorPublicKey: CryptoExchangePublicKey | Uint8Array,
         algorithm?: CryptoEncryptionAlgorithm
     ): Promise<CryptoExchangeSecrets> {
-        if (
-            providerInitialized &&
-            !(templatorKeypair instanceof CryptoExchangeKeypair) &&
-            requestorPublicKey instanceof Uint8Array
-        ) {
+        if (!(templatorKeypair instanceof CryptoExchangeKeypair) && requestorPublicKey instanceof Uint8Array) {
             try {
                 const effectiveAlgorithm = algorithm ?? CryptoEncryptionAlgorithm.AES256_GCM;
                 return await CryptoExchangeWithCryptoLayer.deriveTemplator(
@@ -224,10 +206,7 @@ export class CryptoExchange extends CryptoExchangeWithLibsodium {
             }
         }
 
-        if (
-            templatorKeypair instanceof CryptoExchangeKeypair &&
-            requestorPublicKey instanceof CryptoExchangePublicKey
-        ) {
+        if (templatorKeypair instanceof CryptoExchangeKeypair && requestorPublicKey instanceof CryptoPublicKey) {
             const effectiveAlgorithm = algorithm ?? CryptoEncryptionAlgorithm.XCHACHA20_POLY1305;
             return await super.deriveTemplator(templatorKeypair, requestorPublicKey, effectiveAlgorithm);
         }

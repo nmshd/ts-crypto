@@ -1,5 +1,5 @@
 import { CoreBuffer, Encoding, ICoreBuffer } from "../CoreBuffer";
-import { getProvider, ProviderIdentifier } from "../crypto-layer/CryptoLayerProviders";
+import { ProviderIdentifier } from "../crypto-layer/CryptoLayerProviders";
 import { CryptoHashWithCryptoLayer } from "../crypto-layer/hash/CryptoHash";
 import { SodiumWrapper } from "../SodiumWrapper";
 
@@ -124,26 +124,6 @@ export class CryptoHashWithLibsodium {
 }
 
 /**
- * Indicates whether a crypto-layer provider has been initialized.
- */
-let providerInitialized = false;
-
-/**
- * Initializes the hashing functionality with the specified crypto-layer provider.
- *
- * If the given provider is successfully retrieved, `providerInitialized` will be set to true,
- * causing subsequent hash operations to use the Rust-based crypto layer by default.
- * Otherwise, libsodium will be used as a fallback.
- *
- * @param providerIdent - The identifier of the crypto-layer provider to initialize.
- */
-export function initCryptoHash(providerIdent: ProviderIdentifier): void {
-    if (getProvider(providerIdent)) {
-        providerInitialized = true;
-    }
-}
-
-/**
  * The new CryptoHash class that uses the Rust-based crypto-layer by default (if initialized),
  * and falls back to [[CryptoHashWithLibsodium]] if no provider has been initialized.
  *
@@ -158,15 +138,11 @@ export class CryptoHash extends CryptoHashWithLibsodium {
     public static override async verify(
         content: ICoreBuffer,
         hash: ICoreBuffer,
-        algorithm: CryptoHashAlgorithm
+        algorithm: CryptoHashAlgorithm,
+        provider?: ProviderIdentifier
     ): Promise<boolean> {
-        if (providerInitialized) {
-            return await CryptoHashWithCryptoLayer.verify(
-                { providerName: "SoftwareProvider" },
-                content,
-                hash,
-                algorithm
-            );
+        if (provider) {
+            return await CryptoHashWithCryptoLayer.verify(provider, content, hash, algorithm);
         }
         return await super.verify(content, hash, algorithm);
     }
@@ -174,9 +150,13 @@ export class CryptoHash extends CryptoHashWithLibsodium {
     /**
      * @inheritdoc
      */
-    public static override async hash(content: ICoreBuffer, algorithm: CryptoHashAlgorithm): Promise<CoreBuffer> {
-        if (providerInitialized) {
-            return await CryptoHashWithCryptoLayer.hash({ providerName: "SoftwareProvider" }, content, algorithm);
+    public static override async hash(
+        content: ICoreBuffer,
+        algorithm: CryptoHashAlgorithm,
+        provider?: ProviderIdentifier
+    ): Promise<CoreBuffer> {
+        if (provider) {
+            return await CryptoHashWithCryptoLayer.hash(provider, content, algorithm);
         }
         return await super.hash(content, algorithm);
     }
@@ -184,9 +164,13 @@ export class CryptoHash extends CryptoHashWithLibsodium {
     /**
      * @inheritdoc
      */
-    public static override async sha256(content: string, hash?: string): Promise<string | boolean> {
-        if (providerInitialized) {
-            return await CryptoHashWithCryptoLayer.sha256(content, hash);
+    public static override async sha256(
+        content: string,
+        hash?: string,
+        provider?: ProviderIdentifier
+    ): Promise<string | boolean> {
+        if (provider) {
+            return await CryptoHashWithCryptoLayer.sha256(content, provider, hash);
         }
         return await super.sha256(content, hash);
     }
@@ -194,9 +178,13 @@ export class CryptoHash extends CryptoHashWithLibsodium {
     /**
      * @inheritdoc
      */
-    public static override async sha512(content: string, hash?: string): Promise<string | boolean> {
-        if (providerInitialized) {
-            return await CryptoHashWithCryptoLayer.sha512(content, hash);
+    public static override async sha512(
+        content: string,
+        hash?: string,
+        provider?: ProviderIdentifier
+    ): Promise<string | boolean> {
+        if (provider) {
+            return await CryptoHashWithCryptoLayer.sha512(content, provider, hash);
         }
         return await super.sha512(content, hash);
     }

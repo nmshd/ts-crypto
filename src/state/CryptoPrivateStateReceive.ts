@@ -1,6 +1,5 @@
 import { type } from "@js-soft/ts-serval";
 import { CoreBuffer } from "../CoreBuffer";
-import { ProviderIdentifier, getProvider } from "../crypto-layer/CryptoLayerProviders";
 import { CryptoEncryptionWithCryptoLayer } from "../crypto-layer/encryption/CryptoEncryption";
 import { CryptoSecretKeyHandle } from "../crypto-layer/encryption/CryptoSecretKeyHandle";
 import { CryptoError } from "../CryptoError";
@@ -11,23 +10,6 @@ import { CryptoEncryption, CryptoEncryptionAlgorithm } from "../encryption/Crypt
 import { CryptoPrivateState, ICryptoPrivateState, ICryptoPrivateStateSerialized } from "./CryptoPrivateState";
 import { CryptoPublicState } from "./CryptoPublicState";
 import { CryptoStateType } from "./CryptoStateType";
-
-/**
- * Indicates if a cryptographic provider for state operations is available.
- */
-let stateProviderInitialized = false;
-
-/**
- * Configures the state subsystem to use a specified provider.
- * If the provider is found, handle-based operations become available.
- *
- * @param providerIdent - Identifier of the cryptographic provider to initialize.
- */
-export function initCryptoState(providerIdent: ProviderIdentifier): void {
-    if (getProvider(providerIdent)) {
-        stateProviderInitialized = true;
-    }
-}
 
 /**
  * Original receive-only class using libsodium-based cryptography.
@@ -136,7 +118,7 @@ export class CryptoPrivateStateReceive extends CryptoPrivateStateReceiveWithLibs
      * proper message order, unless `omitCounterCheck` is true.
      */
     public override async decrypt(cipher: CryptoCipher, omitCounterCheck = false): Promise<CoreBuffer> {
-        if (stateProviderInitialized && this.secretKey instanceof CryptoSecretKeyHandle) {
+        if (this.secretKey instanceof CryptoSecretKeyHandle) {
             const plaintext = await CryptoEncryptionWithCryptoLayer.decryptWithCounter(
                 cipher,
                 this.secretKey,

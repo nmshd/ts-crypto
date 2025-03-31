@@ -1,8 +1,8 @@
 import { serialize, type, validate } from "@js-soft/ts-serval";
 import { DHExchange, KeyPairSpec, KeySpec, Provider, KeyHandle as ProviderKeyHandle } from "@nmshd/rs-crypto-types";
-import { CryptoExchangeSecrets } from "src/exchange/CryptoExchangeSecrets";
 import { CoreBuffer } from "../../CoreBuffer";
 import { CryptoCipher } from "../../encryption/CryptoCipher";
+import { CryptoExchangeSecrets } from "../../exchange/CryptoExchangeSecrets";
 import { CryptoSignature } from "../../signature/CryptoSignature";
 import { getProviderOrThrow, ProviderIdentifier } from "../CryptoLayerProviders";
 import { CryptoEncryptionWithCryptoLayer } from "../encryption/CryptoEncryption";
@@ -98,6 +98,7 @@ export class CryptoRelationshipRequestSecretsHandle {
         // 5. Derive final secret key
         const derivedKeySpec: KeySpec = {
             cipher: "XChaCha20Poly1305",
+            // eslint-disable-next-line @typescript-eslint/naming-convention
             signing_hash: "Sha2_256",
             ephemeral: true
         };

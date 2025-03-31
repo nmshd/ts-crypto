@@ -2,6 +2,7 @@ import { serialize, type, validate } from "@js-soft/ts-serval";
 import { CoreBuffer, IClearable } from "../../CoreBuffer";
 import { CryptoSerializableAsync } from "../../CryptoSerializable";
 import { CryptoEncryptionAlgorithm } from "../../encryption/CryptoEncryption";
+import { ProviderIdentifier } from "../CryptoLayerProviders";
 import { CryptoSecretKeyHandle } from "../encryption/CryptoSecretKeyHandle";
 
 /**
@@ -153,14 +154,14 @@ export class CryptoExchangeSecretsHandle
         receivingKey: CoreBuffer,
         transmissionKey: CoreBuffer,
         algorithm: CryptoEncryptionAlgorithm,
-        providerName: string
+        providerName: ProviderIdentifier
     ): Promise<CryptoExchangeSecretsHandle> {
         const secrets = new CryptoExchangeSecretsHandle();
         secrets.algorithm = algorithm;
 
         // Create secret key handles for both keys
         const rxKeyHandle = await CryptoSecretKeyHandle.importRawKeyIntoHandle(
-            { providerName },
+            providerName,
             receivingKey,
             // eslint-disable-next-line @typescript-eslint/naming-convention
             { cipher: "XChaCha20Poly1305", signing_hash: "Sha2_256", ephemeral: true },
@@ -168,7 +169,7 @@ export class CryptoExchangeSecretsHandle
         );
 
         const txKeyHandle = await CryptoSecretKeyHandle.importRawKeyIntoHandle(
-            { providerName },
+            providerName,
             transmissionKey,
             // eslint-disable-next-line @typescript-eslint/naming-convention
             { cipher: "XChaCha20Poly1305", signing_hash: "Sha2_256", ephemeral: true },

@@ -1,5 +1,6 @@
 import { ISerializable, ISerialized, serialize, type, validate } from "@js-soft/ts-serval";
 import { CoreBuffer, IClearable, ICoreBuffer } from "../CoreBuffer";
+import { ProviderIdentifier } from "../crypto-layer";
 import { CryptoExchangeSecretsHandle } from "../crypto-layer/exchange/CryptoExchangeSecretsHandle";
 import { CryptoSerializable } from "../CryptoSerializable";
 import { CryptoEncryptionAlgorithm } from "../encryption/CryptoEncryption";
@@ -136,18 +137,6 @@ export class CryptoExchangeSecretsWithLibsodium
 }
 
 /**
- * A simple flag indicating if handle-based usage is available.
- */
-let secretsProviderInitialized = false;
-
-/**
- * Call this during initialization if you have a crypto-layer provider for exchange secrets.
- */
-export function initCryptoExchangeSecrets(): void {
-    secretsProviderInitialized = true;
-}
-
-/**
  * Extended class that supports handle-based keys if the crypto-layer provider is available.
  * Otherwise, it falls back to the libsodium-based implementation.
  */
@@ -169,27 +158,11 @@ export class CryptoExchangeSecrets extends CryptoExchangeSecretsWithLibsodium {
     }
 
     /**
-     * Checks if this is a crypto-layer handle.
-     * @returns True if using crypto-layer, false if libsodium-based.
-     */
-    public isUsingCryptoLayer(): boolean {
-        return this instanceof CryptoExchangeSecretsHandle;
-    }
-
-    /**
      * Converts this object into a crypto-layer handle if possible.
      * @returns A Promise that resolves to a CryptoExchangeSecretsHandle.
      * @throws If not using a crypto-layer provider or conversion fails.
      */
-    public async toHandle(providerName: string): Promise<CryptoExchangeSecretsHandle> {
-        if (this.isUsingCryptoLayer()) {
-            return this as unknown as CryptoExchangeSecretsHandle;
-        }
-
-        if (!secretsProviderInitialized) {
-            throw new Error("Cannot create handle: crypto-layer provider not initialized");
-        }
-
+    public async toHandle(providerName: ProviderIdentifier): Promise<CryptoExchangeSecretsHandle> {
         return await CryptoExchangeSecretsHandle.fromRawKeys(
             this.receivingKey,
             this.transmissionKey,

@@ -7,7 +7,7 @@ import { AdditionalConfig, ProviderConfig, ProviderFactoryFunctions, SecurityLev
  * @property factoryFunctions - Functions that list providers or create providers.
  * @property keyMetadataStoreConfig - Configuration needed for saving key metadata.
  * @property keyMetadataStoreAuth - ~~Optional~~ configuration for authenticating key metadata.
- * @property providersToBeInitialized - Array of providers to initalize.
+ * @property providersToBeInitialized - Array of providers to initialize.
  */
 export interface CryptoLayerConfig {
     factoryFunctions: ProviderFactoryFunctions;
@@ -20,7 +20,7 @@ export interface CryptoLayerConfig {
 }
 
 /**
- * Reference to a specific provider, if a name is supplied, or any provider that fullfills the other requirements.
+ * Reference to a specific provider, if a name is supplied, or any provider that fulfills the other requirements.
  */
 export type CryptoLayerProviderFilter =
     | {
