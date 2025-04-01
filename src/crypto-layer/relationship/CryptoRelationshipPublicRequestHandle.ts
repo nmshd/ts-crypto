@@ -225,4 +225,22 @@ export class CryptoRelationshipPublicRequestHandle
     public async decryptRequest(cipher: CryptoCipher, secretKey: CryptoSecretKeyHandle): Promise<CoreBuffer> {
         return await CryptoEncryptionWithCryptoLayer.decrypt(cipher, secretKey, this.nonce);
     }
+
+    /**
+     * Converts this handle-based public request into a standard CryptoRelationshipPublicRequest
+     * containing plain key objects.
+     * Requires the handle properties to have methods to convert back to plain keys.
+     * @returns {Promise<CryptoRelationshipPublicRequest>} A promise resolving to the plain request object.
+     */
+    public async toPublicRequest(): Promise<CryptoRelationshipPublicRequestHandle> {
+        const plainRequest = CryptoRelationshipPublicRequestHandle.fromAny({
+            id: this.id,
+            nonce: this.nonce,
+            exchangeKey: await this.exchangeKey.keyPairHandle.getPublicKey(),
+            signatureKey: await this.signatureKey.keyPairHandle.getPublicKey(),
+            ephemeralKey: await this.ephemeralKey.keyPairHandle.getPublicKey()
+        });
+
+        return await plainRequest;
+    }
 }

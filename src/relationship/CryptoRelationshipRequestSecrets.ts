@@ -1,8 +1,11 @@
 import { ISerializable, serialize, type, validate } from "@js-soft/ts-serval";
 import { CoreBuffer, ICoreBuffer } from "../CoreBuffer";
-import { ProviderIdentifier } from "../crypto-layer";
-import { CryptoSignaturePrivateKeyHandle } from "../crypto-layer/signature/CryptoSignaturePrivateKeyHandle";
-import { CryptoSignaturesWithCryptoLayer } from "../crypto-layer/signature/CryptoSignatures";
+import {
+    CryptoExchangePublicKeyHandle,
+    CryptoRelationshipRequestSecretsHandle,
+    CryptoSignaturePublicKeyHandle,
+    ProviderIdentifier
+} from "../crypto-layer";
 import { CryptoDerivation } from "../CryptoDerivation";
 import { CryptoSerializable } from "../CryptoSerializable";
 import { CryptoCipher } from "../encryption/CryptoCipher";
@@ -161,26 +164,62 @@ export class CryptoRelationshipRequestSecrets extends CryptoRelationshipRequestS
         provider?: ProviderIdentifier
     ): Promise<CryptoRelationshipRequestSecrets> {
         if (provider) {
-            const base = await super.fromPeer(peerExchangeKey, peerIdentityKey);
-            return this.from(base);
+            const handle = await CryptoRelationshipRequestSecretsHandle.fromPeer(
+                provider,
+                peerExchangeKey as unknown as CryptoExchangePublicKeyHandle,
+                peerIdentityKey as unknown as CryptoSignaturePublicKeyHandle
+            );
+            return handle as unknown as CryptoRelationshipRequestSecrets;
         }
+        // fallback to libsodium
         const base = await super.fromPeer(peerExchangeKey, peerIdentityKey);
         return this.from(base);
     }
 
-    public override async sign(
-        content: CoreBuffer,
-        algorithm = CryptoHashAlgorithm.SHA256,
-        provider?: ProviderIdentifier
-    ): Promise<CryptoSignature> {
-        if (provider) {
-            return await CryptoSignaturesWithCryptoLayer.sign(
-                content,
-                await CryptoSignaturePrivateKeyHandle.fromAny(this.signatureKeypair.privateKey),
-                "Id"
-            );
+    public override async sign(content: CoreBuffer, algorithm = CryptoHashAlgorithm.SHA256): Promise<CryptoSignature> {
+        if ((this.exchangeKeypair as any)?.keyPairHandle) {
+            return await (this as unknown as CryptoRelationshipRequestSecretsHandle).sign(content);
         }
         // fallback
         return await super.sign(content, algorithm);
+    }
+
+    public override async verifyOwn(content: CoreBuffer, signature: CryptoSignature): Promise<boolean> {
+        if ((this.exchangeKeypair as any)?.keyPairHandle) {
+            return await (this as unknown as CryptoRelationshipRequestSecretsHandle).verifyOwn(content, signature);
+        }
+        return await super.verifyOwn(content, signature);
+    }
+
+    public override async verifyPeerIdentity(content: CoreBuffer, signature: CryptoSignature): Promise<boolean> {
+        if ((this.exchangeKeypair as any)?.keyPairHandle) {
+            return await (this as unknown as CryptoRelationshipRequestSecretsHandle).verifyPeerIdentity(
+                content,
+                signature
+            );
+        }
+        return await super.verifyPeerIdentity(content, signature);
+    }
+
+    public override async encryptRequest(content: CoreBuffer): Promise<CryptoCipher> {
+        if ((this.exchangeKeypair as any)?.keyPairHandle) {
+            return await (this as unknown as CryptoRelationshipRequestSecretsHandle).encryptRequest(content);
+        }
+        return await super.encryptRequest(content);
+    }
+
+    public override async decryptRequest(cipher: CryptoCipher): Promise<CoreBuffer> {
+        if ((this.exchangeKeypair as any)?.keyPairHandle) {
+            return await (this as unknown as CryptoRelationshipRequestSecretsHandle).decryptRequest(cipher);
+        }
+        return await super.decryptRequest(cipher);
+    }
+
+    public override toPublicRequest(): CryptoRelationshipPublicRequest {
+        if ((this.exchangeKeypair as any)?.keyPairHandle) {
+            const handle = this as unknown as CryptoRelationshipRequestSecretsHandle;
+            return handle.toPublicRequest() as unknown as CryptoRelationshipPublicRequest;
+        }
+        return super.toPublicRequest();
     }
 }
