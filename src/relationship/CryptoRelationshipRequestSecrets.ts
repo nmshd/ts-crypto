@@ -144,6 +144,35 @@ export class CryptoRelationshipRequestSecretsWithLibsodium
  */
 @type("CryptoRelationshipRequestSecrets")
 export class CryptoRelationshipRequestSecrets extends CryptoRelationshipRequestSecretsWithLibsodium {
+    /**
+     * Converts this object into a crypto-layer handle.
+     */
+    public async toHandle(provider: ProviderIdentifier): Promise<CryptoRelationshipRequestSecretsHandle> {
+        return await CryptoRelationshipRequestSecretsHandle.fromPeer(
+            provider,
+            await CryptoExchangePublicKeyHandle.fromAny(this.peerExchangeKey),
+            await CryptoSignaturePublicKeyHandle.fromAny(this.peerIdentityKey)
+        );
+    }
+
+    /**
+     * Creates a new CryptoRelationshipRequestSecrets from a crypto-layer handle.
+     */
+    public static async fromHandle(
+        handle: CryptoRelationshipRequestSecretsHandle
+    ): Promise<CryptoRelationshipRequestSecrets> {
+        return CryptoRelationshipRequestSecrets.from({
+            id: handle.id,
+            exchangeKeypair: CryptoExchangeKeypair.fromHandle(handle.exchangeKeypair),
+            ephemeralKeypair: CryptoExchangeKeypair.fromAny(handle.ephemeralKeypair),
+            signatureKeypair: CryptoSignatureKeypair.fromAny(handle.signatureKeypair),
+            peerIdentityKey: await CryptoSignaturePublicKey.fromHandle(handle.peerIdentityKey),
+            peerExchangeKey: CryptoExchangePublicKey.fromHandle(handle.peerExchangeKey),
+            secretKey: CryptoSecretKey.fromHandle(handle.secretKey),
+            nonce: handle.nonce
+        });
+    }
+
     public static override from(value: ICryptoRelationshipRequestSecrets): CryptoRelationshipRequestSecrets {
         const base = super.fromAny(value);
         const extended = new CryptoRelationshipRequestSecrets();

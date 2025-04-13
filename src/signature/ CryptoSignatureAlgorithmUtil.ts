@@ -10,7 +10,7 @@ export class CryptoSignatureAlgorithmUtil {
             case CryptoSignatureAlgorithm.ECDSA_P521:
                 return "P521";
             case CryptoSignatureAlgorithm.ECDSA_ED25519:
-                return "Ed25519";
+                return "Curve25519";
             default:
                 throw new CryptoError(
                     CryptoErrorCode.SignatureWrongAlgorithm,
@@ -25,7 +25,7 @@ export class CryptoSignatureAlgorithmUtil {
                 return CryptoSignatureAlgorithm.ECDSA_P256;
             case "P521":
                 return CryptoSignatureAlgorithm.ECDSA_P521;
-            case "Ed25519":
+            case "Curve25519":
                 return CryptoSignatureAlgorithm.ECDSA_ED25519;
             default:
                 throw new CryptoError(

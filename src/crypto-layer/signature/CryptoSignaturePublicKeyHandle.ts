@@ -1,7 +1,7 @@
 import { ISerializable, ISerialized, type } from "@js-soft/ts-serval";
 import { KeyPairSpec } from "@nmshd/rs-crypto-types";
-import { CoreBuffer } from "../../CoreBuffer";
-import { CryptoPrivateKeyHandle } from "../CryptoPrivateKeyHandle";
+import { CoreBuffer, IClearable } from "../../CoreBuffer";
+import { CryptoPublicKeyHandle } from "../CryptoPublicKeyHandle";
 
 /**
  * Interface defining the serialized form of {@link CryptoSignaturePublicKeyHandle}.
@@ -35,7 +35,10 @@ export interface ICryptoSignaturePublicKeyHandle extends ISerializable {
  * This class represents a handle to a public key managed by an external crypto provider.
  */
 @type("CryptoSignaturePublicKeyHandle")
-export class CryptoSignaturePublicKeyHandle extends CryptoPrivateKeyHandle {
+export class CryptoSignaturePublicKeyHandle
+    extends CryptoPublicKeyHandle
+    implements ICryptoSignaturePublicKeyHandle, IClearable
+{
     /**
      * Clears sensitive data associated with this public key.
      * Since this class only contains a handle to a key managed by the crypto provider,

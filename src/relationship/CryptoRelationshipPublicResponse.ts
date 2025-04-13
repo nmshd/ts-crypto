@@ -174,18 +174,6 @@ export class CryptoRelationshipPublicResponseWithLibsodium
     public static fromBase64(value: string): CryptoRelationshipPublicResponseWithLibsodium {
         return this.deserialize(CoreBuffer.base64_utf8(value));
     }
-
-    /**
-     * Checks if all relevant fields are crypto-layer handles.
-     * @returns True if crypto-layer, false if libsodium-based.
-     */
-    public isUsingCryptoLayer(): boolean {
-        return (
-            this.exchangeKey instanceof CryptoExchangePublicKeyHandle &&
-            this.signatureKey instanceof CryptoSignaturePublicKeyHandle &&
-            this.state instanceof CryptoPublicStateHandle
-        );
-    }
 }
 
 /**
@@ -205,7 +193,7 @@ export class CryptoRelationshipPublicResponse extends CryptoRelationshipPublicRe
         signature: CryptoSignature,
         provider?: ProviderIdentifier
     ): Promise<boolean> {
-        if (provider && this.isUsingCryptoLayer()) {
+        if (provider) {
             try {
                 // Use the universal method which might handle both:
                 return await CryptoSignatures.verify(content, signature, this.signatureKey);
@@ -222,18 +210,12 @@ export class CryptoRelationshipPublicResponse extends CryptoRelationshipPublicRe
      * Converts this object into a crypto-layer handle if all fields are handles.
      */
     public async toHandle(): Promise<CryptoRelationshipPublicResponseHandle> {
-        if (this.isUsingCryptoLayer()) {
-            return await CryptoRelationshipPublicResponseHandle.from({
-                id: this.id,
-                exchangeKey: await CryptoExchangePublicKeyHandle.fromAny(this.exchangeKey),
-                signatureKey: await CryptoSignaturePublicKeyHandle.fromAny(this.signatureKey),
-                state: await CryptoPublicStateHandle.fromAny(this.state)
-            });
-        }
-        throw new CryptoError(
-            CryptoErrorCode.CalUninitializedKey,
-            "Cannot create handle: this response does not use crypto-layer handles"
-        );
+        return await CryptoRelationshipPublicResponseHandle.from({
+            id: this.id,
+            exchangeKey: await CryptoExchangePublicKeyHandle.fromAny(this.exchangeKey),
+            signatureKey: await CryptoSignaturePublicKeyHandle.fromAny(this.signatureKey),
+            state: await CryptoPublicStateHandle.fromAny(this.state)
+        });
     }
 
     /**

@@ -1,11 +1,11 @@
 import { DHExchange, KeyPairSpec } from "@nmshd/rs-crypto-types";
-import { CryptoPublicKey } from "src/CryptoPublicKey";
 import { CoreBuffer } from "../CoreBuffer";
 import { ProviderIdentifier } from "../crypto-layer/CryptoLayerProviders";
 import { CryptoExchangeWithCryptoLayer } from "../crypto-layer/exchange/CryptoExchange";
 import { CryptoExchangeKeypairHandle } from "../crypto-layer/exchange/CryptoExchangeKeypairHandle";
 import { CryptoError } from "../CryptoError";
 import { CryptoErrorCode } from "../CryptoErrorCode";
+import { CryptoPublicKey } from "../CryptoPublicKey";
 import { CryptoEncryptionAlgorithm } from "../encryption/CryptoEncryption";
 import { SodiumWrapper } from "../SodiumWrapper";
 import { CryptoExchangeKeypair } from "./CryptoExchangeKeypair";

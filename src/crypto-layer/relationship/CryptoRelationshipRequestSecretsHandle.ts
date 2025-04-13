@@ -10,6 +10,7 @@ import { CryptoSecretKeyHandle } from "../encryption/CryptoSecretKeyHandle";
 import { CryptoExchangeWithCryptoLayer } from "../exchange/CryptoExchange";
 import { CryptoExchangeKeypairHandle } from "../exchange/CryptoExchangeKeypairHandle";
 import { CryptoExchangePublicKeyHandle } from "../exchange/CryptoExchangePublicKeyHandle";
+import { CryptoSignatureKeypairHandle } from "../signature/CryptoSignatureKeypair";
 import { CryptoSignaturePublicKeyHandle } from "../signature/CryptoSignaturePublicKeyHandle";
 import { CryptoSignaturesWithCryptoLayer } from "../signature/CryptoSignatures";
 import { CryptoRelationshipPublicRequestHandle } from "./CryptoRelationshipPublicRequestHandle";
@@ -29,11 +30,11 @@ export class CryptoRelationshipRequestSecretsHandle {
 
     @validate()
     @serialize()
-    public signatureKeypair: CryptoExchangeKeypairHandle;
+    public signatureKeypair: CryptoSignatureKeypairHandle;
 
     @validate()
     @serialize()
-    public ephemeralPublicKey: CryptoExchangePublicKeyHandle;
+    public ephemeralKeypair: DHExchange;
 
     // Peer keys
     @validate()
@@ -78,16 +79,6 @@ export class CryptoRelationshipRequestSecretsHandle {
             ephemeralSpec
         );
 
-        // 2. Get ephemeral public key bytes
-        const ephemeralPublicKeyBytes: Uint8Array = await ephemeralDHHandle.getPublicKey();
-
-        // 3. Create the ephemeral public key handle
-        const ephemeralPublicKeyHandle = await CryptoExchangePublicKeyHandle.fromBytes(
-            provider,
-            ephemeralPublicKeyBytes,
-            ephemeralSpec
-        );
-
         // 4. Derive secrets using DH context and peer key bytes
         const peerExchangeKeyBytes = await peerExchangeKey.keyPairHandle.getPublicKey();
         const masterKey: CryptoExchangeSecrets = await CryptoExchangeWithCryptoLayer.deriveRequestor(
@@ -129,7 +120,7 @@ export class CryptoRelationshipRequestSecretsHandle {
         secrets.id = undefined;
         secrets.exchangeKeypair = exchangeKeypair;
         secrets.signatureKeypair = signatureKeypair;
-        secrets.ephemeralPublicKey = ephemeralPublicKeyHandle;
+        secrets.ephemeralKeypair = ephemeralDHHandle;
         secrets.peerExchangeKey = peerExchangeKey;
         secrets.peerIdentityKey = peerIdentityKey;
         secrets.secretKey = finalSecretKeyHandle;
@@ -163,12 +154,12 @@ export class CryptoRelationshipRequestSecretsHandle {
      * Uses the directly stored ephemeral public key handle.
      * @returns A {@link CryptoRelationshipPublicRequestHandle} instance.
      */
-    public toPublicRequest(): CryptoRelationshipPublicRequestHandle {
+    public async toPublicRequest(): Promise<CryptoRelationshipPublicRequestHandle> {
         const requestHandle = new CryptoRelationshipPublicRequestHandle();
         requestHandle.id = this.id;
         requestHandle.exchangeKey = this.exchangeKeypair.publicKey;
         requestHandle.signatureKey = this.signatureKeypair.publicKey as any;
-        requestHandle.ephemeralKey = this.ephemeralPublicKey;
+        requestHandle.ephemeralKey = await CryptoExchangePublicKeyHandle.fromAny(this.ephemeralKeypair.getPublicKey());
         requestHandle.nonce = this.nonce;
         return requestHandle;
     }

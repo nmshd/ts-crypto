@@ -152,3 +152,12 @@ export function getProviderOrThrow(identifier: ProviderIdentifier): Provider {
     }
     return provider;
 }
+
+export function hasProviderForSecurityLevel(securityLevel: SecurityLevel): boolean {
+    if (!PROVIDERS_BY_SECURITY) {
+        return false;
+    }
+
+    const providers = PROVIDERS_BY_SECURITY.get(securityLevel);
+    return !!providers && providers.length > 0;
+}

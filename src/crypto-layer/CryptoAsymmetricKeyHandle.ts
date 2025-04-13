@@ -76,12 +76,39 @@ export class CryptoAsymmetricKeyHandle extends CryptoSerializableAsync {
     ): Promise<T> {
         const result = new this();
 
+        // 1. Determine which spec data to use as the source (prioritize 'other')
+        // If other.keySpec exists, use it; otherwise, use the data from the handle.
+        const sourceSpec: KeyPairSpec = other?.keySpec ?? (await keyPairHandle.spec());
+
+        // 2. Attempt the preferred direct assignment
+        try {
+            result.spec = sourceSpec;
+        } catch (_) {
+            // Fill the fields of result.spec individually from the chosen sourceSpec
+            // Assignment dumps if result.spec structure isn't initialized
+            result.spec = {
+                // eslint-disable-next-line @typescript-eslint/naming-convention
+                asym_spec: "Curve25519",
+                cipher: null,
+                ephemeral: false,
+                // eslint-disable-next-line @typescript-eslint/naming-convention
+                non_exportable: false,
+                // eslint-disable-next-line @typescript-eslint/naming-convention
+                signing_hash: "Sha2_256"
+            };
+
+            result.spec.asym_spec = sourceSpec.asym_spec;
+            result.spec.cipher = sourceSpec.cipher;
+            result.spec.signing_hash = sourceSpec.signing_hash;
+            result.spec.ephemeral = sourceSpec.ephemeral;
+            result.spec.non_exportable = sourceSpec.non_exportable;
+        }
+
         result.providerName = other?.providerName ?? (await provider.providerName());
         result.id = other?.keyId ?? (await keyPairHandle.id());
-        result.spec = other?.keySpec ?? (await keyPairHandle.spec());
-
         result.provider = provider;
         result.keyPairHandle = keyPairHandle;
+
         return result;
     }
 

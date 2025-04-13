@@ -56,11 +56,12 @@ export class CryptoSignaturePublicKey extends CryptoPublicKey implements ICrypto
     }
 
     public static async fromHandle(handle: CryptoSignaturePublicKeyHandle): Promise<CryptoSignaturePublicKey> {
-        return CryptoSignaturePublicKey.from({
+        const bla = CryptoSignaturePublicKey.from({
             algorithm: CryptoSignatureAlgorithmUtil.fromCalSigSpec(handle.spec.asym_spec),
             // Convert the serialized key string into a CoreBuffer instance.
             publicKey: CoreBuffer.from(await handle.toSerializedString())
         });
+        return bla;
     }
 
     public static fromJSON(value: ICryptoSignaturePublicKeySerialized): CryptoSignaturePublicKey {

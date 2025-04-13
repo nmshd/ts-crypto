@@ -132,7 +132,7 @@ export class CryptoSecretKey extends CryptoSecretKeyWithLibsodium {
         return CryptoSecretKey.fromHandle(handle);
     }
 
-    public override toJSON(verbose = true): ICryptoSecretKeySerialized {
+    public override toJSON(verbose = false): ICryptoSecretKeySerialized {
         const serialized = super.toJSON(false);
         serialized["@type"] = verbose ? "CryptoSecretKey" : undefined;
         return serialized;
