@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-import { AsymmetricKeySpec, Cipher, CryptoHash, KeyPairSpec } from "@nmshd/rs-crypto-types";
+import { AsymmetricKeySpec, Cipher, CryptoHash, KeyPairSpec, KeySpec } from "@nmshd/rs-crypto-types";
 import { expect } from "chai";
 import { defaults } from "lodash";
 
@@ -9,6 +9,12 @@ export interface ParametersKeyPairSpec {
     signingHash: CryptoHash[];
     ephemeral: boolean[];
     nonExportable: boolean[];
+}
+
+export interface ParametersKeySpec {
+    cipher: Cipher[];
+    signingHash: CryptoHash[];
+    ephemeral: boolean[];
 }
 
 export function parameterizedKeyPairSpec(
@@ -41,6 +47,34 @@ export function parameterizedKeyPairSpec(
                             await testFunction(spec);
                         });
                     });
+                });
+            });
+        });
+    });
+}
+
+export function parameterizedKeySpec(
+    name: string,
+    testFunction: (spec: KeySpec) => Promise<void>,
+    override?: Partial<ParametersKeySpec>
+): void {
+    const matrix: ParametersKeySpec = defaults(override, {
+        cipher: ["AesGcm256", "AesGcm128", "ChaCha20Poly1305"],
+        signingHash: ["Sha2_256"],
+        ephemeral: [false, true]
+    });
+
+    matrix.signingHash.forEach((signing_hash) => {
+        matrix.cipher.forEach((cipher) => {
+            matrix.ephemeral.forEach((ephemeral) => {
+                // eslint-disable-next-line jest/expect-expect
+                it(`${name} with ${signing_hash}${cipher ? `, ${cipher}` : ""}${ephemeral ? `, ephemeral` : ""}`, async function () {
+                    const spec: KeySpec = {
+                        cipher: cipher,
+                        signing_hash: signing_hash,
+                        ephemeral: ephemeral
+                    };
+                    await testFunction(spec);
                 });
             });
         });

@@ -1,0 +1,86 @@
+/* eslint-disable @typescript-eslint/naming-convention */
+import {
+    CoreBuffer,
+    CryptoCipher,
+    CryptoEncryption,
+    CryptoEncryptionAlgorithm,
+    CryptoSecretKeyHandle
+} from "@nmshd/crypto";
+import { KeySpec } from "@nmshd/rs-crypto-types";
+import { expect } from "chai";
+import { parameterizedKeySpec } from "../CryptoLayerTestUtil";
+import { assertSecretKeyHandleValid } from "../KeyValidation";
+
+export class CryptoSecretKeyHandleTest {
+    public static run(): void {
+        describe("CryptoSecretKeyHandle", function () {
+            describe("generateSecretKeyHandle() SoftwareProvider", function () {
+                const spec: KeySpec = {
+                    cipher: "AesGcm256",
+                    signing_hash: "Sha2_256",
+                    ephemeral: false
+                };
+                const providerIdent = { providerName: "SoftwareProvider" };
+
+                parameterizedKeySpec("generateSecretKeyHandle()", async function (spec: KeySpec) {
+                    const cryptoSecretKeyHandle = await CryptoEncryption.generateKeyHandle(providerIdent, spec);
+                    await assertSecretKeyHandleValid(cryptoSecretKeyHandle);
+                });
+
+                it("from() ICryptoSecretKeyHandle", async function () {
+                    const cryptoSecretKeyHandle = await CryptoEncryption.generateKeyHandle(providerIdent, spec);
+                    await assertSecretKeyHandleValid(cryptoSecretKeyHandle);
+
+                    const loadedSecretKeyHandle = await CryptoSecretKeyHandle.fromAny({
+                        id: cryptoSecretKeyHandle.id,
+                        spec: cryptoSecretKeyHandle.spec,
+                        providerName: cryptoSecretKeyHandle.providerName
+                    });
+                    await assertSecretKeyHandleValid(loadedSecretKeyHandle);
+
+                    expect(loadedSecretKeyHandle.id).to.equal(cryptoSecretKeyHandle.id);
+                });
+
+                it("from() CryptoSecretKeyHandle", async function () {
+                    const cryptoSecretKeyHandle = await CryptoEncryption.generateKeyHandle(providerIdent, spec);
+                    await assertSecretKeyHandleValid(cryptoSecretKeyHandle);
+
+                    const loadedSecretKeyHandle = await CryptoSecretKeyHandle.from(cryptoSecretKeyHandle);
+                    await assertSecretKeyHandleValid(loadedSecretKeyHandle);
+
+                    expect(loadedSecretKeyHandle.id).to.equal(cryptoSecretKeyHandle.id);
+                });
+
+                it("encrypt() and decrypt()", async function () {
+                    const cryptoSecretKeyHandle = await CryptoEncryption.generateKeyHandle(providerIdent, spec);
+
+                    const data = new CoreBuffer("0123456789ABCDEF");
+                    const encrypted = await CryptoEncryption.encrypt(data, cryptoSecretKeyHandle);
+                    expect(encrypted).to.be.ok.and.to.be.instanceOf(CryptoCipher);
+                    expect(encrypted.algorithm).to.equal(CryptoEncryptionAlgorithm.XCHACHA20_POLY1305);
+
+                    expect(await CryptoEncryption.decrypt(encrypted, cryptoSecretKeyHandle)).to.equal(data);
+                });
+
+                it("encrypt() and decrypt() with counter", async function () {
+                    const cryptoSecretKeyHandle = await CryptoEncryption.generateKeyHandle(providerIdent, spec);
+
+                    const data = new CoreBuffer("0123456789ABCDEF");
+                    const nonce = new CoreBuffer("22");
+                    const encrypted = await CryptoEncryption.encryptWithCounter(
+                        data,
+                        cryptoSecretKeyHandle,
+                        nonce,
+                        222
+                    );
+                    expect(encrypted).to.be.ok.and.to.be.instanceOf(CryptoCipher);
+                    expect(encrypted.algorithm).to.equal(CryptoEncryptionAlgorithm.XCHACHA20_POLY1305);
+
+                    expect(
+                        await CryptoEncryption.decryptWithCounter(encrypted, cryptoSecretKeyHandle, nonce, 222)
+                    ).to.equal(data);
+                });
+            });
+        });
+    }
+}

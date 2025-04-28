@@ -157,7 +157,7 @@ export class CryptoSecretKey extends CryptoSecretKeyWithLibsodium {
      */
     public static fromHandle(handle: CryptoSecretKeyHandle): CryptoSecretKey {
         const key = new CryptoSecretKey();
-        key.algorithm = handle.algorithm;
+        key.algorithm = CryptoEncryptionAlgorithm.fromCalCipher(handle.spec.cipher);
 
         key.secretKey = CoreBuffer.fromUtf8("handle-based key, no raw data in memory");
         (key as any).keyHandle = handle;

@@ -52,8 +52,9 @@ export class CryptoDerivationHandle extends CryptoSerializableAsync {
         let kdfOptions: KDF;
         switch (derivationAlgorithm) {
             case CryptoDerivationAlgorithm.ARGON2I: {
+                // TDOD: it should be Argon2i and not d, need to update ts-types
                 // eslint-disable-next-line @typescript-eslint/naming-convention
-                kdfOptions = { Argon2i: { memory: memlimit, iterations: opslimit, parallelism: 1 } };
+                kdfOptions = { Argon2d: { memory: memlimit, iterations: opslimit, parallelism: 1 } };
             }
             case CryptoDerivationAlgorithm.ARGON2ID: {
                 // eslint-disable-next-line @typescript-eslint/naming-convention

@@ -109,6 +109,11 @@ export class CryptoValidation {
 
         switch (algorithm) {
             case CryptoEncryptionAlgorithm.XCHACHA20_POLY1305:
+            case CryptoEncryptionAlgorithm.CHACHA20_POLY1305:
+            case CryptoEncryptionAlgorithm.AES128_CBC:
+            case CryptoEncryptionAlgorithm.AES128_GCM:
+            case CryptoEncryptionAlgorithm.AES256_CBC:
+            case CryptoEncryptionAlgorithm.AES256_GCM:
                 break;
             default:
                 error = new CryptoError(

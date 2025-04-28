@@ -1,4 +1,4 @@
-import { KeySpec } from "@nmshd/rs-crypto-types";
+import { Cipher, KeySpec } from "@nmshd/rs-crypto-types";
 import { CoreBuffer } from "../CoreBuffer";
 import { ProviderIdentifier } from "../crypto-layer/CryptoLayerProviders";
 import { CryptoEncryptionWithCryptoLayer } from "../crypto-layer/encryption/CryptoEncryption";
@@ -13,13 +13,55 @@ import { CryptoSecretKey } from "./CryptoSecretKey";
 /**
  * The symmetric encryption algorithm to use.
  */
-export const enum CryptoEncryptionAlgorithm {
+export enum CryptoEncryptionAlgorithm {
     // eslint-disable-next-line @typescript-eslint/naming-convention
     AES128_GCM = 1,
     // eslint-disable-next-line @typescript-eslint/naming-convention
     AES256_GCM = 2,
     // eslint-disable-next-line @typescript-eslint/naming-convention
-    XCHACHA20_POLY1305 = 3
+    XCHACHA20_POLY1305 = 3,
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    AES128_CBC = 4,
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    AES256_CBC = 5,
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    CHACHA20_POLY1305 = 6
+}
+
+export namespace CryptoEncryptionAlgorithm {
+    export function toCalCipher(alg: CryptoEncryptionAlgorithm): Cipher {
+        switch (alg) {
+            case CryptoEncryptionAlgorithm.AES128_GCM:
+                return "AesGcm128";
+            case CryptoEncryptionAlgorithm.AES256_GCM:
+                return "AesGcm256";
+            case CryptoEncryptionAlgorithm.XCHACHA20_POLY1305:
+                return "XChaCha20Poly1305";
+            case CryptoEncryptionAlgorithm.AES128_CBC:
+                return "AesCbc128";
+            case CryptoEncryptionAlgorithm.AES256_CBC:
+                return "AesCbc256";
+            case CryptoEncryptionAlgorithm.CHACHA20_POLY1305:
+                return "ChaCha20Poly1305";
+        }
+    }
+
+    export function fromCalCipher(cipher: Cipher): CryptoEncryptionAlgorithm {
+        switch (cipher) {
+            case "AesGcm128":
+                return CryptoEncryptionAlgorithm.AES128_GCM;
+            case "AesGcm256":
+                return CryptoEncryptionAlgorithm.AES256_GCM;
+            case "AesCbc128":
+                return CryptoEncryptionAlgorithm.AES128_CBC;
+            case "AesCbc256":
+                return CryptoEncryptionAlgorithm.AES256_CBC;
+            case "XChaCha20Poly1305":
+                return CryptoEncryptionAlgorithm.XCHACHA20_POLY1305;
+            case "ChaCha20Poly1305":
+                return CryptoEncryptionAlgorithm.CHACHA20_POLY1305;
+        }
+    }
 }
 
 export class CryptoEncryptionWithLibsodium {
@@ -252,16 +294,14 @@ export class CryptoEncryptionWithLibsodium {
         switch (algorithm) {
             case CryptoEncryptionAlgorithm.AES128_GCM:
             case CryptoEncryptionAlgorithm.AES256_GCM:
+            case CryptoEncryptionAlgorithm.AES128_CBC:
+            case CryptoEncryptionAlgorithm.AES256_CBC:
+            case CryptoEncryptionAlgorithm.CHACHA20_POLY1305:
                 nonceLength = 12;
                 break;
             case CryptoEncryptionAlgorithm.XCHACHA20_POLY1305:
                 nonceLength = 24;
                 break;
-            default:
-                throw new CryptoError(
-                    CryptoErrorCode.EncryptionWrongAlgorithm,
-                    "Encryption algorithm is not supported."
-                );
         }
         return CoreBuffer.random(nonceLength);
     }
@@ -300,10 +340,9 @@ export class CryptoEncryption extends CryptoEncryptionWithLibsodium {
         plaintext: CoreBuffer,
         secretKey: CryptoSecretKey | CoreBuffer | CryptoSecretKeyHandle,
         nonce?: CoreBuffer,
-        algorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.XCHACHA20_POLY1305,
-        provider?: ProviderIdentifier
+        algorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.XCHACHA20_POLY1305
     ): Promise<CryptoCipher> {
-        if (provider && secretKey instanceof CryptoSecretKeyHandle) {
+        if (secretKey instanceof CryptoSecretKeyHandle) {
             return await CryptoEncryptionWithCryptoLayer.encrypt(plaintext, secretKey);
         }
         if (!(secretKey instanceof CryptoSecretKeyHandle)) {
@@ -320,10 +359,9 @@ export class CryptoEncryption extends CryptoEncryptionWithLibsodium {
         secretKey: CryptoSecretKey | CoreBuffer | CryptoSecretKeyHandle,
         nonce: CoreBuffer,
         counter: number,
-        algorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.XCHACHA20_POLY1305,
-        provider?: ProviderIdentifier
+        algorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.XCHACHA20_POLY1305
     ): Promise<CryptoCipher> {
-        if (provider && secretKey instanceof CryptoSecretKeyHandle) {
+        if (secretKey instanceof CryptoSecretKeyHandle) {
             return await CryptoEncryptionWithCryptoLayer.encryptWithCounter(plaintext, secretKey, counter);
         }
 
@@ -340,10 +378,9 @@ export class CryptoEncryption extends CryptoEncryptionWithLibsodium {
         cipher: CryptoCipher,
         secretKey: CryptoSecretKey | CoreBuffer | CryptoSecretKeyHandle,
         nonce?: CoreBuffer,
-        algorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.XCHACHA20_POLY1305,
-        provider?: ProviderIdentifier
+        algorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.XCHACHA20_POLY1305
     ): Promise<CoreBuffer> {
-        if (provider && secretKey instanceof CryptoSecretKeyHandle) {
+        if (secretKey instanceof CryptoSecretKeyHandle) {
             return await CryptoEncryptionWithCryptoLayer.decrypt(cipher, secretKey, nonce);
         }
 
@@ -361,10 +398,9 @@ export class CryptoEncryption extends CryptoEncryptionWithLibsodium {
         secretKey: CryptoSecretKey | CoreBuffer | CryptoSecretKeyHandle,
         nonce: CoreBuffer,
         counter: number,
-        algorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.XCHACHA20_POLY1305,
-        provider?: ProviderIdentifier
+        algorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.XCHACHA20_POLY1305
     ): Promise<CoreBuffer> {
-        if (provider && secretKey instanceof CryptoSecretKeyHandle) {
+        if (secretKey instanceof CryptoSecretKeyHandle) {
             return await CryptoEncryptionWithCryptoLayer.decryptWithCounter(cipher, secretKey, nonce);
         }
 

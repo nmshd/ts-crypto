@@ -43,10 +43,10 @@ export class CryptoEncryptionWithCryptoLayer {
         secretKeyHandle: CryptoSecretKeyHandle
         // nonce?: CoreBuffer
     ): Promise<CryptoCipher> {
-        const encryptionAlgorithm = secretKeyHandle.algorithm;
-
         try {
             const [cipher, iv] = await secretKeyHandle.keyHandle.encryptData(plaintext.buffer);
+
+            const encryptionAlgorithm = CryptoEncryptionAlgorithm.fromCalCipher(secretKeyHandle.spec.cipher);
 
             return CryptoCipher.from({
                 cipher: CoreBuffer.from(cipher),
@@ -72,7 +72,7 @@ export class CryptoEncryptionWithCryptoLayer {
         secretKeyHandle: CryptoSecretKeyHandle,
         counter: number
     ): Promise<CryptoCipher> {
-        const encryptionAlgorithm = secretKeyHandle.algorithm;
+        const encryptionAlgorithm = CryptoEncryptionAlgorithm.fromCalCipher(secretKeyHandle.spec.cipher);
 
         try {
             const [cipher, iv] = await secretKeyHandle.keyHandle.encryptData(plaintext.buffer);
@@ -152,16 +152,14 @@ export class CryptoEncryptionWithCryptoLayer {
         switch (algorithm) {
             case CryptoEncryptionAlgorithm.AES128_GCM:
             case CryptoEncryptionAlgorithm.AES256_GCM:
+            case CryptoEncryptionAlgorithm.AES128_CBC:
+            case CryptoEncryptionAlgorithm.AES256_CBC:
+            case CryptoEncryptionAlgorithm.CHACHA20_POLY1305:
                 nonceLength = 12;
                 break;
             case CryptoEncryptionAlgorithm.XCHACHA20_POLY1305:
                 nonceLength = 24;
                 break;
-            default:
-                throw new CryptoError(
-                    CryptoErrorCode.EncryptionWrongAlgorithm,
-                    "Encryption algorithm is not supported."
-                );
         }
         return CoreBuffer.random(nonceLength);
     }

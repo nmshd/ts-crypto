@@ -11,7 +11,6 @@ import { getProviderOrThrow, ProviderIdentifier } from "../CryptoLayerProviders"
  * Interface defining the serialized form of {@link CryptoSecretKeyHandle}.
  */
 export interface ICryptoSecretKeyHandleSerialized extends ISerialized {
-    alg: number;
     kid: string;
     pnm: string;
     spc: KeySpec;
@@ -21,7 +20,6 @@ export interface ICryptoSecretKeyHandleSerialized extends ISerialized {
  * Interface defining the structure of {@link CryptoSecretKeyHandle}.
  */
 export interface ICryptoSecretKeyHandle extends ISerializable {
-    algorithm: CryptoEncryptionAlgorithm;
     id: string;
     providerName: string;
     spec: KeySpec;
@@ -34,10 +32,6 @@ export interface ICryptoSecretKeyHandle extends ISerializable {
  */
 @type("CryptoSecretKeyHandle")
 export class CryptoSecretKeyHandle extends CryptoSerializableAsync implements ICryptoSecretKeyHandle, IClearable {
-    @validate()
-    @serialize()
-    public algorithm: CryptoEncryptionAlgorithm;
-
     @validate()
     @serialize()
     public id: string;
@@ -53,10 +47,6 @@ export class CryptoSecretKeyHandle extends CryptoSerializableAsync implements IC
     public provider: Provider;
     public keyHandle: KeyHandle;
 
-    @validate()
-    @serialize()
-    public secretKey: CoreBuffer;
-
     /**
      * Clears sensitive data associated with this key pair.
      * Since this class only contains handles to keys managed by the crypto provider,
@@ -70,7 +60,6 @@ export class CryptoSecretKeyHandle extends CryptoSerializableAsync implements IC
     public override toJSON(verbose = true): ICryptoSecretKeyHandleSerialized {
         return {
             kid: this.id,
-            alg: this.algorithm,
             pnm: this.providerName,
             spc: this.spec,
             "@type": verbose ? "CryptoSecretKeyHandle" : undefined
@@ -123,7 +112,6 @@ export class CryptoSecretKeyHandle extends CryptoSerializableAsync implements IC
         result.providerName = other?.providerName ?? (await provider.providerName());
         result.id = other?.keyId ?? (await keyHandle.id());
         result.spec = other?.keySpec ?? (await keyHandle.spec());
-        result.algorithm = other?.algorithm ?? CryptoEncryptionAlgorithm.XCHACHA20_POLY1305;
 
         result.provider = provider;
         result.keyHandle = keyHandle;
