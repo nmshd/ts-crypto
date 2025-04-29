@@ -56,7 +56,7 @@ export class CryptoEncryptionWithCryptoLayer {
         try {
             [cipher, iv] = await secretKeyHandle.keyHandle.encryptData(plaintext.buffer, nonce.buffer);
         } catch (e) {
-            throw new CryptoError(CryptoErrorCode.EncryptionEncrypt, `${e}`);
+            throw new CryptoError(CryptoErrorCode.EncryptionEncrypt, `${e}`, undefined, e as Error);
         }
 
         return CryptoCipher.from({
@@ -92,7 +92,7 @@ export class CryptoEncryptionWithCryptoLayer {
         try {
             [cipher, iv] = await secretKeyHandle.keyHandle.encryptData(plaintext.buffer, publicnonce.buffer);
         } catch (e) {
-            throw new CryptoError(CryptoErrorCode.EncryptionEncrypt, `${e}`);
+            throw new CryptoError(CryptoErrorCode.EncryptionEncrypt, `${e}`, undefined, e as Error);
         }
 
         return CryptoCipher.from({
@@ -135,7 +135,7 @@ export class CryptoEncryptionWithCryptoLayer {
             const buffer = await secretKeyHandle.keyHandle.decryptData(cipher.cipher.buffer, publicnonce);
             return CoreBuffer.from(buffer);
         } catch (e) {
-            throw new CryptoError(CryptoErrorCode.EncryptionDecrypt, `${e}`);
+            throw new CryptoError(CryptoErrorCode.EncryptionEncrypt, `${e}`, undefined, e as Error);
         }
     }
 
@@ -165,7 +165,7 @@ export class CryptoEncryptionWithCryptoLayer {
             const buffer = await secretKeyHandle.keyHandle.decryptData(cipher.cipher.buffer, publicnonce.buffer);
             return CoreBuffer.from(buffer);
         } catch (e) {
-            throw new CryptoError(CryptoErrorCode.EncryptionDecrypt, `${e}`);
+            throw new CryptoError(CryptoErrorCode.EncryptionEncrypt, `${e}`, undefined, e as Error);
         }
     }
 
