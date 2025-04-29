@@ -4,7 +4,6 @@ import { getProviderOrThrow } from "../crypto-layer/CryptoLayerProviders";
 import { CryptoSerializableAsync } from "../CryptoSerializable";
 import { CryptoValidation } from "../CryptoValidation";
 import { CryptoEncryptionAlgorithm } from "./CryptoEncryption";
-import { CryptoEncryptionAlgorithmUtil } from "./CryptoEncryptionAlgorithmUtil";
 
 interface ICryptoLayerSecretKeySerialized extends ISerialized {
     algorithm: number;

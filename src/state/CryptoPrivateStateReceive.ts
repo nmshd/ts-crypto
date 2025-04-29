@@ -122,7 +122,8 @@ export class CryptoPrivateStateReceive extends CryptoPrivateStateReceiveWithLibs
             const plaintext = await CryptoEncryptionWithCryptoLayer.decryptWithCounter(
                 cipher,
                 this.secretKey,
-                this.nonce
+                this.nonce,
+                cipher.counter ?? this.counter
             );
 
             if (!omitCounterCheck) {

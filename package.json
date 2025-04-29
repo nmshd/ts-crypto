@@ -44,7 +44,7 @@
     },
     "dependencies": {
         "@istanbuljs/nyc-config-typescript": "^1.0.2",
-        "@nmshd/rs-crypto-types": "^0.5.4",
+        "@nmshd/rs-crypto-types": "^0.7.0",
         "@types/lodash": "^4.17.15",
         "deasync": "^0.1.30",
         "libsodium-wrappers-sumo": "0.7.15",
@@ -57,7 +57,7 @@
         "@js-soft/eslint-config-ts": "^1.6.13",
         "@js-soft/license-check": "1.0.9",
         "@js-soft/ts-serval": "2.0.10",
-        "@nmshd/rs-crypto-node": "^0.8.13",
+        "@nmshd/rs-crypto-node": "^0.10.0",
         "@types/chai": "^5.0.0",
         "@types/deasync": "^0.1.5",
         "@types/libsodium-wrappers-sumo": "^0.7.8",

@@ -127,6 +127,7 @@ export class CryptoPrivateStateHandle extends CryptoSerializableAsync implements
             const cipher = await CryptoEncryptionWithCryptoLayer.encryptWithCounter(
                 plaintext,
                 this.secretKeyHandle,
+                this.nonce,
                 this.counter
             );
             // After successful encryption, increment our local counter.
@@ -162,7 +163,8 @@ export class CryptoPrivateStateHandle extends CryptoSerializableAsync implements
             const plaintext = await CryptoEncryptionWithCryptoLayer.decryptWithCounter(
                 cipher,
                 this.secretKeyHandle,
-                this.nonce
+                this.nonce,
+                cipher.counter ?? this.counter
             );
             if (!omitCounterCheck) {
                 this.counter++;

@@ -343,7 +343,7 @@ export class CryptoEncryption extends CryptoEncryptionWithLibsodium {
         algorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.XCHACHA20_POLY1305
     ): Promise<CryptoCipher> {
         if (secretKey instanceof CryptoSecretKeyHandle) {
-            return await CryptoEncryptionWithCryptoLayer.encrypt(plaintext, secretKey);
+            return await CryptoEncryptionWithCryptoLayer.encrypt(plaintext, secretKey, nonce);
         }
         if (!(secretKey instanceof CryptoSecretKeyHandle)) {
             return await super.encrypt(plaintext, secretKey, nonce, algorithm);
@@ -362,10 +362,10 @@ export class CryptoEncryption extends CryptoEncryptionWithLibsodium {
         algorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.XCHACHA20_POLY1305
     ): Promise<CryptoCipher> {
         if (secretKey instanceof CryptoSecretKeyHandle) {
-            return await CryptoEncryptionWithCryptoLayer.encryptWithCounter(plaintext, secretKey, counter);
+            return await CryptoEncryptionWithCryptoLayer.encryptWithCounter(plaintext, secretKey, nonce, counter);
         }
 
-        if (!(secretKey instanceof CryptoSecretKeyHandle)) {
+        if (!(secretKey instanceof CryptoSecretKeyHandle) && nonce) {
             return await super.encryptWithCounter(plaintext, secretKey, nonce, counter, algorithm);
         }
         throw new CryptoError(
@@ -401,7 +401,7 @@ export class CryptoEncryption extends CryptoEncryptionWithLibsodium {
         algorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.XCHACHA20_POLY1305
     ): Promise<CoreBuffer> {
         if (secretKey instanceof CryptoSecretKeyHandle) {
-            return await CryptoEncryptionWithCryptoLayer.decryptWithCounter(cipher, secretKey, nonce);
+            return await CryptoEncryptionWithCryptoLayer.decryptWithCounter(cipher, secretKey, nonce, counter);
         }
 
         if (!(secretKey instanceof CryptoSecretKeyHandle)) {

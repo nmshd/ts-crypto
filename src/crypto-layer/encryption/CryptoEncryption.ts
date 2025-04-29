@@ -1,4 +1,5 @@
-import { KeySpec } from "@nmshd/rs-crypto-types";
+import { CryptoValidation } from "@nmshd/crypto";
+import { KeySpec, Provider } from "@nmshd/rs-crypto-types";
 import { CoreBuffer } from "../../CoreBuffer";
 import { CryptoError } from "../../CryptoError";
 import { CryptoErrorCode } from "../../CryptoErrorCode";
@@ -40,22 +41,29 @@ export class CryptoEncryptionWithCryptoLayer {
      */
     public static async encrypt(
         plaintext: CoreBuffer,
-        secretKeyHandle: CryptoSecretKeyHandle
-        // nonce?: CoreBuffer
+        secretKeyHandle: CryptoSecretKeyHandle,
+        nonce?: CoreBuffer
     ): Promise<CryptoCipher> {
+        const encryptionAlgorithm = CryptoEncryptionAlgorithm.fromCalCipher(secretKeyHandle.spec.cipher);
+
+        if (!nonce || nonce.buffer.length == 0) {
+            nonce = await this.createNonce(encryptionAlgorithm, secretKeyHandle.provider);
+        } else {
+            CryptoValidation.checkNonceForAlgorithm(nonce, encryptionAlgorithm);
+        }
+
+        let cipher, iv;
         try {
-            const [cipher, iv] = await secretKeyHandle.keyHandle.encryptData(plaintext.buffer);
-
-            const encryptionAlgorithm = CryptoEncryptionAlgorithm.fromCalCipher(secretKeyHandle.spec.cipher);
-
-            return CryptoCipher.from({
-                cipher: CoreBuffer.from(cipher),
-                algorithm: encryptionAlgorithm,
-                nonce: CoreBuffer.from(iv)
-            });
+            [cipher, iv] = await secretKeyHandle.keyHandle.encryptData(plaintext.buffer, nonce.buffer);
         } catch (e) {
             throw new CryptoError(CryptoErrorCode.EncryptionEncrypt, `${e}`);
         }
+
+        return CryptoCipher.from({
+            cipher: CoreBuffer.from(cipher),
+            algorithm: encryptionAlgorithm,
+            nonce: nonce
+        });
     }
 
     /**
@@ -70,22 +78,28 @@ export class CryptoEncryptionWithCryptoLayer {
     public static async encryptWithCounter(
         plaintext: CoreBuffer,
         secretKeyHandle: CryptoSecretKeyHandle,
+        nonce: CoreBuffer,
         counter: number
     ): Promise<CryptoCipher> {
         const encryptionAlgorithm = CryptoEncryptionAlgorithm.fromCalCipher(secretKeyHandle.spec.cipher);
 
-        try {
-            const [cipher, iv] = await secretKeyHandle.keyHandle.encryptData(plaintext.buffer);
+        CryptoValidation.checkCounter(counter);
+        CryptoValidation.checkNonceForAlgorithm(nonce, encryptionAlgorithm);
 
-            return CryptoCipher.from({
-                cipher: CoreBuffer.from(cipher),
-                algorithm: encryptionAlgorithm,
-                nonce: CoreBuffer.from(iv),
-                counter
-            });
+        const publicnonce = this._addCounter(nonce.buffer, counter);
+
+        let cipher, iv;
+        try {
+            [cipher, iv] = await secretKeyHandle.keyHandle.encryptData(plaintext.buffer, publicnonce.buffer);
         } catch (e) {
             throw new CryptoError(CryptoErrorCode.EncryptionEncrypt, `${e}`);
         }
+
+        return CryptoCipher.from({
+            cipher: CoreBuffer.from(cipher),
+            algorithm: encryptionAlgorithm,
+            counter
+        });
     }
 
     /**
@@ -102,8 +116,11 @@ export class CryptoEncryptionWithCryptoLayer {
         secretKeyHandle: CryptoSecretKeyHandle,
         nonce?: CoreBuffer
     ): Promise<CoreBuffer> {
+        const encryptionAlgorithm = CryptoEncryptionAlgorithm.fromCalCipher(secretKeyHandle.spec.cipher);
+
         let publicnonce;
         if (typeof nonce !== "undefined") {
+            CryptoValidation.checkNonceForAlgorithm(nonce, encryptionAlgorithm);
             publicnonce = nonce.buffer;
         } else if (typeof cipher.nonce !== "undefined") {
             publicnonce = cipher.nonce.buffer;
@@ -134,10 +151,22 @@ export class CryptoEncryptionWithCryptoLayer {
     public static async decryptWithCounter(
         cipher: CryptoCipher,
         secretKeyHandle: CryptoSecretKeyHandle,
-        nonce: CoreBuffer
+        nonce: CoreBuffer,
+        counter: number
     ): Promise<CoreBuffer> {
-        const publicnonce = nonce.buffer;
-        return await this.decrypt(cipher, secretKeyHandle, CoreBuffer.from(publicnonce));
+        const encryptionAlgorithm = CryptoEncryptionAlgorithm.fromCalCipher(secretKeyHandle.spec.cipher);
+
+        CryptoValidation.checkCounter(counter);
+        CryptoValidation.checkNonceForAlgorithm(nonce, encryptionAlgorithm);
+
+        const publicnonce = this._addCounter(nonce.buffer, counter);
+
+        try {
+            const buffer = await secretKeyHandle.keyHandle.decryptData(cipher.cipher.buffer, publicnonce.buffer);
+            return CoreBuffer.from(buffer);
+        } catch (e) {
+            throw new CryptoError(CryptoErrorCode.EncryptionDecrypt, `${e}`);
+        }
     }
 
     /**
@@ -147,7 +176,7 @@ export class CryptoEncryptionWithCryptoLayer {
      * @returns A {@link CoreBuffer} containing the generated nonce.
      * @throws {@link CryptoError} if the specified algorithm is not supported.
      */
-    public static createNonce(algorithm: CryptoEncryptionAlgorithm): CoreBuffer {
+    public static async createNonce(algorithm: CryptoEncryptionAlgorithm, provider: Provider): Promise<CoreBuffer> {
         let nonceLength;
         switch (algorithm) {
             case CryptoEncryptionAlgorithm.AES128_GCM:
@@ -161,7 +190,9 @@ export class CryptoEncryptionWithCryptoLayer {
                 nonceLength = 24;
                 break;
         }
-        return CoreBuffer.random(nonceLength);
+
+        const buffer = await provider.getRandom(nonceLength);
+        return CoreBuffer.from(buffer);
     }
 
     /**

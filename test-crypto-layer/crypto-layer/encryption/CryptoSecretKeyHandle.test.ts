@@ -4,6 +4,7 @@ import {
     CryptoCipher,
     CryptoEncryption,
     CryptoEncryptionAlgorithm,
+    CryptoEncryptionWithCryptoLayer,
     CryptoSecretKeyHandle
 } from "@nmshd/crypto";
 import { KeySpec } from "@nmshd/rs-crypto-types";
@@ -57,16 +58,22 @@ export class CryptoSecretKeyHandleTest {
                     const data = new CoreBuffer("0123456789ABCDEF");
                     const encrypted = await CryptoEncryption.encrypt(data, cryptoSecretKeyHandle);
                     expect(encrypted).to.be.ok.and.to.be.instanceOf(CryptoCipher);
-                    expect(encrypted.algorithm).to.equal(CryptoEncryptionAlgorithm.XCHACHA20_POLY1305);
+                    expect(encrypted.algorithm).to.equal(CryptoEncryptionAlgorithm.AES256_GCM);
 
-                    expect(await CryptoEncryption.decrypt(encrypted, cryptoSecretKeyHandle)).to.equal(data);
+                    const decrypted = await CryptoEncryption.decrypt(encrypted, cryptoSecretKeyHandle);
+
+                    expect(decrypted.buffer).to.deep.equal(data.buffer);
                 });
 
                 it("encrypt() and decrypt() with counter", async function () {
                     const cryptoSecretKeyHandle = await CryptoEncryption.generateKeyHandle(providerIdent, spec);
 
+                    const nonce = await CryptoEncryptionWithCryptoLayer.createNonce(
+                        CryptoEncryptionAlgorithm.AES256_GCM,
+                        cryptoSecretKeyHandle.provider
+                    );
+
                     const data = new CoreBuffer("0123456789ABCDEF");
-                    const nonce = new CoreBuffer("22");
                     const encrypted = await CryptoEncryption.encryptWithCounter(
                         data,
                         cryptoSecretKeyHandle,
@@ -74,11 +81,16 @@ export class CryptoSecretKeyHandleTest {
                         222
                     );
                     expect(encrypted).to.be.ok.and.to.be.instanceOf(CryptoCipher);
-                    expect(encrypted.algorithm).to.equal(CryptoEncryptionAlgorithm.XCHACHA20_POLY1305);
+                    expect(encrypted.algorithm).to.equal(CryptoEncryptionAlgorithm.AES256_GCM);
 
-                    expect(
-                        await CryptoEncryption.decryptWithCounter(encrypted, cryptoSecretKeyHandle, nonce, 222)
-                    ).to.equal(data);
+                    const decrypted = await CryptoEncryption.decryptWithCounter(
+                        encrypted,
+                        cryptoSecretKeyHandle,
+                        nonce,
+                        222
+                    );
+
+                    expect(decrypted.buffer).to.deep.equal(data.buffer);
                 });
             });
         });
