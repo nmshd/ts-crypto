@@ -32,7 +32,7 @@ export class CryptoLayerSecretKey extends CryptoSerializableAsync {
         const provider = getProviderOrThrow({ providerName: providername });
 
         const key = await provider.loadKey(id);
-        const alg = CryptoEncryptionAlgorithmUtil.fromCalCipher((await key.spec()).cipher);
+        const alg = CryptoEncryptionAlgorithm.fromCalCipher((await key.spec()).cipher);
         return await this.fromAny({ algorithm: alg, id, providername });
     }
 
