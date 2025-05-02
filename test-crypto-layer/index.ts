@@ -6,6 +6,7 @@ import {
     getProviderCapabilities
 } from "@nmshd/rs-crypto-node";
 import chai from "chai";
+import { CryptoDerivationHandleTest } from "./crypto-layer/CryptoDerivation.test";
 import { CryptoExportedPublicKeyTest } from "./crypto-layer/CryptoExportedPublicKey.test";
 import { CryptoLayerProviderTest } from "./crypto-layer/CryptoLayerProviderTest.test";
 import { CryptoSecretKeyHandleTest } from "./crypto-layer/encryption/CryptoSecretKeyHandle.test";
@@ -45,6 +46,9 @@ chai.config.truncateThreshold = 0;
 
     // Encryption
     CryptoSecretKeyHandleTest.run();
+
+    // Derivation
+    CryptoDerivationHandleTest.run();
 
     run();
 })();

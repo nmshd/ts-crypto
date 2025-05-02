@@ -1,8 +1,6 @@
-import { Cipher, CryptoHash, KDF, KeySpec } from "@nmshd/rs-crypto-types";
+import { CryptoHash, KDF, KeySpec } from "@nmshd/rs-crypto-types";
 import { CryptoDerivationAlgorithm } from "src/CryptoDerivation";
 import { ICoreBuffer } from "../CoreBuffer";
-import { CryptoError } from "../CryptoError";
-import { CryptoErrorCode } from "../CryptoErrorCode";
 import { CryptoSerializableAsync } from "../CryptoSerializable";
 import { CryptoEncryptionAlgorithm } from "../encryption/CryptoEncryption";
 import { getProviderOrThrow, ProviderIdentifier } from "./CryptoLayerProviders";
@@ -42,7 +40,7 @@ export class CryptoDerivationHandle extends CryptoSerializableAsync {
         const signingHash: CryptoHash = "Sha2_512";
 
         const spec: KeySpec = {
-            cipher: CryptoDerivationHandle.mapAlgorithmToCipherName(keyAlgorithm),
+            cipher: CryptoEncryptionAlgorithm.toCalCipher(keyAlgorithm),
             ephemeral: true,
             // eslint-disable-next-line @typescript-eslint/naming-convention
             signing_hash: signingHash
@@ -90,7 +88,7 @@ export class CryptoDerivationHandle extends CryptoSerializableAsync {
         keyAlgorithm: CryptoEncryptionAlgorithm
     ): Promise<CryptoSecretKeyHandle> {
         const provider = getProviderOrThrow(providerIdent);
-        const cipherName = CryptoDerivationHandle.mapAlgorithmToCipherName(keyAlgorithm);
+        const cipherName = CryptoEncryptionAlgorithm.toCalCipher(keyAlgorithm);
 
         const spec: KeySpec = {
             cipher: cipherName,
@@ -105,27 +103,5 @@ export class CryptoDerivationHandle extends CryptoSerializableAsync {
             keySpec: spec,
             algorithm: keyAlgorithm
         });
-    }
-
-    /**
-     * Maps a CryptoEncryptionAlgorithm to the corresponding Cipher type used by the crypto layer.
-     * This internal utility method ensures proper translation between the application's algorithm
-     * enumeration and the provider's cipher specification.
-     *
-     * @param keyAlgorithm - The encryption algorithm to map.
-     * @returns The corresponding Cipher type for the crypto layer.
-     * @throws {@link CryptoError} with {@link CryptoErrorCode.EncryptionWrongAlgorithm} if the algorithm is not supported.
-     */
-    private static mapAlgorithmToCipherName(keyAlgorithm: CryptoEncryptionAlgorithm): Cipher {
-        switch (keyAlgorithm) {
-            case CryptoEncryptionAlgorithm.AES128_GCM:
-                return "AesGcm128";
-            case CryptoEncryptionAlgorithm.AES256_GCM:
-                return "AesGcm256";
-            case CryptoEncryptionAlgorithm.XCHACHA20_POLY1305:
-                return "XChaCha20Poly1305";
-            default:
-                throw new CryptoError(CryptoErrorCode.EncryptionWrongAlgorithm, `Unsupported encryption algorithm.`);
-        }
     }
 }
