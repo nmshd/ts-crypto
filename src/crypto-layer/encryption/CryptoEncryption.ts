@@ -89,9 +89,9 @@ export class CryptoEncryptionWithCryptoLayer {
         const publicNonce = this._addCounter(nonce.buffer, counter);
 
         let cipher;
-        let iv;
+        let _iv;
         try {
-            [cipher, iv] = await secretKeyHandle.keyHandle.encryptData(plaintext.buffer, publicNonce.buffer);
+            [cipher, _iv] = await secretKeyHandle.keyHandle.encryptData(plaintext.buffer, publicNonce.buffer);
         } catch (e) {
             throw new CryptoError(CryptoErrorCode.EncryptionEncrypt, `${e}`, undefined, e as Error);
         }
@@ -99,7 +99,7 @@ export class CryptoEncryptionWithCryptoLayer {
         return CryptoCipher.from({
             cipher: CoreBuffer.from(cipher),
             algorithm: encryptionAlgorithm,
-            nonce: new CoreBuffer(iv),
+            // nonce: new CoreBuffer(iv), // TODO: How is the nonce transmitted?
             counter
         });
     }
