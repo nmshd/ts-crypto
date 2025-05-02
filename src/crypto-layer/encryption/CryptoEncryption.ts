@@ -73,7 +73,7 @@ export class CryptoEncryptionWithCryptoLayer {
      * @param secretKeyHandle - The {@link CryptoSecretKeyHandle} to use for encryption.
      * @param nonce - The {@link CoreBuffer} representing the nonce.
      * @param counter - The counter value for counter mode encryption.
-     * @returns A Promise that resolves to a {@link CryptoCipher} object containing the ciphertext and associated metadata.
+     * @returns A Promise that resolves to a {@link CryptoCipher} object containing the cipher text and associated metadata.
      */
     public static async encryptWithCounter(
         plaintext: CoreBuffer,

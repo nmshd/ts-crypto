@@ -1,6 +1,8 @@
 {
     "words": [
         "asym",
+        "browsertest",
+        "cdep",
         "CHACHA",
         "Keypair",
         "libsodium",
