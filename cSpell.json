@@ -1,8 +1,11 @@
 {
     "words": [
         "asym",
+        "CHACHA",
         "Keypair",
+        "libsodium",
         "nmshd",
-        "Templator"
+        "Templator",
+        "XCHACHA"
     ]
 }

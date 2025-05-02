@@ -25,8 +25,7 @@ export class CryptoEncryptionWithCryptoLayer {
         const provider = getProviderOrThrow(providerIdent);
         const keyHandle = await provider.createKey(spec);
         const secretKeyHandle = await CryptoSecretKeyHandle.newFromProviderAndKeyHandle(provider, keyHandle, {
-            keySpec: spec,
-            algorithm: CryptoEncryptionAlgorithm.XCHACHA20_POLY1305 // TODO: correct default?
+            keySpec: spec
         });
         return secretKeyHandle;
     }
@@ -37,7 +36,7 @@ export class CryptoEncryptionWithCryptoLayer {
      * @param plaintext - The data to be encrypted, as a {@link CoreBuffer}.
      * @param secretKeyHandle - The {@link CryptoSecretKeyHandle} to use for encryption.
      * @param nonce - An optional {@link CoreBuffer} representing the nonce. If not provided, a random nonce will be generated.
-     * @returns A Promise that resolves to a {@link CryptoCipher} object containing the ciphertext and associated metadata.
+     * @returns A Promise that resolves to a {@link CryptoCipher} object containing the cipher text and associated metadata.
      */
     public static async encrypt(
         plaintext: CoreBuffer,
@@ -63,7 +62,7 @@ export class CryptoEncryptionWithCryptoLayer {
         return CryptoCipher.from({
             cipher: CoreBuffer.from(cipher),
             algorithm: encryptionAlgorithm,
-            nonce: new CoreBuffer(iv) // TODO: Does this make sense?
+            nonce: new CoreBuffer(iv)
         });
     }
 
@@ -87,12 +86,12 @@ export class CryptoEncryptionWithCryptoLayer {
         CryptoValidation.checkCounter(counter);
         CryptoValidation.checkNonceForAlgorithm(nonce, encryptionAlgorithm);
 
-        const publicnonce = this._addCounter(nonce.buffer, counter);
+        const publicNonce = this._addCounter(nonce.buffer, counter);
 
         let cipher;
         let iv;
         try {
-            [cipher, iv] = await secretKeyHandle.keyHandle.encryptData(plaintext.buffer, publicnonce.buffer);
+            [cipher, iv] = await secretKeyHandle.keyHandle.encryptData(plaintext.buffer, publicNonce.buffer);
         } catch (e) {
             throw new CryptoError(CryptoErrorCode.EncryptionEncrypt, `${e}`, undefined, e as Error);
         }
@@ -100,14 +99,15 @@ export class CryptoEncryptionWithCryptoLayer {
         return CryptoCipher.from({
             cipher: CoreBuffer.from(cipher),
             algorithm: encryptionAlgorithm,
-            counter // TODO: Does the iv not need to be supplied?
+            nonce: new CoreBuffer(iv),
+            counter
         });
     }
 
     /**
-     * Asynchronously decrypts the given ciphertext using the provided secret key handle and optional nonce.
+     * Asynchronously decrypts the given cipher text using the provided secret key handle and optional nonce.
      *
-     * @param cipher - The {@link CryptoCipher} object containing the ciphertext and associated metadata.
+     * @param cipher - The {@link CryptoCipher} object containing the cipher text and associated metadata.
      * @param secretKeyHandle - The {@link CryptoSecretKeyHandle} to use for decryption.
      * @param nonce - An optional {@link CoreBuffer} representing the nonce.  If not provided, it must be present in the `cipher` object.
      * @returns A Promise that resolves to a {@link CoreBuffer} containing the decrypted plaintext.
@@ -120,12 +120,12 @@ export class CryptoEncryptionWithCryptoLayer {
     ): Promise<CoreBuffer> {
         const encryptionAlgorithm = CryptoEncryptionAlgorithm.fromCalCipher(secretKeyHandle.spec.cipher);
 
-        let publicnonce;
+        let publicNonce;
         if (typeof nonce !== "undefined") {
             CryptoValidation.checkNonceForAlgorithm(nonce, encryptionAlgorithm);
-            publicnonce = nonce.buffer;
+            publicNonce = nonce.buffer;
         } else if (typeof cipher.nonce !== "undefined") {
-            publicnonce = cipher.nonce.buffer;
+            publicNonce = cipher.nonce.buffer;
         } else {
             throw new CryptoError(
                 CryptoErrorCode.EncryptionWrongNonce,
@@ -134,7 +134,7 @@ export class CryptoEncryptionWithCryptoLayer {
         }
 
         try {
-            const buffer = await secretKeyHandle.keyHandle.decryptData(cipher.cipher.buffer, publicnonce);
+            const buffer = await secretKeyHandle.keyHandle.decryptData(cipher.cipher.buffer, publicNonce);
             return CoreBuffer.from(buffer);
         } catch (e) {
             throw new CryptoError(CryptoErrorCode.EncryptionEncrypt, `${e}`, undefined, e as Error);
@@ -142,9 +142,9 @@ export class CryptoEncryptionWithCryptoLayer {
     }
 
     /**
-     * Asynchronously decrypts the given ciphertext using counter mode with the provided secret key handle, nonce, and counter.
+     * Asynchronously decrypts the given cipher text using counter mode with the provided secret key handle, nonce, and counter.
      *
-     * @param cipher - The {@link CryptoCipher} object containing the ciphertext and associated metadata.
+     * @param cipher - The {@link CryptoCipher} object containing the cipher text and associated metadata.
      * @param secretKeyHandle - The {@link CryptoSecretKeyHandle} to use for decryption.
      * @param nonce - The {@link CoreBuffer} representing the nonce.
      * @param counter - The counter value used for counter mode decryption.
@@ -161,10 +161,10 @@ export class CryptoEncryptionWithCryptoLayer {
         CryptoValidation.checkCounter(counter);
         CryptoValidation.checkNonceForAlgorithm(nonce, encryptionAlgorithm);
 
-        const publicnonce = this._addCounter(nonce.buffer, counter);
+        const publicNonce = this._addCounter(nonce.buffer, counter);
 
         try {
-            const buffer = await secretKeyHandle.keyHandle.decryptData(cipher.cipher.buffer, publicnonce.buffer);
+            const buffer = await secretKeyHandle.keyHandle.decryptData(cipher.cipher.buffer, publicNonce.buffer);
             return CoreBuffer.from(buffer);
         } catch (e) {
             throw new CryptoError(CryptoErrorCode.EncryptionEncrypt, `${e}`, undefined, e as Error);
