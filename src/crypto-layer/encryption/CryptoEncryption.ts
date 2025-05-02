@@ -46,13 +46,14 @@ export class CryptoEncryptionWithCryptoLayer {
     ): Promise<CryptoCipher> {
         const encryptionAlgorithm = CryptoEncryptionAlgorithm.fromCalCipher(secretKeyHandle.spec.cipher);
 
-        if (!nonce || nonce.buffer.length == 0) {
+        if (!nonce || nonce.buffer.length === 0) {
             nonce = await this.createNonce(encryptionAlgorithm, secretKeyHandle.provider);
         } else {
             CryptoValidation.checkNonceForAlgorithm(nonce, encryptionAlgorithm);
         }
 
-        let cipher, iv;
+        let cipher;
+        let iv;
         try {
             [cipher, iv] = await secretKeyHandle.keyHandle.encryptData(plaintext.buffer, nonce.buffer);
         } catch (e) {
@@ -62,7 +63,7 @@ export class CryptoEncryptionWithCryptoLayer {
         return CryptoCipher.from({
             cipher: CoreBuffer.from(cipher),
             algorithm: encryptionAlgorithm,
-            nonce: nonce
+            nonce: new CoreBuffer(iv) // TODO: Does this make sense?
         });
     }
 
@@ -88,7 +89,8 @@ export class CryptoEncryptionWithCryptoLayer {
 
         const publicnonce = this._addCounter(nonce.buffer, counter);
 
-        let cipher, iv;
+        let cipher;
+        let iv;
         try {
             [cipher, iv] = await secretKeyHandle.keyHandle.encryptData(plaintext.buffer, publicnonce.buffer);
         } catch (e) {
@@ -98,7 +100,7 @@ export class CryptoEncryptionWithCryptoLayer {
         return CryptoCipher.from({
             cipher: CoreBuffer.from(cipher),
             algorithm: encryptionAlgorithm,
-            counter
+            counter // TODO: Does the iv not need to be supplied?
         });
     }
 
