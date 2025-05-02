@@ -1,5 +1,5 @@
-import { CryptoValidation } from "@nmshd/crypto";
 import { KeySpec, Provider } from "@nmshd/rs-crypto-types";
+import { CryptoValidation } from "src/CryptoValidation";
 import { CoreBuffer } from "../../CoreBuffer";
 import { CryptoError } from "../../CryptoError";
 import { CryptoErrorCode } from "../../CryptoErrorCode";
