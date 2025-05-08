@@ -67,6 +67,13 @@ export class CryptoPrivateStateHandle extends CryptoSerializableAsync implements
     public secretKeyHandle: CryptoSecretKeyHandle;
 
     /**
+     * Updates the state's internal counter.
+     */
+    protected setCounter(value: number): void {
+        this.counter = value;
+    }
+
+    /**
      * Converts the {@link CryptoPrivateStateHandle} object into a JSON serializable object.
      *
      * @param verbose - If `true`, includes the `@type` property in the JSON output. Defaults to `true`.

@@ -1,5 +1,13 @@
 import { type } from "@js-soft/ts-serval";
+import { CryptoError } from "src/CryptoError";
+import { CryptoErrorCode } from "src/CryptoErrorCode";
+import { CryptoValidation } from "src/CryptoValidation";
+import { CryptoCipher } from "src/encryption/CryptoCipher";
+import { CryptoEncryption, CryptoEncryptionAlgorithm } from "src/encryption/CryptoEncryption";
+import { CryptoStateType } from "src/state/CryptoStateType";
 import { CoreBuffer } from "../../CoreBuffer";
+import { CryptoEncryptionWithCryptoLayer } from "../encryption/CryptoEncryption";
+import { CryptoSecretKeyHandle } from "../encryption/CryptoSecretKeyHandle";
 import {
     CryptoPrivateStateHandle,
     ICryptoPrivateStateHandle,
@@ -27,6 +35,54 @@ export class CryptoPrivateStateTransmitHandle
     extends CryptoPrivateStateHandle
     implements ICryptoPrivateStateTransmitHandle
 {
+    public static async generate(
+        secretKey: CryptoSecretKeyHandle,
+        id?: string,
+        algorithm?: CryptoEncryptionAlgorithm
+    ): Promise<CryptoPrivateStateTransmitHandle> {
+        if (algorithm) {
+            CryptoValidation.checkEncryptionAlgorithm(algorithm);
+            CryptoValidation.checkKeyHandleForAlgorithm(secretKey, algorithm);
+        }
+        const currentAlgorithm = CryptoEncryptionAlgorithm.fromCalCipher(secretKey.spec.cipher);
+        const nonce = await CryptoEncryptionWithCryptoLayer.createNonce(currentAlgorithm, secretKey.provider);
+        const counter = 0;
+
+        return await this.from({
+            nonce,
+            counter,
+            algorithm: currentAlgorithm,
+            id,
+            stateType: CryptoStateType.Transmit,
+            secretKeyHandle: secretKey
+        });
+    }
+
+    public override async encrypt(plaintext: CoreBuffer): Promise<CryptoCipher> {
+        const cipher = await CryptoEncryption.encryptWithCounter(
+            plaintext,
+            this.secretKeyHandle,
+            this.nonce,
+            this.counter,
+            this.algorithm
+        );
+        this.setCounter(this.counter + 1);
+        return cipher;
+    }
+
+    public override async decrypt(cipher: CryptoCipher): Promise<CoreBuffer> {
+        CryptoValidation.checkCounter(cipher.counter);
+        if (typeof cipher.counter === "undefined") throw new CryptoError(CryptoErrorCode.StateWrongCounter);
+
+        const plaintext = await CryptoEncryption.decryptWithCounter(
+            cipher,
+            this.secretKeyHandle,
+            this.nonce,
+            cipher.counter
+        );
+        return plaintext;
+    }
+
     /**
      * Converts the {@link CryptoPrivateStateTransmitHandle} object into a JSON serializable object.
      *

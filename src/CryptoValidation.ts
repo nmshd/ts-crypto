@@ -1,4 +1,5 @@
 import { CoreBuffer } from "./CoreBuffer";
+import { CryptoSecretKeyHandle } from "./crypto-layer";
 import { CryptoError } from "./CryptoError";
 import { CryptoErrorCode } from "./CryptoErrorCode";
 import { CryptoEncryptionAlgorithm } from "./encryption/CryptoEncryption";
@@ -171,6 +172,26 @@ export class CryptoValidation {
 
         if (error && throwError) throw error;
         return error;
+    }
+
+    public static checkKeyHandleForAlgorithm(
+        key: CryptoSecretKeyHandle,
+        algorithm: CryptoEncryptionAlgorithm,
+        throwError = true
+    ): CryptoError | undefined {
+        const calCipher = CryptoEncryptionAlgorithm.toCalCipher(algorithm);
+        if (key.spec.cipher !== calCipher) {
+            const error = new CryptoError(
+                CryptoErrorCode.EncryptionWrongAlgorithm,
+                "Key Algorithm and provided Algorithm do not match."
+            );
+            if (throwError) {
+                throw error;
+            } else {
+                return error;
+            }
+        }
+        return undefined;
     }
 
     public static checkSerializedSecretKeyForAlgorithm(

@@ -1,4 +1,5 @@
 import { type } from "@js-soft/ts-serval";
+import { CryptoPrivateStateTransmitHandle } from "src/crypto-layer";
 import { CoreBuffer } from "../CoreBuffer";
 import { CryptoEncryptionWithCryptoLayer } from "../crypto-layer/encryption/CryptoEncryption";
 import { CryptoSecretKeyHandle } from "../crypto-layer/encryption/CryptoSecretKeyHandle";
@@ -129,6 +130,14 @@ export class CryptoPrivateStateTransmit extends CryptoPrivateStateTransmitWithLi
     ): CryptoPrivateStateTransmit {
         const base = super.generate(secretKey, id, algorithm);
         return this.from(base);
+    }
+
+    public static async generateHandle(
+        secretKey: CryptoSecretKeyHandle,
+        id?: string,
+        algorithm?: CryptoEncryptionAlgorithm
+    ): Promise<CryptoPrivateStateTransmitHandle> {
+        return await CryptoPrivateStateTransmitHandle.generate(secretKey, id, algorithm);
     }
 
     public static override from(obj: CryptoPrivateState | ICryptoPrivateState): CryptoPrivateStateTransmit {

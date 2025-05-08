@@ -1,10 +1,18 @@
 import { type } from "@js-soft/ts-serval";
+import { CryptoError } from "src/CryptoError";
+import { CryptoErrorCode } from "src/CryptoErrorCode";
+import { CryptoValidation } from "src/CryptoValidation";
+import { CryptoCipher } from "src/encryption/CryptoCipher";
+import { CryptoEncryption, CryptoEncryptionAlgorithm } from "src/encryption/CryptoEncryption";
+import { CryptoStateType } from "src/state/CryptoStateType";
 import { CoreBuffer } from "../../CoreBuffer";
+import { CryptoSecretKeyHandle } from "../encryption/CryptoSecretKeyHandle";
 import {
     CryptoPrivateStateHandle,
     ICryptoPrivateStateHandle,
     ICryptoPrivateStateHandleSerialized
 } from "./CryptoPrivateStateHandle";
+import { CryptoPublicStateHandle } from "./CryptoPublicStateHandle";
 
 /**
  * Interface defining the serialized form of {@link CryptoPrivateStateReceiveHandle}.
@@ -27,8 +35,62 @@ export class CryptoPrivateStateReceiveHandle
     extends CryptoPrivateStateHandle
     implements ICryptoPrivateStateReceiveHandle
 {
-    // No longer needed, inherited from base class
-    // public secretKeyHandle: CryptoSecretKeyHandle;
+    public override async decrypt(cipher: CryptoCipher, omitCounterCheck = false): Promise<CoreBuffer> {
+        CryptoValidation.checkCounter(cipher.counter);
+        if (typeof cipher.counter === "undefined") {
+            throw new CryptoError(CryptoErrorCode.Unknown, "Cipher is missing a counter.");
+        }
+
+        if (!omitCounterCheck && this.counter !== cipher.counter) {
+            throw new CryptoError(
+                CryptoErrorCode.StateWrongOrder,
+                `Expected counter ${this.counter} but got ${cipher.counter}.`
+            );
+        }
+
+        const plaintext = await CryptoEncryption.decryptWithCounter(
+            cipher,
+            this.secretKeyHandle,
+            this.nonce,
+            cipher.counter ?? this.counter,
+            this.algorithm
+        );
+
+        if (!omitCounterCheck) {
+            this.setCounter(this.counter + 1);
+        }
+
+        return plaintext;
+    }
+
+    public static fromNonce(
+        nonce: CoreBuffer,
+        secretKeyHandle: CryptoSecretKeyHandle,
+        counter = 0
+    ): Promise<CryptoPrivateStateReceiveHandle> {
+        return this.from({
+            nonce: nonce.clone(),
+            counter,
+            secretKeyHandle,
+            algorithm: CryptoEncryptionAlgorithm.XCHACHA20_POLY1305,
+            stateType: CryptoStateType.Receive
+        });
+    }
+
+    public static fromPublicState(
+        publicState: CryptoPublicStateHandle,
+        secretKeyHandle: CryptoSecretKeyHandle,
+        counter = 0
+    ): Promise<CryptoPrivateStateReceiveHandle> {
+        return this.from({
+            nonce: publicState.nonce.clone(),
+            counter,
+            secretKeyHandle,
+            algorithm: publicState.algorithm,
+            id: publicState.id,
+            stateType: CryptoStateType.Receive
+        });
+    }
 
     /**
      * Converts the {@link CryptoPrivateStateReceiveHandle} object into a JSON serializable object.

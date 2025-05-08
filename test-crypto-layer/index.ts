@@ -17,6 +17,7 @@ import { CryptoExchangePublicKeyHandleTest } from "./crypto-layer/exchange/Crypt
 import { CryptoSignatureKeypairHandleTest } from "./crypto-layer/signature/CryptoSignatureKeypairHandle.test";
 import { CryptoSignaturePrivateKeyHandleTest } from "./crypto-layer/signature/CryptoSignaturePrivateKeyHandle.test";
 import { CryptoSignaturePublicKeyHandleTest } from "./crypto-layer/signature/CryptoSignaturePublicKeyHandle.test";
+import { CryptoStateTest } from "./crypto-layer/state/CryptoState.test";
 
 chai.config.truncateThreshold = 0;
 
@@ -49,6 +50,9 @@ chai.config.truncateThreshold = 0;
 
     // Derivation
     CryptoDerivationHandleTest.run();
+
+    // State
+    CryptoStateTest.run();
 
     run();
 })();
