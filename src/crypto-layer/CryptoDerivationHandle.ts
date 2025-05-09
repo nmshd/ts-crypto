@@ -1,6 +1,6 @@
 import { CryptoHash, KDF, KeySpec } from "@nmshd/rs-crypto-types";
-import { CryptoDerivationAlgorithm } from "src/CryptoDerivation";
 import { ICoreBuffer } from "../CoreBuffer";
+import { CryptoDerivationAlgorithm } from "../CryptoDerivation";
 import { CryptoSerializableAsync } from "../CryptoSerializable";
 import { CryptoEncryptionAlgorithm } from "../encryption/CryptoEncryption";
 import { getProviderOrThrow, ProviderIdentifier } from "./CryptoLayerProviders";
@@ -50,7 +50,7 @@ export class CryptoDerivationHandle extends CryptoSerializableAsync {
         let kdfOptions: KDF;
         switch (derivationAlgorithm) {
             case CryptoDerivationAlgorithm.ARGON2I: {
-                // TDOD: it should be Argon2i and not d, need to update ts-types
+                // TODO: it should be Argon2i and not d, need to update ts-types
                 // eslint-disable-next-line @typescript-eslint/naming-convention
                 kdfOptions = { Argon2d: { memory: memlimit, iterations: opslimit, parallelism: 1 } };
             }
@@ -66,42 +66,61 @@ export class CryptoDerivationHandle extends CryptoSerializableAsync {
         return await CryptoSecretKeyHandle.newFromProviderAndKeyHandle(provider, keyHandle);
     }
 
+    // /**
+    //  * Derives a cryptographic key from a base key using a key derivation function.
+    //  * This method enables hierarchical key derivation, which is useful for creating
+    //  * multiple independent keys from a single master key.
+    //  *
+    //  * @param providerIdent - Identifier for the crypto provider to be used for key derivation.
+    //  * @param baseKey - The base key buffer from which to derive the new key.
+    //  * @param keyId - A numeric identifier for the derived key, allowing multiple keys to be derived from the same base.
+    //  * @param context - A string context that provides additional domain separation.
+    //  * @param keyAlgorithm - The encryption algorithm for which the key will be used.
+    //  * @returns A Promise that resolves to a {@link CryptoSecretKeyHandle} containing the derived key.
+    //  * @throws {@link CryptoError} with {@link CryptoErrorCode.CalUninitializedKey} if the derivation system is not initialized.
+    //  * @throws {@link CryptoError} with {@link CryptoErrorCode.EncryptionWrongAlgorithm} if the key algorithm is not supported.
+    //  */
+    // public static async deriveKeyFromBase(
+    //     providerIdent: ProviderIdentifier,
+    //     baseKey: ICoreBuffer,
+    //     keyId: number,
+    //     context: string,
+    //     keyAlgorithm: CryptoEncryptionAlgorithm
+    // ): Promise<CryptoSecretKeyHandle> {
+    //     const provider = getProviderOrThrow(providerIdent);
+    //     const cipherName = CryptoEncryptionAlgorithm.toCalCipher(keyAlgorithm);
+
+    //     const spec: KeySpec = {
+    //         cipher: cipherName,
+    //         ephemeral: true,
+    //         // eslint-disable-next-line @typescript-eslint/naming-convention
+    //         signing_hash: "Sha2_512"
+    //     };
+
+    //     const keyHandle = await provider.deriveKeyFromBase(baseKey.buffer, keyId, context, spec);
+
+    //     return await CryptoSecretKeyHandle.newFromProviderAndKeyHandle(provider, keyHandle, {
+    //         keySpec: spec,
+    //         algorithm: keyAlgorithm
+    //     });
+    // }
+
     /**
-     * Derives a cryptographic key from a base key using a key derivation function.
-     * This method enables hierarchical key derivation, which is useful for creating
-     * multiple independent keys from a single master key.
+     * Derive an ephemeral {@link CryptoSecretKeyHandle} from another with the same key spec and algorithm.
      *
-     * @param providerIdent - Identifier for the crypto provider to be used for key derivation.
-     * @param baseKey - The base key buffer from which to derive the new key.
-     * @param keyId - A numeric identifier for the derived key, allowing multiple keys to be derived from the same base.
-     * @param context - A string context that provides additional domain separation.
-     * @param keyAlgorithm - The encryption algorithm for which the key will be used.
-     * @returns A Promise that resolves to a {@link CryptoSecretKeyHandle} containing the derived key.
-     * @throws {@link CryptoError} with {@link CryptoErrorCode.CalUninitializedKey} if the derivation system is not initialized.
-     * @throws {@link CryptoError} with {@link CryptoErrorCode.EncryptionWrongAlgorithm} if the key algorithm is not supported.
+     * @param baseKey Basekey to derive the new key from.
+     * @param keyId A numeric identifier for the derived key, allowing multiple keys to be derived from the same base.
+     * @param context A string context that provides additional domain separation.
+     * @returns A promise resolving to an ephemeral key handle.
      */
-    public static async deriveKeyFromBase(
-        providerIdent: ProviderIdentifier,
-        baseKey: ICoreBuffer,
+    public static async deriveKeyHandleFromBase(
+        baseKey: CryptoSecretKeyHandle,
         keyId: number,
-        context: string,
-        keyAlgorithm: CryptoEncryptionAlgorithm
+        context: string
     ): Promise<CryptoSecretKeyHandle> {
-        const provider = getProviderOrThrow(providerIdent);
-        const cipherName = CryptoEncryptionAlgorithm.toCalCipher(keyAlgorithm);
-
-        const spec: KeySpec = {
-            cipher: cipherName,
-            ephemeral: true,
-            // eslint-disable-next-line @typescript-eslint/naming-convention
-            signing_hash: "Sha2_512"
-        };
-
-        const keyHandle = await provider.deriveKeyFromBase(baseKey.buffer, keyId, context, spec);
-
-        return await CryptoSecretKeyHandle.newFromProviderAndKeyHandle(provider, keyHandle, {
-            keySpec: spec,
-            algorithm: keyAlgorithm
-        });
+        const encoder = new TextEncoder();
+        const bytes = encoder.encode(`id:${keyId};ctx:${context}`);
+        const derived = await baseKey.keyHandle.deriveKey(bytes);
+        return await CryptoSecretKeyHandle.newFromProviderAndKeyHandle(baseKey.provider, derived);
     }
 }

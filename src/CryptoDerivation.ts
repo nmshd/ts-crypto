@@ -66,6 +66,7 @@ export class CryptoDerivationWithLibsodium implements ICryptoDerivation {
         }
 
         let keyLength;
+        // eslint-disable-next-line @typescript-eslint/switch-exhaustiveness-check
         switch (keyAlgorithm) {
             case CryptoEncryptionAlgorithm.AES128_GCM:
                 keyLength = 16;
@@ -113,6 +114,7 @@ export class CryptoDerivationWithLibsodium implements ICryptoDerivation {
             throw new Error("The context must be exactly 8 characters long.");
         }
         let keyLength: number;
+        // eslint-disable-next-line @typescript-eslint/switch-exhaustiveness-check
         switch (keyAlgorithm) {
             case CryptoEncryptionAlgorithm.AES128_GCM:
                 keyLength = 16;
@@ -137,6 +139,8 @@ export class CryptoDerivationWithLibsodium implements ICryptoDerivation {
  * or fall back to libsodium if not.
  */
 export class CryptoDerivation extends CryptoDerivationWithLibsodium {
+    public static deriveKeyHandleFromBase = CryptoDerivationHandle.deriveKeyHandleFromBase;
+
     /**
      * If handle-based usage is enabled, do a handle-based approach via CryptoDerivationHandle.
      * Otherwise, fallback to libsodium logic.
@@ -146,8 +150,8 @@ export class CryptoDerivation extends CryptoDerivationWithLibsodium {
         salt: ICoreBuffer,
         keyAlgorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.XCHACHA20_POLY1305,
         derivationAlgorithm: CryptoDerivationAlgorithm = CryptoDerivationAlgorithm.ARGON2ID,
-        opslimit = 100000,
-        memlimit = 8192,
+        opsLimit = 100000,
+        memLimit = 8192,
         provider?: ProviderIdentifier
     ): Promise<CryptoSecretKey> {
         if (provider) {
@@ -161,27 +165,6 @@ export class CryptoDerivation extends CryptoDerivationWithLibsodium {
             return CryptoSecretKey.fromHandle(derivedKey);
         }
         // fallback to libsodium
-        return await super.deriveKeyFromPassword(password, salt, keyAlgorithm, derivationAlgorithm, opslimit, memlimit);
-    }
-
-    public static override async deriveKeyFromBase(
-        baseKey: ICoreBuffer,
-        keyId: number,
-        context: string,
-        keyAlgorithm: CryptoEncryptionAlgorithm = CryptoEncryptionAlgorithm.XCHACHA20_POLY1305,
-        provider?: ProviderIdentifier
-    ): Promise<CryptoSecretKey> {
-        if (provider) {
-            const derivedKey = await CryptoDerivationHandle.deriveKeyFromBase(
-                provider,
-                baseKey,
-                keyId,
-                context,
-                keyAlgorithm
-            );
-            return CryptoSecretKey.fromHandle(derivedKey);
-        }
-        // fallback
-        return await super.deriveKeyFromBase(baseKey, keyId, context, keyAlgorithm);
+        return await super.deriveKeyFromPassword(password, salt, keyAlgorithm, derivationAlgorithm, opsLimit, memLimit);
     }
 }

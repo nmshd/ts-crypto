@@ -6,7 +6,11 @@
         "CHACHA",
         "Keypair",
         "libsodium",
+        "MEMLIMIT",
         "nmshd",
+        "OPSLIMIT",
+        "pwhash",
+        "SALTBYTES",
         "Templator",
         "XCHACHA"
     ]
