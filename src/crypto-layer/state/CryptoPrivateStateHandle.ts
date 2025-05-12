@@ -1,4 +1,4 @@
-import { ISerializable, ISerialized, serialize, type, validate } from "@js-soft/ts-serval";
+import { ISerializable, ISerialized, SerializableAsync, serialize, type, validate } from "@js-soft/ts-serval";
 import { CoreBuffer } from "../../CoreBuffer";
 import { CryptoError } from "../../CryptoError";
 import { CryptoErrorCode } from "../../CryptoErrorCode";
@@ -6,15 +6,16 @@ import { CryptoSerializableAsync } from "../../CryptoSerializable";
 import { CryptoCipher } from "../../encryption/CryptoCipher";
 import { CryptoEncryptionAlgorithm } from "../../encryption/CryptoEncryption";
 import { CryptoStateType } from "../../state/CryptoStateType";
+import { getProviderOrThrow } from "../CryptoLayerProviders";
 import { CryptoEncryptionWithCryptoLayer } from "../encryption/CryptoEncryption";
-import { CryptoSecretKeyHandle } from "../encryption/CryptoSecretKeyHandle";
+import { CryptoSecretKeyHandle, ICryptoSecretKeyHandleSerialized } from "../encryption/CryptoSecretKeyHandle";
 import { CryptoPublicStateHandle } from "./CryptoPublicStateHandle";
 
 /**
  * Interface defining the serialized form of {@link CryptoPrivateStateHandle}.
  */
 export interface ICryptoPrivateStateHandleSerialized extends ISerialized {
-    key: string; // Key is required in serialized form
+    key: ICryptoSecretKeyHandleSerialized; // Key is required in serialized form
     nnc: string;
     cnt: number;
     alg: number;
@@ -79,14 +80,14 @@ export class CryptoPrivateStateHandle extends CryptoSerializableAsync implements
      * @param verbose - If `true`, includes the `@type` property in the JSON output. Defaults to `true`.
      * @returns An {@link ICryptoPrivateStateHandleSerialized} object that is JSON serializable.
      */
-    public override async toJSON(verbose = true): Promise<ICryptoPrivateStateHandleSerialized> {
+    public override toJSON(verbose = true): ICryptoPrivateStateHandleSerialized {
         return {
             nnc: this.nonce.toBase64URL(),
             cnt: this.counter,
             alg: this.algorithm,
             typ: this.stateType,
             id: this.id,
-            key: await this.secretKeyHandle.toSerializedString(),
+            key: this.secretKeyHandle.toJSON(),
             "@type": verbose ? "CryptoPrivateStateHandle" : undefined
         };
     }
@@ -194,5 +195,17 @@ export class CryptoPrivateStateHandle extends CryptoSerializableAsync implements
         publicState.algorithm = this.algorithm;
         publicState.stateType = this.stateType;
         return publicState;
+    }
+
+    public static override async postFrom<T extends SerializableAsync>(value: T): Promise<T> {
+        if (!(value instanceof CryptoPrivateStateHandle)) {
+            throw new CryptoError(CryptoErrorCode.WrongParameters, "Expected 'CryptoPrivateStateHandle' in postFrom.");
+        }
+        const provider = getProviderOrThrow({ providerName: value.secretKeyHandle.providerName });
+        const keyHandle = await provider.loadKey(value.secretKeyHandle.id);
+
+        value.secretKeyHandle.keyHandle = keyHandle;
+        value.secretKeyHandle.provider = provider;
+        return value;
     }
 }

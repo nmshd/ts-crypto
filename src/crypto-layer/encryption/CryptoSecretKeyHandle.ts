@@ -83,7 +83,6 @@ export class CryptoSecretKeyHandle extends CryptoSerializableAsync implements IC
     protected static override preFrom(value: any): any {
         if (value.kid) {
             value = {
-                algorithm: value.alg,
                 id: value.kid,
                 providerName: value.pnm,
                 spec: value.spc
@@ -164,7 +163,7 @@ export class CryptoSecretKeyHandle extends CryptoSerializableAsync implements IC
         const keyHandle = await provider.loadKey(value.id);
 
         value.keyHandle = keyHandle;
-        (value as CryptoSecretKeyHandle).provider = provider;
+        value.provider = provider;
         return value;
     }
 }

@@ -1,4 +1,4 @@
-import { type } from "@js-soft/ts-serval";
+import { SerializableAsync, type } from "@js-soft/ts-serval";
 import { CryptoError } from "src/CryptoError";
 import { CryptoErrorCode } from "src/CryptoErrorCode";
 import { CryptoValidation } from "src/CryptoValidation";
@@ -6,6 +6,7 @@ import { CryptoCipher } from "src/encryption/CryptoCipher";
 import { CryptoEncryption, CryptoEncryptionAlgorithm } from "src/encryption/CryptoEncryption";
 import { CryptoStateType } from "src/state/CryptoStateType";
 import { CoreBuffer } from "../../CoreBuffer";
+import { getProviderOrThrow } from "../CryptoLayerProviders";
 import { CryptoEncryptionWithCryptoLayer } from "../encryption/CryptoEncryption";
 import { CryptoSecretKeyHandle } from "../encryption/CryptoSecretKeyHandle";
 import {
@@ -89,8 +90,8 @@ export class CryptoPrivateStateTransmitHandle
      * @param verbose - If `true`, includes the `@type` property in the JSON output. Defaults to `true`.
      * @returns An {@link ICryptoPrivateStateTransmitHandleSerialized} object that is JSON serializable.
      */
-    public override async toJSON(verbose = true): Promise<ICryptoPrivateStateTransmitHandleSerialized> {
-        const base = await super.toJSON(verbose); // Get the base serialization
+    public override toJSON(verbose = true): ICryptoPrivateStateTransmitHandleSerialized {
+        const base = super.toJSON(verbose); // Get the base serialization
         return {
             ...base, // Spread the base properties
             "@type": verbose ? "CryptoPrivateStateTransmitHandle" : undefined
@@ -131,5 +132,20 @@ export class CryptoPrivateStateTransmitHandle
      */
     public static override async fromBase64(value: string): Promise<CryptoPrivateStateTransmitHandle> {
         return await this.deserialize(CoreBuffer.base64_utf8(value));
+    }
+
+    public static override async postFrom<T extends SerializableAsync>(value: T): Promise<T> {
+        if (!(value instanceof CryptoPrivateStateTransmitHandle)) {
+            throw new CryptoError(
+                CryptoErrorCode.WrongParameters,
+                "Expected 'CryptoPrivateStateTransmitHandle' in postFrom."
+            );
+        }
+        const provider = getProviderOrThrow({ providerName: value.secretKeyHandle.providerName });
+        const keyHandle = await provider.loadKey(value.secretKeyHandle.id);
+
+        value.secretKeyHandle.keyHandle = keyHandle;
+        value.secretKeyHandle.provider = provider;
+        return value;
     }
 }
