@@ -23,7 +23,7 @@ export class CryptoExchangeTest {
                 providerName: "SoftwareProvider"
             };
 
-            it("generateKeypair()", async () => {
+            it("generateKeyPair()", async () => {
                 const keyPairHandle = await CryptoExchangeWithCryptoLayer.generateKeypair(providerIdent, spec);
                 await assertCryptoKeyPairHandleValid(keyPairHandle);
             });
