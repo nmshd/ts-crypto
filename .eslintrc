@@ -10,6 +10,12 @@
             {
                 "assertFunctionNames": ["expect", "verify", "expectValid*", "expectThrows*"]
             }
+        ],
+        "no-restricted-imports": [
+            "error",
+            {
+                "patterns": ["src/*"]
+            }
         ]
     }
 }
