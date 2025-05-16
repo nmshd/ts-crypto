@@ -365,7 +365,7 @@ export class CryptoEncryption extends CryptoEncryptionWithLibsodium {
             return await CryptoEncryptionWithCryptoLayer.encryptWithCounter(plaintext, secretKey, nonce, counter);
         }
 
-        if (!(secretKey instanceof CryptoSecretKeyHandle) && nonce) {
+        if (!(secretKey instanceof CryptoSecretKeyHandle)) {
             return await super.encryptWithCounter(plaintext, secretKey, nonce, counter, algorithm);
         }
         throw new CryptoError(

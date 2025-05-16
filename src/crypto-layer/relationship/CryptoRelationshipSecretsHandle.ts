@@ -138,12 +138,12 @@ export class CryptoRelationshipSecretsHandle
      * @param verbose - If true, includes the "@type" property in the output.
      * @returns A Promise that resolves to the serialized form {@link ICryptoRelationshipSecretsHandleSerialized}.
      */
-    public override async toJSON(verbose = true): Promise<ICryptoRelationshipSecretsHandleSerialized> {
+    public override toJSON(verbose = true): ICryptoRelationshipSecretsHandleSerialized {
         return {
             exc: this.exchangeKeypair.toJSON(false),
             sig: this.signatureKeypair.toJSON(false),
-            tx: await this.transmitState.toJSON(false),
-            rx: await this.receiveState.toJSON(false),
+            tx: this.transmitState.toJSON(false),
+            rx: this.receiveState.toJSON(false),
             pxk: this.peerExchangeKey.toJSON(false),
             psk: this.peerSignatureKey.toJSON(false),
             ptk: this.peerTemplateKey.toJSON(false),

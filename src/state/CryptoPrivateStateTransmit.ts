@@ -1,6 +1,6 @@
 import { type } from "@js-soft/ts-serval";
-import { CryptoPrivateStateTransmitHandle } from "src/crypto-layer";
 import { CoreBuffer } from "../CoreBuffer";
+import { CryptoPrivateStateTransmitHandle } from "../crypto-layer";
 import { CryptoEncryptionWithCryptoLayer } from "../crypto-layer/encryption/CryptoEncryption";
 import { CryptoSecretKeyHandle } from "../crypto-layer/encryption/CryptoSecretKeyHandle";
 import { CryptoError } from "../CryptoError";

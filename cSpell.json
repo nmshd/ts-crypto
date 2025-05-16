@@ -7,11 +7,14 @@
         "Keypair",
         "libsodium",
         "MEMLIMIT",
+        "memzero",
         "nmshd",
+        "nopadding",
         "OPSLIMIT",
         "pwhash",
         "SALTBYTES",
         "Templator",
+        "urlsafe",
         "XCHACHA"
     ]
 }

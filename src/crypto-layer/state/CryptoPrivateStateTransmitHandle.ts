@@ -1,11 +1,11 @@
 import { SerializableAsync, type } from "@js-soft/ts-serval";
-import { CryptoError } from "src/CryptoError";
-import { CryptoErrorCode } from "src/CryptoErrorCode";
-import { CryptoValidation } from "src/CryptoValidation";
-import { CryptoCipher } from "src/encryption/CryptoCipher";
-import { CryptoEncryption, CryptoEncryptionAlgorithm } from "src/encryption/CryptoEncryption";
-import { CryptoStateType } from "src/state/CryptoStateType";
 import { CoreBuffer } from "../../CoreBuffer";
+import { CryptoError } from "../../CryptoError";
+import { CryptoErrorCode } from "../../CryptoErrorCode";
+import { CryptoValidation } from "../../CryptoValidation";
+import { CryptoCipher } from "../../encryption/CryptoCipher";
+import { CryptoEncryption, CryptoEncryptionAlgorithm } from "../../encryption/CryptoEncryption";
+import { CryptoStateType } from "../../state/CryptoStateType";
 import { getProviderOrThrow } from "../CryptoLayerProviders";
 import { CryptoEncryptionWithCryptoLayer } from "../encryption/CryptoEncryption";
 import { CryptoSecretKeyHandle } from "../encryption/CryptoSecretKeyHandle";
