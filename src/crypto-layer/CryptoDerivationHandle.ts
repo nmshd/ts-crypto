@@ -5,7 +5,9 @@ import { getProviderOrThrow, ProviderIdentifier } from "./CryptoLayerProviders";
 import { CryptoSecretKeyHandle } from "./encryption/CryptoSecretKeyHandle";
 
 export class CryptoDerivationHandle extends CryptoSerializableAsync {
-    /** Derive an ephemeral {@link CryptoSecretKeyHandle} from a password.  */
+    /**
+     * Derive an ephemeral {@link CryptoSecretKeyHandle} from a password.
+     */
     public static async deriveKeyHandleFromPassword(
         providerIdent: ProviderIdentifier,
         password: ICoreBuffer,

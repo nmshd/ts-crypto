@@ -24,9 +24,7 @@ export class CryptoEncryptionHandle {
         secretKeyHandle: CryptoSecretKeyHandle,
         nonce?: CoreBuffer
     ): Promise<CryptoCipher> {
-        const encryptionAlgorithm = CryptoLayerUtils.cryptoEncryptionAlgorithmFromCalCipher(
-            secretKeyHandle.spec.cipher
-        );
+        const encryptionAlgorithm = CryptoLayerUtils.cryptoEncryptionAlgorithmFromCipher(secretKeyHandle.spec.cipher);
 
         if (!nonce || nonce.buffer.length === 0) {
             nonce = await this.createNonce(encryptionAlgorithm, secretKeyHandle.provider);
@@ -54,9 +52,7 @@ export class CryptoEncryptionHandle {
         nonce: CoreBuffer,
         counter: number
     ): Promise<CryptoCipher> {
-        const encryptionAlgorithm = CryptoLayerUtils.cryptoEncryptionAlgorithmFromCalCipher(
-            secretKeyHandle.spec.cipher
-        );
+        const encryptionAlgorithm = CryptoLayerUtils.cryptoEncryptionAlgorithmFromCipher(secretKeyHandle.spec.cipher);
 
         CryptoValidation.checkCounter(counter);
         CryptoValidation.checkNonceForAlgorithm(nonce, encryptionAlgorithm);
@@ -83,9 +79,7 @@ export class CryptoEncryptionHandle {
         secretKeyHandle: CryptoSecretKeyHandle,
         nonce?: CoreBuffer
     ): Promise<CoreBuffer> {
-        const encryptionAlgorithm = CryptoLayerUtils.cryptoEncryptionAlgorithmFromCalCipher(
-            secretKeyHandle.spec.cipher
-        );
+        const encryptionAlgorithm = CryptoLayerUtils.cryptoEncryptionAlgorithmFromCipher(secretKeyHandle.spec.cipher);
 
         let publicNonce;
         if (typeof nonce !== "undefined") {
@@ -114,9 +108,7 @@ export class CryptoEncryptionHandle {
         nonce: CoreBuffer,
         counter: number
     ): Promise<CoreBuffer> {
-        const encryptionAlgorithm = CryptoLayerUtils.cryptoEncryptionAlgorithmFromCalCipher(
-            secretKeyHandle.spec.cipher
-        );
+        const encryptionAlgorithm = CryptoLayerUtils.cryptoEncryptionAlgorithmFromCipher(secretKeyHandle.spec.cipher);
 
         CryptoValidation.checkCounter(counter);
         CryptoValidation.checkNonceForAlgorithm(nonce, encryptionAlgorithm);
