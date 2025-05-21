@@ -8,8 +8,9 @@ import {
 } from "@nmshd/crypto";
 import { KeySpec } from "@nmshd/rs-crypto-types";
 import { expect } from "chai";
+import { TestSerializeDeserializeOfBase64AndJson } from "../CommonSerialize";
 import { parameterizedKeySpec } from "../CryptoLayerTestUtil";
-import { assertSecretKeyHandleValid } from "../KeyValidation";
+import { assertSecretKeyHandleEqual, assertSecretKeyHandleValid } from "../KeyValidation";
 
 export class CryptoSecretKeyHandleTest {
     public static run(): void {
@@ -91,6 +92,16 @@ export class CryptoSecretKeyHandleTest {
 
                     expect(decrypted.buffer).to.deep.equal(data.buffer);
                 });
+
+                TestSerializeDeserializeOfBase64AndJson(
+                    "CryptoSecretKeyHandle",
+                    async () => {
+                        return CryptoEncryptionHandle.generateKey(providerIdent, spec);
+                    },
+                    CryptoSecretKeyHandle,
+                    assertSecretKeyHandleValid,
+                    assertSecretKeyHandleEqual
+                );
             });
         });
     }

@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import { AsymmetricKeySpec, Cipher, CryptoHash, KeyPairSpec, KeySpec } from "@nmshd/rs-crypto-types";
 import { expect } from "chai";
-import { defaults } from "lodash";
 
 export interface ParametersKeyPairSpec {
     asymSpec: AsymmetricKeySpec[];
@@ -23,6 +22,12 @@ const DEFAULT_PARAMETRIZED_KEY_PAIR_SPEC: ParametersKeyPairSpec = {
     signingHash: ["Sha2_512", "Sha2_256"],
     ephemeral: [false, true],
     nonExportable: [false, true]
+};
+
+const DEFAULT_PARAMETRIZED_KEY_SPEC: ParametersKeySpec = {
+    cipher: ["AesGcm256", "AesGcm128", "ChaCha20Poly1305"],
+    signingHash: ["Sha2_256"],
+    ephemeral: [false, true]
 };
 
 export function parameterizedKeyPairSpec(
@@ -63,11 +68,10 @@ export function parameterizedKeySpec(
     testFunction: (spec: KeySpec) => Promise<void>,
     override?: Partial<ParametersKeySpec>
 ): void {
-    const matrix: ParametersKeySpec = defaults(override, {
-        cipher: ["AesGcm256", "AesGcm128", "ChaCha20Poly1305"],
-        signingHash: ["Sha2_256"],
-        ephemeral: [false, true]
-    });
+    const matrix: ParametersKeySpec = {
+        ...DEFAULT_PARAMETRIZED_KEY_SPEC,
+        ...override
+    };
 
     matrix.signingHash.forEach((signing_hash) => {
         matrix.cipher.forEach((cipher) => {

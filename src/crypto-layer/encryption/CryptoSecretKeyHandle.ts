@@ -49,6 +49,10 @@ export class CryptoSecretKeyHandle extends CryptoSerializableAsync implements IC
         };
     }
 
+    public override toBase64(verbose = true): string {
+        return CoreBuffer.utf8_base64(this.serialize(verbose));
+    }
+
     /**
      * Deserializes an object representation of a {@link CryptoSecretKeyHandle}.
      *

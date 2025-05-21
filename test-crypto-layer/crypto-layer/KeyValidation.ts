@@ -24,4 +24,5 @@ export async function assertSecretKeyHandleValid<T extends CryptoSecretKeyHandle
  */
 export async function assertSecretKeyHandleEqual<T extends CryptoSecretKeyHandle>(before: T, after: T) {
     expect(before.spec).to.deep.equal(after.spec);
+    expect(await before.keyHandle.extractKey()).to.deep.eq(await after.keyHandle.extractKey());
 }
