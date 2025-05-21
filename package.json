@@ -1,6 +1,6 @@
 {
     "name": "@nmshd/crypto",
-    "version": "2.1.0",
+    "version": "2.1.1",
     "description": "The Enmeshed crypto library.",
     "homepage": "https://enmeshed.eu",
     "repository": "github:nmshd/ts-crypto",
@@ -60,7 +60,7 @@
         "@types/node": "^22.7.7",
         "@types/uuid": "^10.0.0",
         "@typescript-eslint/eslint-plugin": "^8.10.0",
-        "bt-runner": "^4.0.4",
+        "bt-runner": "^4.0.6",
         "nyc": "^17.1.0",
         "@istanbuljs/nyc-config-typescript": "^1.0.2",
         "source-map-support": "^0.5.21",
