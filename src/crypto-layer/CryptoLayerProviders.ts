@@ -28,20 +28,20 @@ async function providerBySecurityMapFromProviderByNameMap(
 ): Promise<Map<SecurityLevel, Provider[]>> {
     const providersBySecurity = new Map<SecurityLevel, Provider[]>();
     for (const [providerName, provider] of providersByName) {
-        const caps = await provider.getCapabilities();
-        if (!caps) {
+        const capabilities = await provider.getCapabilities();
+        if (!capabilities) {
             throw new CryptoError(
                 CryptoErrorCode.CalFailedLoadingProvider,
                 `Failed fetching capabilities or security levels of provider ${providerName}`
             );
         }
-        if (caps.max_security_level !== caps.min_security_level) {
+        if (capabilities.max_security_level !== capabilities.min_security_level) {
             throw new CryptoError(
                 CryptoErrorCode.CalFailedLoadingProvider,
                 `Minimum and maximum security levels of provider ${providerName} must be the same.`
             );
         }
-        const securityLevel = caps.min_security_level;
+        const securityLevel = capabilities.min_security_level;
 
         if (!providersBySecurity.has(securityLevel)) {
             providersBySecurity.set(securityLevel, []);
@@ -55,7 +55,7 @@ async function providerBySecurityMapFromProviderByNameMap(
 /**
  * Creates a provider if possible with the given provider filter. This means, that the provider created must adhere to the filter.
  *
- * If a `SecurityLevel` is given, the default provider config (`DEFAULT_PROVIDER_CONFIG`) will be used to fill in the rest for the selection.
+ * If a `SecurityLevel` is given, the default provider config {@link DEFAULT_PROVIDER_CONFIG} will be used to fill in the rest for the selection.
  */
 async function createProviderFromProviderFilter(
     providerToBeInitialized: CryptoLayerProviderFilter,
@@ -83,11 +83,7 @@ async function createProviderFromProviderFilter(
 }
 
 /**
- * Initializes global providers with the given configuration.
- *
- * This enables the crypto layer functionality.
- *
- * @param config Configuration to initialize providers. At least one software provider should be initialized.
+ * Initializes a list of global providers with the given configuration.
  */
 export async function initCryptoLayerProviders(config: CryptoLayerConfig): Promise<void> {
     if (PROVIDERS_BY_NAME || PROVIDERS_BY_SECURITY) {
@@ -123,9 +119,9 @@ export async function initCryptoLayerProviders(config: CryptoLayerConfig): Promi
 export type ProviderIdentifier = Exclude<CryptoLayerProviderFilter, { providerConfig: any }>;
 
 /**
- * Returns an initialized provider with the given name or security level if possible.
+ * Returns an initialized provider with the given name or security level if possible, otherwise undefined.
  *
- * Returns `undefined` if providers are not initialized or provider asked for was not initialized by `initCryptoLayerProviders`.
+ * Providers need to be initialized via the {@link initCryptoLayerProviders} function.
  */
 export function getProvider(identifier: ProviderIdentifier): Provider | undefined {
     if (!PROVIDERS_BY_NAME || !PROVIDERS_BY_SECURITY) {
@@ -142,6 +138,7 @@ export function getProvider(identifier: ProviderIdentifier): Provider | undefine
     throw new CryptoError(CryptoErrorCode.WrongParameters);
 }
 
+/** @see getProvider */
 export function getProviderOrThrow(identifier: ProviderIdentifier): Provider {
     const provider = getProvider(identifier);
     if (!provider) {
