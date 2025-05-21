@@ -1,24 +1,17 @@
 import { ISerializable, ISerialized, SerializableAsync, serialize, type, validate } from "@js-soft/ts-serval";
 import { KeyHandle, KeySpec, Provider } from "@nmshd/rs-crypto-types";
-import { CoreBuffer, Encoding, IClearable } from "../../CoreBuffer";
+import { CoreBuffer } from "../../CoreBuffer";
 import { CryptoError } from "../../CryptoError";
 import { CryptoErrorCode } from "../../CryptoErrorCode";
 import { CryptoSerializableAsync } from "../../CryptoSerializable";
-import { CryptoEncryptionAlgorithm } from "../../encryption/CryptoEncryption";
 import { getProviderOrThrow, ProviderIdentifier } from "../CryptoLayerProviders";
 
-/**
- * Interface defining the serialized form of {@link CryptoSecretKeyHandle}.
- */
 export interface ICryptoSecretKeyHandleSerialized extends ISerialized {
     kid: string;
     pnm: string;
     spc: KeySpec;
 }
 
-/**
- * Interface defining the structure of {@link CryptoSecretKeyHandle}.
- */
 export interface ICryptoSecretKeyHandle extends ISerializable {
     id: string;
     providerName: string;
@@ -31,7 +24,7 @@ export interface ICryptoSecretKeyHandle extends ISerializable {
  * without exposing the raw key material directly.
  */
 @type("CryptoSecretKeyHandle")
-export class CryptoSecretKeyHandle extends CryptoSerializableAsync implements ICryptoSecretKeyHandle, IClearable {
+export class CryptoSecretKeyHandle extends CryptoSerializableAsync implements ICryptoSecretKeyHandle {
     @validate()
     @serialize()
     public id: string;
@@ -47,16 +40,6 @@ export class CryptoSecretKeyHandle extends CryptoSerializableAsync implements IC
     public provider: Provider;
     public keyHandle: KeyHandle;
 
-    /**
-     * Clears sensitive data associated with this key pair.
-     * Since this class only contains handles to keys managed by the crypto provider,
-     * no actual clearing of raw key material is performed here.
-     */
-    public clear(): void {
-        // No-op for handle objects as they don't contain the actual key material
-        // The actual key material is managed by the crypto provider
-    }
-
     public override toJSON(verbose = true): ICryptoSecretKeyHandleSerialized {
         return {
             kid: this.id,
@@ -67,13 +50,10 @@ export class CryptoSecretKeyHandle extends CryptoSerializableAsync implements IC
     }
 
     /**
-     * Extracts the raw key material from this handle as a Base64-URL string.
+     * Deserializes an object representation of a {@link CryptoSecretKeyHandle}.
+     *
+     * This method is not able to import raw keys or {@link KeyHandle}.
      */
-    public async toSerializedString(): Promise<string> {
-        const raw = await this.keyHandle.extractKey();
-        return CoreBuffer.from(raw).toString(Encoding.Base64_UrlSafe_NoPadding);
-    }
-
     public static async from(
         value: CryptoSecretKeyHandle | ICryptoSecretKeyHandle | CoreBuffer
     ): Promise<CryptoSecretKeyHandle> {
@@ -91,11 +71,23 @@ export class CryptoSecretKeyHandle extends CryptoSerializableAsync implements IC
         return value;
     }
 
+    /** @see from */
+    public static async fromJSON(value: ICryptoSecretKeyHandleSerialized): Promise<CryptoSecretKeyHandle> {
+        return await this.fromAny(value);
+    }
+
+    /** @see from */
+    public static async fromBase64(value: string): Promise<CryptoSecretKeyHandle> {
+        return await this.deserialize(CoreBuffer.base64_utf8(value));
+    }
+
     /**
-     * Creates a new CryptoSecretKeyHandle from an existing KeyHandle plus optional data
-     * (providerName, keyId, keySpec, etc.).
+     * Creates a new {@link CryptoSecretKeyHandle} from an existing {@link KeyHandle}.
+     *
+     * `other` is an optional object, where metadata, that is by default derived from asynchronous calls
+     * to the {@link Provider} and {@link KeyHandle}, may be provided manually.
      */
-    public static async newFromProviderAndKeyHandle<T extends CryptoSecretKeyHandle>(
+    public static async fromProviderAndKeyHandle<T extends CryptoSecretKeyHandle>(
         this: new () => T,
         provider: Provider,
         keyHandle: KeyHandle,
@@ -103,56 +95,32 @@ export class CryptoSecretKeyHandle extends CryptoSerializableAsync implements IC
             providerName?: string;
             keyId?: string;
             keySpec?: KeySpec;
-            algorithm?: CryptoEncryptionAlgorithm;
         }
     ): Promise<T> {
         const result = new this();
 
-        result.providerName = other?.providerName ?? (await provider.providerName());
-        result.id = other?.keyId ?? (await keyHandle.id());
-        result.spec = other?.keySpec ?? (await keyHandle.spec());
+        [result.providerName, result.id, result.spec] = await Promise.all([
+            other?.providerName ?? provider.providerName(),
+            other?.keyId ?? keyHandle.id(),
+            other?.keySpec ?? keyHandle.spec()
+        ]);
 
         result.provider = provider;
         result.keyHandle = keyHandle;
         return result;
     }
 
-    public static async fromJSON(value: ICryptoSecretKeyHandleSerialized): Promise<CryptoSecretKeyHandle> {
-        return await this.fromAny(value);
-    }
-
-    public static async fromBase64(value: string): Promise<CryptoSecretKeyHandle> {
-        return await this.deserialize(CoreBuffer.base64_utf8(value));
-    }
-
     /**
-     * Imports a raw key (as a CoreBuffer) into the provider as a handle, returning a new CryptoSecretKeyHandle.
+     * Creates a new {@link CryptoSecretKeyHandle} by importing a raw key into a provider.
      */
-    public static async importRawKeyIntoHandle(
+    public static async fromRawKey(
         providerIdent: ProviderIdentifier,
         rawKey: CoreBuffer,
-        spec: KeySpec,
-        algorithm: CryptoEncryptionAlgorithm
+        spec: KeySpec
     ): Promise<CryptoSecretKeyHandle> {
         const provider = getProviderOrThrow(providerIdent);
         const keyHandle = await provider.importKey(spec, rawKey.buffer);
-        return await this.newFromProviderAndKeyHandle(provider, keyHandle, { keySpec: spec, algorithm });
-    }
-
-    /**
-     * Creates a brand-new secret key handle with the given KeySpec and algorithm from the provider.
-     */
-    public static async generateKeyHandle(
-        providerIdent: ProviderIdentifier,
-        spec: KeySpec,
-        algorithm: CryptoEncryptionAlgorithm
-    ): Promise<CryptoSecretKeyHandle> {
-        const provider = getProviderOrThrow(providerIdent);
-        const keyHandle = await provider.createKey(spec);
-        return await this.newFromProviderAndKeyHandle(provider, keyHandle, {
-            keySpec: spec,
-            algorithm
-        });
+        return await this.fromProviderAndKeyHandle(provider, keyHandle, { keySpec: spec });
     }
 
     public static override async postFrom<T extends SerializableAsync>(value: T): Promise<T> {

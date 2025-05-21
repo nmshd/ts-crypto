@@ -19,6 +19,7 @@
         "SALTBYTES",
         "Templator",
         "urlsafe",
-        "XCHACHA"
+        "XCHACHA",
+        "zeroize"
     ]
 }

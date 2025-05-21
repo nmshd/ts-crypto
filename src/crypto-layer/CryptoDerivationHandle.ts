@@ -64,7 +64,7 @@ export class CryptoDerivationHandle extends CryptoSerializableAsync {
         // Now call deriveKeyFromPassword with the additional kdf parameter.
         const keyHandle = await provider.deriveKeyFromPassword(password.toUtf8(), salt.buffer, spec, kdfOptions);
 
-        return await CryptoSecretKeyHandle.newFromProviderAndKeyHandle(provider, keyHandle);
+        return await CryptoSecretKeyHandle.fromProviderAndKeyHandle(provider, keyHandle);
     }
 
     // /**
@@ -122,6 +122,6 @@ export class CryptoDerivationHandle extends CryptoSerializableAsync {
         const encoder = new TextEncoder();
         const bytes = encoder.encode(`id:${keyId};ctx:${context}`);
         const derived = await baseKey.keyHandle.deriveKey(bytes);
-        return await CryptoSecretKeyHandle.newFromProviderAndKeyHandle(baseKey.provider, derived);
+        return await CryptoSecretKeyHandle.fromProviderAndKeyHandle(baseKey.provider, derived);
     }
 }
