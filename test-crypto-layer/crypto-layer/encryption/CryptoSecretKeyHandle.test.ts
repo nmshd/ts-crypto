@@ -3,7 +3,7 @@ import {
     CoreBuffer,
     CryptoCipher,
     CryptoEncryptionAlgorithm,
-    CryptoEncryptionWithCryptoLayer,
+    CryptoEncryptionHandle,
     CryptoSecretKeyHandle
 } from "@nmshd/crypto";
 import { KeySpec } from "@nmshd/rs-crypto-types";
@@ -23,18 +23,12 @@ export class CryptoSecretKeyHandleTest {
                 const providerIdent = { providerName: "SoftwareProvider" };
 
                 parameterizedKeySpec("generateSecretKeyHandle()", async function (spec: KeySpec) {
-                    const cryptoSecretKeyHandle = await CryptoEncryptionWithCryptoLayer.generateKey(
-                        providerIdent,
-                        spec
-                    );
+                    const cryptoSecretKeyHandle = await CryptoEncryptionHandle.generateKey(providerIdent, spec);
                     await assertSecretKeyHandleValid(cryptoSecretKeyHandle);
                 });
 
                 it("from() ICryptoSecretKeyHandle", async function () {
-                    const cryptoSecretKeyHandle = await CryptoEncryptionWithCryptoLayer.generateKey(
-                        providerIdent,
-                        spec
-                    );
+                    const cryptoSecretKeyHandle = await CryptoEncryptionHandle.generateKey(providerIdent, spec);
                     await assertSecretKeyHandleValid(cryptoSecretKeyHandle);
 
                     const loadedSecretKeyHandle = await CryptoSecretKeyHandle.fromAny({
@@ -48,10 +42,7 @@ export class CryptoSecretKeyHandleTest {
                 });
 
                 it("from() CryptoSecretKeyHandle", async function () {
-                    const cryptoSecretKeyHandle = await CryptoEncryptionWithCryptoLayer.generateKey(
-                        providerIdent,
-                        spec
-                    );
+                    const cryptoSecretKeyHandle = await CryptoEncryptionHandle.generateKey(providerIdent, spec);
                     await assertSecretKeyHandleValid(cryptoSecretKeyHandle);
 
                     const loadedSecretKeyHandle = await CryptoSecretKeyHandle.from(cryptoSecretKeyHandle);
@@ -61,34 +52,28 @@ export class CryptoSecretKeyHandleTest {
                 });
 
                 it("encrypt() and decrypt()", async function () {
-                    const cryptoSecretKeyHandle = await CryptoEncryptionWithCryptoLayer.generateKey(
-                        providerIdent,
-                        spec
-                    );
+                    const cryptoSecretKeyHandle = await CryptoEncryptionHandle.generateKey(providerIdent, spec);
 
                     const data = new CoreBuffer("0123456789ABCDEF");
-                    const encrypted = await CryptoEncryptionWithCryptoLayer.encrypt(data, cryptoSecretKeyHandle);
+                    const encrypted = await CryptoEncryptionHandle.encrypt(data, cryptoSecretKeyHandle);
                     expect(encrypted).to.be.ok.and.to.be.instanceOf(CryptoCipher);
                     expect(encrypted.algorithm).to.equal(CryptoEncryptionAlgorithm.AES256_GCM);
 
-                    const decrypted = await CryptoEncryptionWithCryptoLayer.decrypt(encrypted, cryptoSecretKeyHandle);
+                    const decrypted = await CryptoEncryptionHandle.decrypt(encrypted, cryptoSecretKeyHandle);
 
                     expect(decrypted.buffer).to.deep.equal(data.buffer);
                 });
 
                 it("encrypt() and decrypt() with counter", async function () {
-                    const cryptoSecretKeyHandle = await CryptoEncryptionWithCryptoLayer.generateKey(
-                        providerIdent,
-                        spec
-                    );
+                    const cryptoSecretKeyHandle = await CryptoEncryptionHandle.generateKey(providerIdent, spec);
 
-                    const nonce = await CryptoEncryptionWithCryptoLayer.createNonce(
+                    const nonce = await CryptoEncryptionHandle.createNonce(
                         CryptoEncryptionAlgorithm.AES256_GCM,
                         cryptoSecretKeyHandle.provider
                     );
 
                     const data = new CoreBuffer("0123456789ABCDEF");
-                    const encrypted = await CryptoEncryptionWithCryptoLayer.encryptWithCounter(
+                    const encrypted = await CryptoEncryptionHandle.encryptWithCounter(
                         data,
                         cryptoSecretKeyHandle,
                         nonce,
@@ -97,7 +82,7 @@ export class CryptoSecretKeyHandleTest {
                     expect(encrypted).to.be.ok.and.to.be.instanceOf(CryptoCipher);
                     expect(encrypted.algorithm).to.equal(CryptoEncryptionAlgorithm.AES256_GCM);
 
-                    const decrypted = await CryptoEncryptionWithCryptoLayer.decryptWithCounter(
+                    const decrypted = await CryptoEncryptionHandle.decryptWithCounter(
                         encrypted,
                         cryptoSecretKeyHandle,
                         nonce,

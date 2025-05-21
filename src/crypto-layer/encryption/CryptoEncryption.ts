@@ -9,7 +9,7 @@ import { getProviderOrThrow, ProviderIdentifier } from "../CryptoLayerProviders"
 import { CryptoLayerUtils } from "../CryptoLayerUtils";
 import { CryptoSecretKeyHandle } from "./CryptoSecretKeyHandle";
 
-export class CryptoEncryptionWithCryptoLayer {
+export class CryptoEncryptionHandle {
     public static async generateKey(providerIdent: ProviderIdentifier, spec: KeySpec): Promise<CryptoSecretKeyHandle> {
         const provider = getProviderOrThrow(providerIdent);
         const keyHandle = await provider.createKey(spec);

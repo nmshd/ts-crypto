@@ -1,6 +1,6 @@
 import { ISerializable, ISerialized, SerializableAsync, serialize, type, validate } from "@js-soft/ts-serval";
 import { KeyHandle, KeySpec, Provider } from "@nmshd/rs-crypto-types";
-import { CoreBuffer } from "../../CoreBuffer";
+import { CoreBuffer, ICoreBuffer } from "../../CoreBuffer";
 import { CryptoError } from "../../CryptoError";
 import { CryptoErrorCode } from "../../CryptoErrorCode";
 import { CryptoSerializableAsync } from "../../CryptoSerializable";
@@ -115,7 +115,7 @@ export class CryptoSecretKeyHandle extends CryptoSerializableAsync implements IC
      */
     public static async fromRawKey(
         providerIdent: ProviderIdentifier,
-        rawKey: CoreBuffer,
+        rawKey: ICoreBuffer,
         spec: KeySpec
     ): Promise<CryptoSecretKeyHandle> {
         const provider = getProviderOrThrow(providerIdent);
