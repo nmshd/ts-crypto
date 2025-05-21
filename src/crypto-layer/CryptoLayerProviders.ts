@@ -7,7 +7,6 @@ import {
     SecurityLevel
 } from "@nmshd/rs-crypto-types";
 
-import { defaults } from "lodash";
 import { CryptoError } from "../CryptoError";
 import { CryptoErrorCode } from "../CryptoErrorCode";
 import { CryptoLayerConfig, CryptoLayerProviderFilter } from "./CryptoLayerConfig";
@@ -66,13 +65,11 @@ async function createProviderFromProviderFilter(
         return await factoryFunctions.createProviderFromName(providerToBeInitialized.providerName, providerImplConfig);
     }
     if ("securityLevel" in providerToBeInitialized) {
-        const providerConfig: ProviderConfig = defaults(
-            {
-                max_security_level: providerToBeInitialized.securityLevel,
-                min_security_level: providerToBeInitialized.securityLevel
-            },
-            DEFAULT_PROVIDER_CONFIG
-        );
+        const providerConfig: ProviderConfig = {
+            ...DEFAULT_PROVIDER_CONFIG,
+            max_security_level: providerToBeInitialized.securityLevel,
+            min_security_level: providerToBeInitialized.securityLevel
+        };
         return await factoryFunctions.createProvider(providerConfig, providerImplConfig);
     }
     if ("providerConfig" in providerToBeInitialized) {

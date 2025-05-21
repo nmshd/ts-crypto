@@ -17,18 +17,23 @@ export interface ParametersKeySpec {
     ephemeral: boolean[];
 }
 
+const DEFAULT_PARAMETRIZED_KEY_PAIR_SPEC: ParametersKeyPairSpec = {
+    asymSpec: ["P256", "Curve25519"],
+    cipher: [null, "AesCbc256", "AesGcm256", "AesCbc128", "AesGcm128"],
+    signingHash: ["Sha2_512", "Sha2_256"],
+    ephemeral: [false, true],
+    nonExportable: [false, true]
+};
+
 export function parameterizedKeyPairSpec(
     name: string,
     testFunction: (spec: KeyPairSpec) => Promise<void>,
     override?: Partial<ParametersKeyPairSpec>
 ): void {
-    const matrix: ParametersKeyPairSpec = defaults(override, {
-        asymSpec: ["P256", "Curve25519"],
-        cipher: [null, "AesCbc256", "AesGcm256", "AesCbc128", "AesGcm128"],
-        signingHash: ["Sha2_512", "Sha2_256"],
-        ephemeral: [false, true],
-        nonExportable: [false, true]
-    });
+    const matrix: ParametersKeyPairSpec = {
+        ...DEFAULT_PARAMETRIZED_KEY_PAIR_SPEC,
+        ...override
+    };
 
     matrix.asymSpec.forEach((asym_spec) => {
         matrix.signingHash.forEach((signing_hash) => {
