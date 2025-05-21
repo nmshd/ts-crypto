@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/naming-convention */
-import { AsymmetricKeySpec, Cipher, CryptoHash, KeyPairSpec } from "@nmshd/rs-crypto-types";
+import { AsymmetricKeySpec, Cipher, CryptoHash } from "@nmshd/rs-crypto-types";
 import { CryptoEncryptionAlgorithm } from "..";
 import { CryptoError } from "../CryptoError";
 import { CryptoErrorCode } from "../CryptoErrorCode";
@@ -8,14 +7,6 @@ import { CryptoHashAlgorithm } from "../hash/CryptoHash";
 import { CryptoSignatureAlgorithm } from "../signature/CryptoSignatureAlgorithm";
 
 export class CryptoLayerUtils {
-    public static readonly DEFAULT_KEY_PAIR_SPEC: KeyPairSpec = {
-        asym_spec: "P256",
-        cipher: "AesGcm256",
-        signing_hash: "Sha2_512",
-        ephemeral: false,
-        non_exportable: false
-    };
-
     public static asymSpecFromCryptoExchangeOrSignatureAlgorithm(
         algorithm: CryptoExchangeAlgorithm | CryptoSignatureAlgorithm
     ): AsymmetricKeySpec {
