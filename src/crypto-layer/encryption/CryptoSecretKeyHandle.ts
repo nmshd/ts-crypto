@@ -34,7 +34,7 @@ export class CryptoSecretKeyHandle extends CryptoSerializableAsync implements IC
     @serialize()
     public providerName: string;
 
-    // ts-serval does not give the option to skip validation and only do custom validation.
+    // Validating here will error when using the ts-serval provided setter in `fromProviderAndKeyHandle`.
     @serialize()
     public spec: KeySpec;
 
@@ -73,6 +73,8 @@ export class CryptoSecretKeyHandle extends CryptoSerializableAsync implements IC
                 spec: value.spc
             };
         }
+
+        // This validation compensates the missing validation from ts-serval.
         if (!isKeySpec(value.spec)) {
             throw new CryptoError(
                 CryptoErrorCode.DeserializeValidation,
