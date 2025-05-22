@@ -8,6 +8,7 @@ import {
 import chai from "chai";
 import { CryptoDerivationHandleTest } from "./crypto-layer/CryptoDerivation.test";
 import { CryptoLayerProviderTest } from "./crypto-layer/CryptoLayerProviderTest.test";
+import { CryptoEncryptionHandleTest } from "./crypto-layer/encryption/CryptoEncryptionHandle.test";
 import { CryptoSecretKeyHandleTest } from "./crypto-layer/encryption/CryptoSecretKeyHandle.test";
 
 chai.config.truncateThreshold = 0;
@@ -32,6 +33,7 @@ export const TEST_PROVIDER_IDENT: ProviderIdentifier = { providerName: "Software
 
     // Encryption
     CryptoSecretKeyHandleTest.run();
+    CryptoEncryptionHandleTest.run();
 
     // Derivation
     CryptoDerivationHandleTest.run();

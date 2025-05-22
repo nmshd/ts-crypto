@@ -65,18 +65,6 @@ export class CryptoSecretKeyHandle extends CryptoSerializableAsync implements IC
         return await this.fromAny(value);
     }
 
-    protected static override preFrom(value: any): any {
-        if (value.kid) {
-            value = {
-                id: value.kid,
-                providerName: value.pnm,
-                spec: value.spc
-            };
-        }
-
-        return value;
-    }
-
     /** @see from */
     public static async fromJSON(value: ICryptoSecretKeyHandleSerialized): Promise<CryptoSecretKeyHandle> {
         return await this.fromAny(value);
@@ -129,9 +117,24 @@ export class CryptoSecretKeyHandle extends CryptoSerializableAsync implements IC
         return await this.fromProviderAndKeyHandle(provider, keyHandle, { keySpec: spec });
     }
 
+    protected static override preFrom(value: any): any {
+        if (value.kid) {
+            value = {
+                id: value.kid,
+                providerName: value.pnm,
+                spec: value.spc
+            };
+        }
+
+        return value;
+    }
+
     public static override async postFrom<T extends SerializableAsync>(value: T): Promise<T> {
         if (!(value instanceof CryptoSecretKeyHandle)) {
-            throw new CryptoError(CryptoErrorCode.WrongParameters, "Expected 'CryptoSecretKeyHandle' in postFrom.");
+            throw new CryptoError(
+                CryptoErrorCode.DeserializeValidation,
+                "Expected 'CryptoSecretKeyHandle' in postFrom."
+            );
         }
 
         // This validation compensates the missing validation from ts-serval.

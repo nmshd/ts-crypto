@@ -57,7 +57,7 @@ export class CryptoEncryptionHandle {
         CryptoValidation.checkCounter(counter);
         CryptoValidation.checkNonceForAlgorithm(nonce, encryptionAlgorithm);
 
-        const publicNonce = this.addCounterToNonce(nonce.buffer, counter);
+        const publicNonce = this._addCounter(nonce.buffer, counter);
 
         let cipher;
         try {
@@ -112,7 +112,7 @@ export class CryptoEncryptionHandle {
         CryptoValidation.checkCounter(counter);
         CryptoValidation.checkNonceForAlgorithm(nonce, encryptionAlgorithm);
 
-        const publicNonce = this.addCounterToNonce(nonce.buffer, counter);
+        const publicNonce = this._addCounter(nonce.buffer, counter);
 
         try {
             const buffer = await secretKeyHandle.keyHandle.decryptData(cipher.cipher.buffer, publicNonce.buffer);
@@ -143,7 +143,7 @@ export class CryptoEncryptionHandle {
         return CoreBuffer.from(buffer);
     }
 
-    private static addCounterToNonce(nonce: Uint8Array | CoreBuffer, counter: number): CoreBuffer {
+    private static _addCounter(nonce: Uint8Array | CoreBuffer, counter: number): CoreBuffer {
         let buffer;
         if (nonce instanceof Uint8Array) {
             buffer = new CoreBuffer(nonce);
