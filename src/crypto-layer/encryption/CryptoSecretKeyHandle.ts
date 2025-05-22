@@ -1,5 +1,6 @@
 import { ISerializable, ISerialized, SerializableAsync, serialize, type, validate } from "@js-soft/ts-serval";
 import { KeyHandle, KeySpec, Provider } from "@nmshd/rs-crypto-types";
+import { isKeySpec } from "@nmshd/rs-crypto-types/checks";
 import { CoreBuffer, ICoreBuffer } from "../../CoreBuffer";
 import { CryptoError } from "../../CryptoError";
 import { CryptoErrorCode } from "../../CryptoErrorCode";
@@ -33,7 +34,14 @@ export class CryptoSecretKeyHandle extends CryptoSerializableAsync implements IC
     @serialize()
     public providerName: string;
 
-    @validate()
+    @validate({
+        customValidator: (value) => {
+            if (isKeySpec(value)) {
+                return undefined;
+            }
+            return "Not KeySpec";
+        }
+    })
     @serialize()
     public spec: KeySpec;
 

@@ -28,7 +28,7 @@ export function parameterizedKeySpec(
         matrix.cipher.forEach((cipher) => {
             matrix.ephemeral.forEach((ephemeral) => {
                 // eslint-disable-next-line jest/expect-expect
-                it(`${name} with ${signing_hash}${cipher}${ephemeral ? `, ephemeral` : ""}`, async function () {
+                it(`${name} with ${signing_hash}, ${cipher}${ephemeral ? `, ephemeral` : ""}`, async function () {
                     const spec: KeySpec = {
                         cipher: cipher,
                         signing_hash: signing_hash,
