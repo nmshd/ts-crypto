@@ -1,5 +1,5 @@
 import { CryptoSecretKeyHandle } from "@nmshd/crypto";
-import { assertKeyHandle, assertProvider } from "@nmshd/rs-crypto-types/checks";
+import { assertKeyHandle, assertKeySpec, assertProvider } from "@nmshd/rs-crypto-types/checks";
 import { expect } from "chai";
 
 /**
@@ -10,10 +10,12 @@ export async function assertSecretKeyHandleValid<T extends CryptoSecretKeyHandle
     expect(handle.id).to.exist.and.to.be.a("string");
     expect(handle.keyHandle).to.exist;
     expect(handle.provider).to.exist;
+    expect(handle.spec).to.exist;
     expect(handle.providerName).to.exist.and.to.be.a("string");
 
     assertKeyHandle(handle.keyHandle);
     assertProvider(handle.provider);
+    assertKeySpec(handle.spec);
 
     expect(await handle.keyHandle.id()).to.exist.and.to.be.a("string").and.to.be.not.empty;
     expect(await handle.keyHandle.spec()).to.exist.and.to.deep.equal(handle.spec);

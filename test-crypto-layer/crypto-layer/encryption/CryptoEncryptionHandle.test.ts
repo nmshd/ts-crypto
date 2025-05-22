@@ -41,9 +41,11 @@ export class CryptoEncryptionHandleTest {
                             spec: cryptoSecretKeyHandle.spec,
                             providerName: cryptoSecretKeyHandle.providerName
                         });
-                        await assertSecretKeyHandleValid(loadedSecretKeyHandle);
 
-                        await assertSecretKeyHandleEqual(cryptoSecretKeyHandle, loadedSecretKeyHandle);
+                        await Promise.all([
+                            assertSecretKeyHandleValid(loadedSecretKeyHandle),
+                            assertSecretKeyHandleEqual(cryptoSecretKeyHandle, loadedSecretKeyHandle)
+                        ]);
                     },
                     {
                         ephemeral: [false]
@@ -60,9 +62,11 @@ export class CryptoEncryptionHandleTest {
                         await assertSecretKeyHandleValid(cryptoSecretKeyHandle);
 
                         const loadedSecretKeyHandle = await CryptoSecretKeyHandle.from(cryptoSecretKeyHandle);
-                        await assertSecretKeyHandleValid(loadedSecretKeyHandle);
 
-                        await assertSecretKeyHandleEqual(cryptoSecretKeyHandle, loadedSecretKeyHandle);
+                        await Promise.all([
+                            assertSecretKeyHandleValid(loadedSecretKeyHandle),
+                            assertSecretKeyHandleEqual(cryptoSecretKeyHandle, loadedSecretKeyHandle)
+                        ]);
                     },
                     {
                         ephemeral: [false]
@@ -219,7 +223,7 @@ export class CryptoEncryptionHandleTest {
                 });
             });
 
-            describe("Legacy Tests with XCHACHA20_POLY1305", function () {
+            describe("Execute generateKey() with XCHACHA20_POLY1305", function () {
                 const spec: KeySpec = {
                     cipher: "XChaCha20Poly1305",
                     signing_hash: "Sha2_256",
@@ -229,6 +233,7 @@ export class CryptoEncryptionHandleTest {
                 let key: CryptoSecretKeyHandle;
                 before(async function () {
                     key = await CryptoEncryptionHandle.generateKey(TEST_PROVIDER_IDENT, spec);
+                    await assertSecretKeyHandleValid(key);
                 });
 
                 it("should return a SecretKey", function () {
@@ -245,17 +250,21 @@ export class CryptoEncryptionHandleTest {
                 it("should serialize and deserialize the key correctly", async function () {
                     const serialized = key.serialize();
                     const deserialized = await CryptoSecretKeyHandle.deserialize(serialized);
-                    expect(deserialized.keyHandle).to.deep.equal(key.keyHandle);
+                    await Promise.all([
+                        assertSecretKeyHandleValid(deserialized),
+                        assertSecretKeyHandleEqual(key, deserialized)
+                    ]);
                     expect(deserialized.id).to.equal(key.id);
-                    expect(deserialized.spec).to.deep.equal(key.spec);
                 });
 
                 it("should serialize and deserialize the key using base64 correctly", async function () {
                     const serialized = key.toBase64();
                     const deserialized = await CryptoSecretKeyHandle.fromBase64(serialized);
-                    expect(deserialized.keyHandle).to.deep.equal(key.keyHandle);
+                    await Promise.all([
+                        assertSecretKeyHandleValid(deserialized),
+                        assertSecretKeyHandleEqual(key, deserialized)
+                    ]);
                     expect(deserialized.id).to.equal(key.id);
-                    expect(deserialized.spec).to.deep.equal(key.spec);
                 });
 
                 it("should serialize and deserialize the key correctly from @type", async function () {
@@ -263,10 +272,12 @@ export class CryptoEncryptionHandleTest {
                     const deserialized = (await SerializableAsync.deserializeUnknown(
                         serialized
                     )) as CryptoSecretKeyHandle;
+                    await Promise.all([
+                        assertSecretKeyHandleValid(deserialized),
+                        assertSecretKeyHandleEqual(key, deserialized)
+                    ]);
                     expect(deserialized).instanceOf(CryptoSecretKeyHandle);
-                    expect(deserialized.keyHandle).to.deep.equal(key.keyHandle);
                     expect(deserialized.id).to.equal(key.id);
-                    expect(deserialized.spec).to.deep.equal(key.spec);
                 });
             });
 
@@ -282,8 +293,12 @@ export class CryptoEncryptionHandleTest {
                 const expectedAlgorithm = CryptoLayerUtils.cryptoEncryptionAlgorithmFromCipher(spec.cipher);
 
                 before(async function () {
-                    key = await CryptoEncryptionHandle.generateKey(TEST_PROVIDER_IDENT, spec);
-                    key2 = await CryptoEncryptionHandle.generateKey(TEST_PROVIDER_IDENT, spec);
+                    [key, key2] = await Promise.all([
+                        CryptoEncryptionHandle.generateKey(TEST_PROVIDER_IDENT, spec),
+                        CryptoEncryptionHandle.generateKey(TEST_PROVIDER_IDENT, spec)
+                    ]);
+
+                    await Promise.all([assertSecretKeyHandleValid(key), assertSecretKeyHandleValid(key2)]);
                 });
 
                 it("should return a CryptoCipher with random nonce", async function () {
@@ -423,8 +438,10 @@ export class CryptoEncryptionHandleTest {
                 });
 
                 it("should create a different CryptoCipher every time", async function () {
-                    const cipher1 = await CryptoEncryptionHandle.encrypt(text, key);
-                    const cipher2 = await CryptoEncryptionHandle.encrypt(text, key);
+                    const [cipher1, cipher2] = await Promise.all([
+                        CryptoEncryptionHandle.encrypt(text, key),
+                        CryptoEncryptionHandle.encrypt(text, key)
+                    ]);
                     expect(cipher1.cipher.toBase64URL()).to.not.equal(cipher2.cipher.toBase64URL());
                     if (cipher1.nonce && cipher2.nonce) {
                         expect(cipher1.nonce.toBase64URL()).to.not.equal(cipher2.nonce.toBase64URL());
