@@ -118,7 +118,7 @@ export class CryptoEncryptionHandle {
             const buffer = await secretKeyHandle.keyHandle.decryptData(cipher.cipher.buffer, publicNonce.buffer);
             return CoreBuffer.from(buffer);
         } catch (e) {
-            throw new CryptoError(CryptoErrorCode.EncryptionEncrypt, `${e}`, undefined, e as Error);
+            throw new CryptoError(CryptoErrorCode.EncryptionDecrypt, `${e}`, undefined, e as Error);
         }
     }
 

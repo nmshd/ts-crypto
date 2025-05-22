@@ -9,7 +9,8 @@ import {
     CryptoError,
     CryptoLayerUtils,
     CryptoSecretKey,
-    CryptoSecretKeyHandle
+    CryptoSecretKeyHandle,
+    ICryptoSecretKeySerialized
 } from "@nmshd/crypto";
 import { KeySpec } from "@nmshd/rs-crypto-types";
 import { expect } from "chai";
@@ -152,8 +153,6 @@ export class CryptoEncryptionHandleTest {
 
                     const nonce = new CoreBuffer("ZnZj");
 
-                    console.log(`provided nonce length = ${nonce.buffer.length}`);
-
                     const data = new CoreBuffer("0123456789ABCDEF");
 
                     let error;
@@ -175,34 +174,52 @@ export class CryptoEncryptionHandleTest {
                     ephemeral: false
                 };
 
-                it("extracted key imported in libsodium should be able to decrypt.", async function () {
+                it("extracted key imported in libsodium should be able to decrypt", async function () {
                     const key = await CryptoEncryptionHandle.generateKey(TEST_PROVIDER_IDENT, spec);
 
                     const rawKey = await key.keyHandle.extractKey();
                     const keyBuffer = new CoreBuffer(rawKey);
                     const algorithm = CryptoLayerUtils.cryptoEncryptionAlgorithmFromCipher(key.spec.cipher);
-                    const keyObject = {
+                    const keyObject: ICryptoSecretKeySerialized = {
                         alg: algorithm,
                         key: keyBuffer.toBase64URL()
                     };
 
                     const libsodiumKey = CryptoSecretKey.fromJSON(keyObject);
 
-                    const data = CoreBuffer.random(4);
-                    const encrypted = await CryptoEncryptionHandle.encrypt(data, key);
-                    const encryptedLibsodium = await CryptoEncryption.encrypt(data, libsodiumKey);
-                    console.log(encrypted);
-                    console.log(encryptedLibsodium);
-                    expect(encrypted).to.be.ok.and.to.be.instanceOf(CryptoCipher);
-                    expect(encrypted.algorithm).to.equal(CryptoEncryptionAlgorithm.XCHACHA20_POLY1305);
+                    const payload = CoreBuffer.random(4);
+                    const ciphertext = await CryptoEncryptionHandle.encrypt(payload, key);
+                    expect(ciphertext).to.be.ok.and.to.be.instanceOf(CryptoCipher);
+                    expect(ciphertext.algorithm).to.equal(algorithm);
 
-                    const decrypted = await CryptoEncryption.decrypt(encrypted, libsodiumKey);
+                    const decrypted = await CryptoEncryption.decrypt(ciphertext, libsodiumKey);
 
-                    expect(decrypted.buffer).to.deep.equal(data.buffer);
+                    expect(decrypted.buffer).to.deep.equal(payload.buffer);
+                });
+
+                it("libsodium key should be importable", async function () {
+                    const libsodiumKey = await CryptoEncryption.generateKey(
+                        CryptoEncryptionAlgorithm.XCHACHA20_POLY1305
+                    );
+
+                    const spec: KeySpec = {
+                        cipher: CryptoLayerUtils.cipherFromCryptoEncryptionAlgorithm(libsodiumKey.algorithm),
+                        signing_hash: "Sha2_256",
+                        ephemeral: false
+                    };
+
+                    const keyHandle = await CryptoSecretKeyHandle.fromRawKey(
+                        TEST_PROVIDER_IDENT,
+                        libsodiumKey.secretKey,
+                        spec
+                    );
+                    await assertSecretKeyHandleValid(keyHandle);
+
+                    expect(await keyHandle.keyHandle.extractKey()).to.deep.equal(libsodiumKey.secretKey.buffer);
                 });
             });
 
-            describe("Execute generateKey() with XCHACHA20_POLY1305", function () {
+            describe("Legacy Tests with XCHACHA20_POLY1305", function () {
                 const spec: KeySpec = {
                     cipher: "XChaCha20Poly1305",
                     signing_hash: "Sha2_256",
@@ -253,169 +270,167 @@ export class CryptoEncryptionHandleTest {
                 });
             });
 
-            // describe("Execute encrypt() with XCHACHA20_POLY1305", function () {
-            //     let key: CryptoSecretKeyHandle;
-            //     let key2: CryptoSecretKeyHandle;
-            //     const text: CoreBuffer = CoreBuffer.random(4);
-            //     before(async function () {
-            //         key = await CryptoEncryption.generateKey(CryptoEncryptionAlgorithm.XCHACHA20_POLY1305);
-            //         key2 = await CryptoEncryption.generateKey(CryptoEncryptionAlgorithm.XCHACHA20_POLY1305);
-            //     });
+            describe("Execute encrypt() with XCHACHA20_POLY1305", function () {
+                let key: CryptoSecretKeyHandle;
+                let key2: CryptoSecretKeyHandle;
+                const text: CoreBuffer = CoreBuffer.random(4);
+                const spec: KeySpec = {
+                    cipher: "XChaCha20Poly1305",
+                    signing_hash: "Sha2_256",
+                    ephemeral: false
+                };
+                const expectedAlgorithm = CryptoLayerUtils.cryptoEncryptionAlgorithmFromCipher(spec.cipher);
 
-            //     it("should return a CryptoCipher with random nonce", async function () {
-            //         const cipher = await CryptoEncryption.encrypt(text, key);
-            //         expect(cipher).to.exist;
-            //         expect(cipher).to.be.instanceOf(CryptoCipher);
-            //         expect(cipher.algorithm).to.be.equal(key.algorithm);
-            //         expect(cipher.counter).to.not.exist;
-            //         expect(cipher.nonce).to.exist;
-            //         expect(cipher.nonce?.buffer.byteLength).to.equal(24);
-            //     });
+                before(async function () {
+                    key = await CryptoEncryptionHandle.generateKey(TEST_PROVIDER_IDENT, spec);
+                    key2 = await CryptoEncryptionHandle.generateKey(TEST_PROVIDER_IDENT, spec);
+                });
 
-            //     it("should serialize and deserialize the cipher", async function () {
-            //         const cipher = await CryptoEncryption.encrypt(text, key);
+                it("should return a CryptoCipher with random nonce", async function () {
+                    const cipher = await CryptoEncryptionHandle.encrypt(text, key);
+                    expect(cipher).to.exist;
+                    expect(cipher).to.be.instanceOf(CryptoCipher);
+                    expect(cipher.algorithm).to.be.equal(expectedAlgorithm);
+                    expect(cipher.counter).to.not.exist;
+                    expect(cipher.nonce).to.exist;
+                    expect(cipher.nonce?.buffer.byteLength).to.equal(24);
+                });
 
-            //         const a = CryptoCipher.deserialize(cipher.serialize());
-            //         expect(a.cipher.toBase64()).equals(cipher.cipher.toBase64());
+                it("should serialize and deserialize the cipher", async function () {
+                    const cipher = await CryptoEncryptionHandle.encrypt(text, key);
 
-            //         const b = CryptoCipher.fromJSON(cipher.toJSON());
-            //         expect(b.cipher.toBase64()).equals(cipher.cipher.toBase64());
-            //     });
+                    const a = CryptoCipher.deserialize(cipher.serialize());
+                    expect(a.cipher.toBase64()).equals(cipher.cipher.toBase64());
 
-            //     it("should serialize and deserialize the cipher from @type", async function () {
-            //         const cipher = await CryptoEncryption.encrypt(text, key);
+                    const b = CryptoCipher.fromJSON(cipher.toJSON());
+                    expect(b.cipher.toBase64()).equals(cipher.cipher.toBase64());
+                });
 
-            //         const serialized = cipher.serialize();
-            //         const deserialized = Serializable.deserializeUnknown(serialized) as CryptoCipher;
-            //         expect(deserialized).instanceOf(CryptoCipher);
-            //         expect(deserialized.cipher.toBase64URL()).equals(cipher.cipher.toBase64URL());
-            //         expect(deserialized.counter).equals(cipher.counter);
-            //         expect(deserialized.nonce).to.exist;
-            //         expect(deserialized.nonce?.toBase64URL()).equals(cipher.nonce?.toBase64URL());
-            //         expect(deserialized.algorithm).equals(cipher.algorithm);
-            //     });
+                it("should serialize and deserialize the cipher from @type", async function () {
+                    const cipher = await CryptoEncryptionHandle.encrypt(text, key);
 
-            //     it("should decrypt to the same message", async function () {
-            //         const cipher = await CryptoEncryption.encrypt(text, key);
-            //         const plaintext = await CryptoEncryption.decrypt(cipher, key);
-            //         expect(plaintext.toArray()).to.have.members(text.toArray());
-            //     });
+                    const serialized = cipher.serialize();
+                    const deserialized = (await SerializableAsync.deserializeUnknown(serialized)) as CryptoCipher;
+                    expect(deserialized).instanceOf(CryptoCipher);
+                    expect(deserialized.cipher.toBase64URL()).equals(cipher.cipher.toBase64URL());
+                    expect(deserialized.counter).equals(cipher.counter);
+                    expect(deserialized.nonce).to.exist;
+                    expect(deserialized.nonce?.toBase64URL()).equals(cipher.nonce?.toBase64URL());
+                    expect(deserialized.algorithm).equals(cipher.algorithm);
+                });
 
-            //     it("should deserialize/serialize a CryptoCipher with nonce", function () {
-            //         const nonce = CoreBuffer.random(24);
-            //         const cipher = CryptoCipher.from({
-            //             algorithm: CryptoEncryptionAlgorithm.XCHACHA20_POLY1305,
-            //             cipher: nonce,
-            //             nonce: nonce
-            //         });
-            //         expect(cipher.algorithm).to.equal(CryptoEncryptionAlgorithm.XCHACHA20_POLY1305);
-            //         expect(cipher.cipher.toBase64URL()).to.equal(nonce.toBase64URL());
-            //         expect(cipher.nonce).to.exist;
-            //         expect(cipher.nonce?.toBase64URL()).to.equal(nonce.toBase64URL());
-            //         expect(cipher.counter).to.not.exist;
-            //     });
+                it("should decrypt to the same message", async function () {
+                    const cipher = await CryptoEncryptionHandle.encrypt(text, key);
+                    const plaintext = await CryptoEncryptionHandle.decrypt(cipher, key);
+                    expect(plaintext.toArray()).to.have.members(text.toArray());
+                });
 
-            //     it("should deserialize/serialize a CryptoCipher with counter", function () {
-            //         const nonce = CoreBuffer.random(24);
-            //         const cipher = CryptoCipher.fromJSON({
-            //             alg: CryptoEncryptionAlgorithm.XCHACHA20_POLY1305,
-            //             cph: nonce.toBase64URL(),
-            //             cnt: 0
-            //         });
-            //         expect(cipher.algorithm).to.equal(CryptoEncryptionAlgorithm.XCHACHA20_POLY1305);
-            //         expect(cipher.cipher.toBase64URL()).to.equal(nonce.toBase64URL());
-            //         expect(cipher.counter).to.equal(0);
-            //         expect(cipher.nonce).to.not.exist;
-            //     });
+                it("should deserialize/serialize a CryptoCipher with nonce", function () {
+                    const nonce = CoreBuffer.random(24);
+                    const cipher = CryptoCipher.from({
+                        algorithm: CryptoEncryptionAlgorithm.XCHACHA20_POLY1305,
+                        cipher: nonce,
+                        nonce: nonce
+                    });
+                    expect(cipher.algorithm).to.equal(CryptoEncryptionAlgorithm.XCHACHA20_POLY1305);
+                    expect(cipher.cipher.toBase64URL()).to.equal(nonce.toBase64URL());
+                    expect(cipher.nonce).to.exist;
+                    expect(cipher.nonce?.toBase64URL()).to.equal(nonce.toBase64URL());
+                    expect(cipher.counter).to.not.exist;
+                });
 
-            //     it("should decrypt to the same message with given nonce", async function () {
-            //         const nonce = CoreBuffer.random(24);
-            //         const cipher = await CryptoEncryption.encrypt(text, key, nonce);
-            //         const plaintext = await CryptoEncryption.decrypt(cipher, key);
-            //         expect(plaintext.toArray()).to.have.members(text.toArray());
-            //     });
+                it("should deserialize/serialize a CryptoCipher with counter", function () {
+                    const nonce = CoreBuffer.random(24);
+                    const cipher = CryptoCipher.fromJSON({
+                        alg: CryptoEncryptionAlgorithm.XCHACHA20_POLY1305,
+                        cph: nonce.toBase64URL(),
+                        cnt: 0
+                    });
+                    expect(cipher.algorithm).to.equal(CryptoEncryptionAlgorithm.XCHACHA20_POLY1305);
+                    expect(cipher.cipher.toBase64URL()).to.equal(nonce.toBase64URL());
+                    expect(cipher.counter).to.equal(0);
+                    expect(cipher.nonce).to.not.exist;
+                });
 
-            //     it("should decrypt to the same message with given nonce and counter", async function () {
-            //         const nonce = CoreBuffer.random(24);
-            //         let cipher = await CryptoEncryption.encryptWithCounter(text, key, nonce, 0);
-            //         let plaintext = await CryptoEncryption.decryptWithCounter(cipher, key, nonce, 0);
-            //         expect(plaintext.toArray()).to.have.members(text.toArray());
+                it("should decrypt to the same message with given nonce", async function () {
+                    const nonce = CoreBuffer.random(24);
+                    const cipher = await CryptoEncryptionHandle.encrypt(text, key, nonce);
+                    const plaintext = await CryptoEncryptionHandle.decrypt(cipher, key);
+                    expect(plaintext.toArray()).to.have.members(text.toArray());
+                });
 
-            //         cipher = await CryptoEncryption.encryptWithCounter(text, key, nonce, 1);
-            //         plaintext = await CryptoEncryption.decryptWithCounter(cipher, key, nonce, 1);
-            //         expect(plaintext.toArray()).to.have.members(text.toArray());
+                it("should decrypt to the same message with given nonce and counter", async function () {
+                    const nonce = CoreBuffer.random(24);
+                    let cipher = await CryptoEncryptionHandle.encryptWithCounter(text, key, nonce, 0);
+                    let plaintext = await CryptoEncryptionHandle.decryptWithCounter(cipher, key, nonce, 0);
+                    expect(plaintext.toArray()).to.have.members(text.toArray());
 
-            //         cipher = await CryptoEncryption.encryptWithCounter(text, key, nonce, 4000);
-            //         plaintext = await CryptoEncryption.decryptWithCounter(cipher, key, nonce, 4000);
-            //         expect(plaintext.toArray()).to.have.members(text.toArray());
+                    cipher = await CryptoEncryptionHandle.encryptWithCounter(text, key, nonce, 1);
+                    plaintext = await CryptoEncryptionHandle.decryptWithCounter(cipher, key, nonce, 1);
+                    expect(plaintext.toArray()).to.have.members(text.toArray());
 
-            //         cipher = await CryptoEncryption.encryptWithCounter(text, key, nonce, 400000);
-            //         plaintext = await CryptoEncryption.decryptWithCounter(cipher, key, nonce, 400000);
-            //         expect(plaintext.toArray()).to.have.members(text.toArray());
+                    cipher = await CryptoEncryptionHandle.encryptWithCounter(text, key, nonce, 4000);
+                    plaintext = await CryptoEncryptionHandle.decryptWithCounter(cipher, key, nonce, 4000);
+                    expect(plaintext.toArray()).to.have.members(text.toArray());
 
-            //         cipher = await CryptoEncryption.encryptWithCounter(text, key, nonce, 9999999);
-            //         plaintext = await CryptoEncryption.decryptWithCounter(cipher, key, nonce, 9999999);
-            //         expect(plaintext.toArray()).to.have.members(text.toArray());
+                    cipher = await CryptoEncryptionHandle.encryptWithCounter(text, key, nonce, 400000);
+                    plaintext = await CryptoEncryptionHandle.decryptWithCounter(cipher, key, nonce, 400000);
+                    expect(plaintext.toArray()).to.have.members(text.toArray());
 
-            //         cipher = await CryptoEncryption.encryptWithCounter(text, key, nonce, 999999999);
-            //         plaintext = await CryptoEncryption.decryptWithCounter(cipher, key, nonce, 999999999);
-            //         expect(plaintext.toArray()).to.have.members(text.toArray());
+                    cipher = await CryptoEncryptionHandle.encryptWithCounter(text, key, nonce, 9999999);
+                    plaintext = await CryptoEncryptionHandle.decryptWithCounter(cipher, key, nonce, 9999999);
+                    expect(plaintext.toArray()).to.have.members(text.toArray());
 
-            //         cipher = await CryptoEncryption.encryptWithCounter(text, key, nonce, 4290000000);
-            //         plaintext = await CryptoEncryption.decryptWithCounter(cipher, key, nonce, 4290000000);
-            //         expect(plaintext.toArray()).to.have.members(text.toArray());
+                    cipher = await CryptoEncryptionHandle.encryptWithCounter(text, key, nonce, 999999999);
+                    plaintext = await CryptoEncryptionHandle.decryptWithCounter(cipher, key, nonce, 999999999);
+                    expect(plaintext.toArray()).to.have.members(text.toArray());
 
-            //         cipher = await CryptoEncryption.encryptWithCounter(text, key, nonce, 4294967295);
-            //         plaintext = await CryptoEncryption.decryptWithCounter(cipher, key, nonce, 4294967295);
-            //         expect(plaintext.toArray()).to.have.members(text.toArray());
-            //     });
+                    cipher = await CryptoEncryptionHandle.encryptWithCounter(text, key, nonce, 4290000000);
+                    plaintext = await CryptoEncryptionHandle.decryptWithCounter(cipher, key, nonce, 4290000000);
+                    expect(plaintext.toArray()).to.have.members(text.toArray());
 
-            //     it("should throw an error on wrong counters", async function () {
-            //         const nonce = CoreBuffer.random(24);
-            //         const cipher = await CryptoEncryption.encryptWithCounter(text, key, nonce, 0);
-            //         let error;
-            //         try {
-            //             await CryptoEncryption.decryptWithCounter(cipher, key, nonce, 1);
-            //         } catch (e: any) {
-            //             error = e;
-            //         }
+                    cipher = await CryptoEncryptionHandle.encryptWithCounter(text, key, nonce, 4294967295);
+                    plaintext = await CryptoEncryptionHandle.decryptWithCounter(cipher, key, nonce, 4294967295);
+                    expect(plaintext.toArray()).to.have.members(text.toArray());
+                });
 
-            //         expect(error).to.be.instanceOf(CryptoError);
-            //         expect(error.code).to.equal("error.crypto.encryption.decrypt");
-            //     });
+                it("should throw an error on wrong counters", async function () {
+                    const nonce = CoreBuffer.random(24);
+                    const cipher = await CryptoEncryptionHandle.encryptWithCounter(text, key, nonce, 0);
+                    let error;
+                    try {
+                        await CryptoEncryptionHandle.decryptWithCounter(cipher, key, nonce, 1);
+                    } catch (e: any) {
+                        error = e;
+                    }
 
-            //     it("should throw an error on wrong key", async function () {
-            //         const nonce = CoreBuffer.random(24);
-            //         const wrongkey = await CryptoEncryption.generateKey();
-            //         const cipher = await CryptoEncryption.encryptWithCounter(text, key, nonce, 0);
-            //         let error;
-            //         try {
-            //             await CryptoEncryption.decryptWithCounter(cipher, wrongkey, nonce, 0);
-            //         } catch (e: any) {
-            //             error = e;
-            //         }
+                    expect(error).to.be.instanceOf(CryptoError);
+                    expect(error.code).to.equal("error.crypto.encryption.decrypt");
+                });
 
-            //         expect(error).to.be.instanceOf(CryptoError);
-            //         expect(error.code).to.equal("error.crypto.encryption.decrypt");
-            //     });
+                it("should throw an error on wrong key", async function () {
+                    const nonce = CoreBuffer.random(24);
+                    const cipher = await CryptoEncryptionHandle.encryptWithCounter(text, key, nonce, 0);
+                    let error;
+                    try {
+                        await CryptoEncryptionHandle.decryptWithCounter(cipher, key2, nonce, 0);
+                    } catch (e: any) {
+                        error = e;
+                    }
 
-            //     it("should create a different CryptoCipher every time", async function () {
-            //         const cipher1 = await CryptoEncryption.encrypt(text, key2);
-            //         const cipher2 = await CryptoEncryption.encrypt(text, key2);
-            //         const cipher3 = await CryptoEncryption.encrypt(text, key2);
+                    expect(error).to.be.instanceOf(CryptoError);
+                    expect(error.code).to.equal("error.crypto.encryption.decrypt");
+                });
 
-            //         expect(cipher1.cipher.toArray()).not.to.have.members(cipher2.cipher.toArray());
-            //         expect(cipher2.cipher.toArray()).not.to.have.members(cipher3.cipher.toArray());
-
-            //         const plaintext1 = await CryptoEncryption.decrypt(cipher1, key2);
-            //         const plaintext2 = await CryptoEncryption.decrypt(cipher2, key2);
-            //         const plaintext3 = await CryptoEncryption.decrypt(cipher3, key2);
-
-            //         expect(plaintext1.toArray()).to.have.members(text.toArray());
-            //         expect(plaintext2.toArray()).to.have.members(text.toArray());
-            //         expect(plaintext3.toArray()).to.have.members(text.toArray());
-            //     });
-            // });
+                it("should create a different CryptoCipher every time", async function () {
+                    const cipher1 = await CryptoEncryptionHandle.encrypt(text, key);
+                    const cipher2 = await CryptoEncryptionHandle.encrypt(text, key);
+                    expect(cipher1.cipher.toBase64URL()).to.not.equal(cipher2.cipher.toBase64URL());
+                    if (cipher1.nonce && cipher2.nonce) {
+                        expect(cipher1.nonce.toBase64URL()).to.not.equal(cipher2.nonce.toBase64URL());
+                    }
+                });
+            });
         });
     }
 }
