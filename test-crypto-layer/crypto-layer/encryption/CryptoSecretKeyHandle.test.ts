@@ -15,108 +15,139 @@ import { KeySpec } from "@nmshd/rs-crypto-types";
 import { expect } from "chai";
 import { TEST_PROVIDER_IDENT } from "../../index";
 import { parameterizedKeySpec } from "../CryptoLayerTestUtil";
-import { assertSecretKeyHandleValid } from "../KeyValidation";
+import { assertSecretKeyHandleEqual, assertSecretKeyHandleValid } from "../KeyValidation";
 
 export class CryptoSecretKeyHandleTest {
     public static run(): void {
         describe("CryptoEncryption", function () {
-            const spec: KeySpec = {
-                cipher: "XChaCha20Poly1305",
-                signing_hash: "Sha2_256",
-                ephemeral: false
-            };
-            describe("generateSecretKeyHandle() SoftwareProvider", function () {
-                parameterizedKeySpec("generateSecretKeyHandle()", async function (spec: KeySpec) {
+            describe("Key Creation and Usage", function () {
+                parameterizedKeySpec("should generate secret key handle with", async function (spec: KeySpec) {
                     const cryptoSecretKeyHandle = await CryptoEncryptionHandle.generateKey(TEST_PROVIDER_IDENT, spec);
                     await assertSecretKeyHandleValid(cryptoSecretKeyHandle);
                 });
 
-                it("from() ICryptoSecretKeyHandle", async function () {
-                    const cryptoSecretKeyHandle = await CryptoEncryptionHandle.generateKey(TEST_PROVIDER_IDENT, spec);
-                    await assertSecretKeyHandleValid(cryptoSecretKeyHandle);
+                parameterizedKeySpec(
+                    "from ICryptoSecretKeyHandle should load a crypto secret key handle",
+                    async function (spec: KeySpec) {
+                        const cryptoSecretKeyHandle = await CryptoEncryptionHandle.generateKey(
+                            TEST_PROVIDER_IDENT,
+                            spec
+                        );
+                        await assertSecretKeyHandleValid(cryptoSecretKeyHandle);
 
-                    const loadedSecretKeyHandle = await CryptoSecretKeyHandle.fromAny({
-                        id: cryptoSecretKeyHandle.id,
-                        spec: cryptoSecretKeyHandle.spec,
-                        providerName: cryptoSecretKeyHandle.providerName
-                    });
-                    await assertSecretKeyHandleValid(loadedSecretKeyHandle);
+                        const loadedSecretKeyHandle = await CryptoSecretKeyHandle.from({
+                            id: cryptoSecretKeyHandle.id,
+                            spec: cryptoSecretKeyHandle.spec,
+                            providerName: cryptoSecretKeyHandle.providerName
+                        });
+                        await assertSecretKeyHandleValid(loadedSecretKeyHandle);
 
-                    expect(loadedSecretKeyHandle.id).to.equal(cryptoSecretKeyHandle.id);
-                });
+                        await assertSecretKeyHandleEqual(cryptoSecretKeyHandle, loadedSecretKeyHandle);
+                    },
+                    {
+                        ephemeral: [false]
+                    }
+                );
 
-                it("from() CryptoSecretKeyHandle", async function () {
-                    const cryptoSecretKeyHandle = await CryptoEncryptionHandle.generateKey(TEST_PROVIDER_IDENT, spec);
-                    await assertSecretKeyHandleValid(cryptoSecretKeyHandle);
+                parameterizedKeySpec(
+                    "from CryptoSecretKeyHandle should load a crypto secret key handle",
+                    async function (spec: KeySpec) {
+                        const cryptoSecretKeyHandle = await CryptoEncryptionHandle.generateKey(
+                            TEST_PROVIDER_IDENT,
+                            spec
+                        );
+                        await assertSecretKeyHandleValid(cryptoSecretKeyHandle);
 
-                    const loadedSecretKeyHandle = await CryptoSecretKeyHandle.from(cryptoSecretKeyHandle);
-                    await assertSecretKeyHandleValid(loadedSecretKeyHandle);
+                        const loadedSecretKeyHandle = await CryptoSecretKeyHandle.from(cryptoSecretKeyHandle);
+                        await assertSecretKeyHandleValid(loadedSecretKeyHandle);
 
-                    expect(loadedSecretKeyHandle.id).to.equal(cryptoSecretKeyHandle.id);
-                });
+                        await assertSecretKeyHandleEqual(cryptoSecretKeyHandle, loadedSecretKeyHandle);
+                    },
+                    {
+                        ephemeral: [false]
+                    }
+                );
 
-                it("encrypt() and decrypt()", async function () {
+                parameterizedKeySpec("decrypt encrypt should be an identity function", async function (spec: KeySpec) {
                     const cryptoSecretKeyHandle = await CryptoEncryptionHandle.generateKey(TEST_PROVIDER_IDENT, spec);
 
                     const data = new CoreBuffer("0123456789ABCDEF");
                     const encrypted = await CryptoEncryptionHandle.encrypt(data, cryptoSecretKeyHandle);
                     expect(encrypted).to.be.ok.and.to.be.instanceOf(CryptoCipher);
-                    expect(encrypted.algorithm).to.equal(CryptoEncryptionAlgorithm.XCHACHA20_POLY1305);
+                    expect(encrypted.algorithm).to.equal(
+                        CryptoLayerUtils.cryptoEncryptionAlgorithmFromCipher(cryptoSecretKeyHandle.spec.cipher)
+                    );
 
                     const decrypted = await CryptoEncryptionHandle.decrypt(encrypted, cryptoSecretKeyHandle);
 
                     expect(decrypted.buffer).to.deep.equal(data.buffer);
                 });
 
-                it("encrypt() and decrypt() with counter", async function () {
-                    const cryptoSecretKeyHandle = await CryptoEncryptionHandle.generateKey(TEST_PROVIDER_IDENT, spec);
+                parameterizedKeySpec(
+                    "decrypt encrypt with counter should be an identity function",
+                    async function (spec: KeySpec) {
+                        const cryptoSecretKeyHandle = await CryptoEncryptionHandle.generateKey(
+                            TEST_PROVIDER_IDENT,
+                            spec
+                        );
+                        const cryptoEncryptionAlgorithm = CryptoLayerUtils.cryptoEncryptionAlgorithmFromCipher(
+                            cryptoSecretKeyHandle.spec.cipher
+                        );
 
-                    const nonce = await CryptoEncryptionHandle.createNonce(
-                        CryptoEncryptionAlgorithm.XCHACHA20_POLY1305,
-                        cryptoSecretKeyHandle.provider
-                    );
+                        const nonce = await CryptoEncryptionHandle.createNonce(
+                            cryptoEncryptionAlgorithm,
+                            cryptoSecretKeyHandle.provider
+                        );
 
-                    const data = new CoreBuffer("0123456789ABCDEF");
-                    const encrypted = await CryptoEncryptionHandle.encryptWithCounter(
-                        data,
-                        cryptoSecretKeyHandle,
-                        nonce,
-                        222
-                    );
-                    expect(encrypted).to.be.ok.and.to.be.instanceOf(CryptoCipher);
-                    expect(encrypted.algorithm).to.equal(CryptoEncryptionAlgorithm.XCHACHA20_POLY1305);
+                        const data = new CoreBuffer("0123456789ABCDEF");
+                        const encrypted = await CryptoEncryptionHandle.encryptWithCounter(
+                            data,
+                            cryptoSecretKeyHandle,
+                            nonce,
+                            222
+                        );
+                        expect(encrypted).to.be.ok.and.to.be.instanceOf(CryptoCipher);
+                        expect(encrypted.algorithm).to.equal(cryptoEncryptionAlgorithm);
 
-                    const decrypted = await CryptoEncryptionHandle.decryptWithCounter(
-                        encrypted,
-                        cryptoSecretKeyHandle,
-                        nonce,
-                        222
-                    );
+                        const decrypted = await CryptoEncryptionHandle.decryptWithCounter(
+                            encrypted,
+                            cryptoSecretKeyHandle,
+                            nonce,
+                            222
+                        );
 
-                    expect(decrypted.buffer).to.deep.equal(data.buffer);
-                });
+                        expect(decrypted.buffer).to.deep.equal(data.buffer);
+                    }
+                );
 
-                it("encrypt() and decrypt() with provided nonce", async function () {
-                    const cryptoSecretKeyHandle = await CryptoEncryptionHandle.generateKey(TEST_PROVIDER_IDENT, spec);
+                parameterizedKeySpec(
+                    "decrypt encrypt with provided nonce should be an identity function",
+                    async function (spec: KeySpec) {
+                        const cryptoSecretKeyHandle = await CryptoEncryptionHandle.generateKey(
+                            TEST_PROVIDER_IDENT,
+                            spec
+                        );
+                        const cryptoEncryptionAlgorithm = CryptoLayerUtils.cryptoEncryptionAlgorithmFromCipher(
+                            cryptoSecretKeyHandle.spec.cipher
+                        );
 
-                    const nonce = await CryptoEncryptionHandle.createNonce(
-                        CryptoEncryptionAlgorithm.XCHACHA20_POLY1305,
-                        cryptoSecretKeyHandle.provider
-                    );
+                        const nonce = await CryptoEncryptionHandle.createNonce(
+                            cryptoEncryptionAlgorithm,
+                            cryptoSecretKeyHandle.provider
+                        );
 
-                    console.log(`provided nonce length = ${nonce.buffer.length}`);
+                        const data = new CoreBuffer("0123456789ABCDEF");
+                        const encrypted = await CryptoEncryptionHandle.encrypt(data, cryptoSecretKeyHandle, nonce);
+                        expect(encrypted).to.be.ok.and.to.be.instanceOf(CryptoCipher);
+                        expect(encrypted.algorithm).to.equal(cryptoEncryptionAlgorithm);
 
-                    const data = new CoreBuffer("0123456789ABCDEF");
-                    const encrypted = await CryptoEncryptionHandle.encrypt(data, cryptoSecretKeyHandle, nonce);
-                    expect(encrypted).to.be.ok.and.to.be.instanceOf(CryptoCipher);
-                    expect(encrypted.algorithm).to.equal(CryptoEncryptionAlgorithm.XCHACHA20_POLY1305);
+                        const decrypted = await CryptoEncryptionHandle.decrypt(encrypted, cryptoSecretKeyHandle, nonce);
 
-                    const decrypted = await CryptoEncryptionHandle.decrypt(encrypted, cryptoSecretKeyHandle, nonce);
+                        expect(decrypted.buffer).to.deep.equal(data.buffer);
+                    }
+                );
 
-                    expect(decrypted.buffer).to.deep.equal(data.buffer);
-                });
-
-                it("encrypt() with wrong nonce fails", async function () {
+                parameterizedKeySpec("encrypt with a wrong nonce should fail", async function (spec: KeySpec) {
                     const cryptoSecretKeyHandle = await CryptoEncryptionHandle.generateKey(TEST_PROVIDER_IDENT, spec);
 
                     const nonce = new CoreBuffer("ZnZj");
@@ -137,7 +168,21 @@ export class CryptoSecretKeyHandleTest {
                 });
             });
 
+            // describe("Validation against Libsodium", function () {
+            //     const spec: KeySpec = {
+            //         cipher: "XChaCha20Poly1305",
+            //         signing_hash: "Sha2_256",
+            //         ephemeral: false
+            //     };
+            // });
+
             describe("Execute generateKey() with XCHACHA20_POLY1305", function () {
+                const spec: KeySpec = {
+                    cipher: "XChaCha20Poly1305",
+                    signing_hash: "Sha2_256",
+                    ephemeral: false
+                };
+
                 let key: CryptoSecretKeyHandle;
                 before(async function () {
                     key = await CryptoEncryptionHandle.generateKey(TEST_PROVIDER_IDENT, spec);

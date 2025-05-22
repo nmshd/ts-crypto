@@ -313,14 +313,18 @@ export class CryptoValidation {
             switch (algorithm) {
                 case CryptoEncryptionAlgorithm.AES128_GCM:
                 case CryptoEncryptionAlgorithm.AES256_GCM:
-                case CryptoEncryptionAlgorithm.AES128_CBC:
-                case CryptoEncryptionAlgorithm.AES256_CBC:
+                case CryptoEncryptionAlgorithm.CHACHA20_POLY1305:
                     if (buffer.byteLength !== 12) {
                         errorLength = 12;
                     }
                     break;
+                case CryptoEncryptionAlgorithm.AES128_CBC:
+                case CryptoEncryptionAlgorithm.AES256_CBC:
+                    if (buffer.byteLength !== 16) {
+                        errorLength = 16;
+                    }
+                    break;
                 case CryptoEncryptionAlgorithm.XCHACHA20_POLY1305:
-                case CryptoEncryptionAlgorithm.CHACHA20_POLY1305:
                     if (buffer.byteLength !== 24) {
                         errorLength = 24;
                     }

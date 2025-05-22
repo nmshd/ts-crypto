@@ -69,7 +69,6 @@ export class CryptoEncryptionHandle {
         return CryptoCipher.from({
             cipher: CoreBuffer.from(cipher),
             algorithm: encryptionAlgorithm,
-            // nonce: new CoreBuffer(iv), // TODO: How is the nonce transmitted?
             counter
         });
     }
@@ -128,10 +127,12 @@ export class CryptoEncryptionHandle {
         switch (algorithm) {
             case CryptoEncryptionAlgorithm.AES128_GCM:
             case CryptoEncryptionAlgorithm.AES256_GCM:
-            case CryptoEncryptionAlgorithm.AES128_CBC:
-            case CryptoEncryptionAlgorithm.AES256_CBC:
             case CryptoEncryptionAlgorithm.CHACHA20_POLY1305:
                 nonceLength = 12;
+                break;
+            case CryptoEncryptionAlgorithm.AES128_CBC:
+            case CryptoEncryptionAlgorithm.AES256_CBC:
+                nonceLength = 16;
                 break;
             case CryptoEncryptionAlgorithm.XCHACHA20_POLY1305:
                 nonceLength = 24;

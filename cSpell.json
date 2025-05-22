@@ -6,6 +6,7 @@
         "CHACHA",
         "chaimodule",
         "cipherbuffer",
+        "ciphertext",
         "globalsals",
         "Keypair",
         "libsodium",
