@@ -74,13 +74,6 @@ export class CryptoSecretKeyHandle extends CryptoSerializableAsync implements IC
             };
         }
 
-        // This validation compensates the missing validation from ts-serval.
-        if (!isKeySpec(value.spec)) {
-            throw new CryptoError(
-                CryptoErrorCode.DeserializeValidation,
-                "Validating key spec in preFrom of crypto secret key handle failed."
-            );
-        }
         return value;
     }
 
@@ -140,6 +133,15 @@ export class CryptoSecretKeyHandle extends CryptoSerializableAsync implements IC
         if (!(value instanceof CryptoSecretKeyHandle)) {
             throw new CryptoError(CryptoErrorCode.WrongParameters, "Expected 'CryptoSecretKeyHandle' in postFrom.");
         }
+
+        // This validation compensates the missing validation from ts-serval.
+        if (!isKeySpec(value.spec)) {
+            throw new CryptoError(
+                CryptoErrorCode.DeserializeValidation,
+                "Validating key spec in preFrom of crypto secret key handle failed."
+            );
+        }
+
         const provider = getProviderOrThrow({ providerName: value.providerName });
         const keyHandle = await provider.loadKey(value.id);
 
