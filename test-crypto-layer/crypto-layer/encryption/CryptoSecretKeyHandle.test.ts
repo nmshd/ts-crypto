@@ -13,6 +13,7 @@ import {
 } from "@nmshd/crypto";
 import { KeySpec } from "@nmshd/rs-crypto-types";
 import { expect } from "chai";
+import { TEST_PROVIDER_IDENT } from "../../index";
 import { parameterizedKeySpec } from "../CryptoLayerTestUtil";
 import { assertSecretKeyHandleValid } from "../KeyValidation";
 
@@ -24,15 +25,14 @@ export class CryptoSecretKeyHandleTest {
                 signing_hash: "Sha2_256",
                 ephemeral: false
             };
-            const providerIdent = { providerName: "SoftwareProvider" };
             describe("generateSecretKeyHandle() SoftwareProvider", function () {
                 parameterizedKeySpec("generateSecretKeyHandle()", async function (spec: KeySpec) {
-                    const cryptoSecretKeyHandle = await CryptoEncryptionHandle.generateKey(providerIdent, spec);
+                    const cryptoSecretKeyHandle = await CryptoEncryptionHandle.generateKey(TEST_PROVIDER_IDENT, spec);
                     await assertSecretKeyHandleValid(cryptoSecretKeyHandle);
                 });
 
                 it("from() ICryptoSecretKeyHandle", async function () {
-                    const cryptoSecretKeyHandle = await CryptoEncryptionHandle.generateKey(providerIdent, spec);
+                    const cryptoSecretKeyHandle = await CryptoEncryptionHandle.generateKey(TEST_PROVIDER_IDENT, spec);
                     await assertSecretKeyHandleValid(cryptoSecretKeyHandle);
 
                     const loadedSecretKeyHandle = await CryptoSecretKeyHandle.fromAny({
@@ -46,7 +46,7 @@ export class CryptoSecretKeyHandleTest {
                 });
 
                 it("from() CryptoSecretKeyHandle", async function () {
-                    const cryptoSecretKeyHandle = await CryptoEncryptionHandle.generateKey(providerIdent, spec);
+                    const cryptoSecretKeyHandle = await CryptoEncryptionHandle.generateKey(TEST_PROVIDER_IDENT, spec);
                     await assertSecretKeyHandleValid(cryptoSecretKeyHandle);
 
                     const loadedSecretKeyHandle = await CryptoSecretKeyHandle.from(cryptoSecretKeyHandle);
@@ -56,7 +56,7 @@ export class CryptoSecretKeyHandleTest {
                 });
 
                 it("encrypt() and decrypt()", async function () {
-                    const cryptoSecretKeyHandle = await CryptoEncryptionHandle.generateKey(providerIdent, spec);
+                    const cryptoSecretKeyHandle = await CryptoEncryptionHandle.generateKey(TEST_PROVIDER_IDENT, spec);
 
                     const data = new CoreBuffer("0123456789ABCDEF");
                     const encrypted = await CryptoEncryptionHandle.encrypt(data, cryptoSecretKeyHandle);
@@ -69,7 +69,7 @@ export class CryptoSecretKeyHandleTest {
                 });
 
                 it("encrypt() and decrypt() with counter", async function () {
-                    const cryptoSecretKeyHandle = await CryptoEncryptionHandle.generateKey(providerIdent, spec);
+                    const cryptoSecretKeyHandle = await CryptoEncryptionHandle.generateKey(TEST_PROVIDER_IDENT, spec);
 
                     const nonce = await CryptoEncryptionHandle.createNonce(
                         CryptoEncryptionAlgorithm.XCHACHA20_POLY1305,
@@ -97,7 +97,7 @@ export class CryptoSecretKeyHandleTest {
                 });
 
                 it("encrypt() and decrypt() with provided nonce", async function () {
-                    const cryptoSecretKeyHandle = await CryptoEncryptionHandle.generateKey(providerIdent, spec);
+                    const cryptoSecretKeyHandle = await CryptoEncryptionHandle.generateKey(TEST_PROVIDER_IDENT, spec);
 
                     const nonce = await CryptoEncryptionHandle.createNonce(
                         CryptoEncryptionAlgorithm.XCHACHA20_POLY1305,
@@ -117,7 +117,7 @@ export class CryptoSecretKeyHandleTest {
                 });
 
                 it("encrypt() with wrong nonce fails", async function () {
-                    const cryptoSecretKeyHandle = await CryptoEncryptionHandle.generateKey(providerIdent, spec);
+                    const cryptoSecretKeyHandle = await CryptoEncryptionHandle.generateKey(TEST_PROVIDER_IDENT, spec);
 
                     const nonce = new CoreBuffer("ZnZj");
 
@@ -140,7 +140,7 @@ export class CryptoSecretKeyHandleTest {
             describe("Execute generateKey() with XCHACHA20_POLY1305", function () {
                 let key: CryptoSecretKeyHandle;
                 before(async function () {
-                    key = await CryptoEncryptionHandle.generateKey(providerIdent, spec);
+                    key = await CryptoEncryptionHandle.generateKey(TEST_PROVIDER_IDENT, spec);
                 });
 
                 it("should return a SecretKey", function () {
@@ -182,15 +182,15 @@ export class CryptoSecretKeyHandleTest {
                 });
 
                 it("extracted key imported in libsodium should be able to decrypt.", async function () {
-                    let rawKey = await key.keyHandle.extractKey();
-                    let keyBuffer = new CoreBuffer(rawKey);
-                    let algorithm = CryptoLayerUtils.cryptoEncryptionAlgorithmFromCipher(key.spec.cipher);
-                    let keyObject = {
+                    const rawKey = await key.keyHandle.extractKey();
+                    const keyBuffer = new CoreBuffer(rawKey);
+                    const algorithm = CryptoLayerUtils.cryptoEncryptionAlgorithmFromCipher(key.spec.cipher);
+                    const keyObject = {
                         alg: algorithm,
                         key: keyBuffer.toBase64URL()
                     };
 
-                    let libsodiumKey = CryptoSecretKey.fromJSON(keyObject);
+                    const libsodiumKey = CryptoSecretKey.fromJSON(keyObject);
 
                     const data = CoreBuffer.random(4);
                     const encrypted = await CryptoEncryptionHandle.encrypt(data, key);

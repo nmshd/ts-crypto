@@ -5,25 +5,17 @@ type SerializePair<ClassToTest, IntermediaryFormat> = [
 
 type SerializerVec<T> = [SerializePair<T, string> | SerializePair<T, Object>, string][];
 
-/**
- * Generates tests for common serialize and deserialize functions.
- *
- * @param constructor Constructor of the class. Used for executing static methods.
- * @param create A function that returns the class that is to be tested.
- * @param serializers Functions that are to be tested.
- * @param validator A function that validates that the class is correct. Uses expect from chai and type guards, which throw.
- * @param beforeAfterValidator A function that validates that the deserialized result has expected values compared to the original (like `spec()`).
- */
-async function CommonSerializeTest<T>(
+function commonSerializeTest<T>(
     name: string,
     create: () => Promise<T>,
     serializers: SerializerVec<T>,
     validator: (value: T) => Promise<void>,
     beforeAfterValidator: (beforeSerialization: T, afterSerialization: T) => Promise<void>
 ) {
-    describe(`Serialize Deserialize Tests - ${name}`, () => {
+    describe(`Serialize Deserialize Tests - ${name}`, function () {
         for (const [[serialize, deserialize], serializeTestName] of serializers) {
-            it(serializeTestName, async () => {
+            // eslint-disable-next-line jest/expect-expect
+            it(serializeTestName, async function () {
                 const handle = await create();
                 await validator(handle);
 
@@ -35,31 +27,39 @@ async function CommonSerializeTest<T>(
     });
 }
 
-type ToBase64<T> = {
+interface ToBase64<T> {
     toBase64(this: T, verbose?: boolean): string;
-};
+}
 
-type FromBase64<T> = {
-    fromBase64: (value: string) => Promise<T>;
-};
+interface FromBase64<T> {
+    fromBase64(value: string): Promise<T>;
+}
 
-type ToJson<T> = {
-    toJSON(verbose?: boolean): Object;
-};
+interface ToJson<T> {
+    toJSON(this: T, verbose?: boolean): Object;
+}
 
-type FromJson<T> = {
+interface FromJson<T> {
     fromJSON(value: Object): Promise<T>;
-};
+}
 
-export async function TestSerializeDeserializeOfBase64AndJson<T extends ToBase64<T> & ToJson<T>>(
+/**
+ * Construct common serialization and deserialization tests.
+ *
+ * @param name How to name the parameterized test?
+ * @param create A function that constructs the value that is tests. ({@link CryptoSecretKeyHandle})
+ * @param constructor The constructor of said value. (`CryptoSecretKeyHandle`)
+ * @param validator A function that validates that a value fulfills the specification of its type.
+ * @param beforeAfterValidator A function that validates,
+ *      that the value before the serialization and deserialization matches the one after.
+ */
+export function testSerializeDeserializeOfBase64AndJson<T extends ToBase64<T> & ToJson<T>>(
     name: string,
     create: () => Promise<T>,
     constructor: { new (): T } & FromBase64<T> & FromJson<T>,
     validator: (value: T) => Promise<void>,
     beforeAfterValidator: (beforeSerialization: T, afterSerialization: T) => Promise<void>
-) {
-    const objectForStaticCalls = await create();
-
+): void {
     const toAndFromBase64: SerializePair<T, string> = [
         (handle: T) => handle.toBase64(),
         async (serialized: string) => await constructor.fromBase64(serialized)
@@ -73,5 +73,5 @@ export async function TestSerializeDeserializeOfBase64AndJson<T extends ToBase64
         [toAndFromBase64, "toBase64() and fromBase64()"]
     ];
 
-    CommonSerializeTest(name, create, serializers, validator, beforeAfterValidator);
+    commonSerializeTest(name, create, serializers, validator, beforeAfterValidator);
 }

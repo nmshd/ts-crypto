@@ -5,7 +5,7 @@ import { expect } from "chai";
 /**
  * Tests SecretKeyHandle for validity and executes the id function.
  */
-export async function assertSecretKeyHandleValid<T extends CryptoSecretKeyHandle>(handle: T) {
+export async function assertSecretKeyHandleValid<T extends CryptoSecretKeyHandle>(handle: T): Promise<void> {
     expect(handle).to.exist;
     expect(handle.id).to.exist.and.to.be.a("string");
     expect(handle.keyHandle).to.exist;
@@ -22,7 +22,7 @@ export async function assertSecretKeyHandleValid<T extends CryptoSecretKeyHandle
 /**
  * Test that the content of two SecretKeys match.
  */
-export async function assertSecretKeyHandleEqual<T extends CryptoSecretKeyHandle>(before: T, after: T) {
+export async function assertSecretKeyHandleEqual<T extends CryptoSecretKeyHandle>(before: T, after: T): Promise<void> {
     expect(before.spec).to.deep.equal(after.spec);
     expect(await before.keyHandle.extractKey()).to.deep.eq(await after.keyHandle.extractKey());
 }

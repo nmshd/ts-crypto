@@ -1,44 +1,27 @@
-import { CoreBuffer, CryptoDerivationHandle, CryptoEncryptionHandle, ProviderIdentifier } from "@nmshd/crypto";
-import { Cipher, KeySpec } from "@nmshd/rs-crypto-types";
+import { CoreBuffer, CryptoDerivationHandle, CryptoEncryptionHandle } from "@nmshd/crypto";
+import { KeySpec } from "@nmshd/rs-crypto-types";
 import { expect } from "chai";
+import { TEST_PROVIDER_IDENT } from "../index";
+import { parameterizedKeySpec } from "./CryptoLayerTestUtil";
 
 export class CryptoDerivationHandleTest {
-    public static run() {
+    public static run(): void {
         describe("CryptoDerivationHandle", function () {
-            const providerIdent: ProviderIdentifier = { providerName: "SoftwareProvider" };
+            parameterizedKeySpec("deriveKeyHandleFromBase", async function (spec: KeySpec) {
+                const keyHandle = await CryptoEncryptionHandle.generateKey(TEST_PROVIDER_IDENT, spec);
 
-            it("deriveKeyHandleFromBase", async function () {
-                const ciphers: Cipher[] = ["AesGcm128", "AesGcm256", "XChaCha20Poly1305"];
+                const derivedKey = await CryptoDerivationHandle.deriveKeyHandleFromBase(keyHandle, 1234, "testTest");
 
-                for (const cipher of ciphers) {
-                    const spec: KeySpec = {
-                        cipher,
-                        signing_hash: "Sha2_512",
-                        ephemeral: false
-                    };
-                    const keyHandle = await CryptoEncryptionHandle.generateKey(providerIdent, spec);
+                const derivedKey2 = await CryptoDerivationHandle.deriveKeyHandleFromBase(keyHandle, 1234, "testTest");
 
-                    const derivedKey = await CryptoDerivationHandle.deriveKeyHandleFromBase(
-                        keyHandle,
-                        1234,
-                        "testTest"
-                    );
+                const encoder = new TextEncoder();
+                const payload = new CoreBuffer(encoder.encode("Hello World!"));
 
-                    const derivedKey2 = await CryptoDerivationHandle.deriveKeyHandleFromBase(
-                        keyHandle,
-                        1234,
-                        "testTest"
-                    );
+                const encryptedPayload = await CryptoEncryptionHandle.encrypt(payload, derivedKey);
 
-                    const encoder = new TextEncoder();
-                    const payload = new CoreBuffer(encoder.encode("Hello World!"));
+                const decryptedPayload = await CryptoEncryptionHandle.decrypt(encryptedPayload, derivedKey2);
 
-                    const encryptedPayload = await CryptoEncryptionHandle.encrypt(payload, derivedKey);
-
-                    const decryptedPayload = await CryptoEncryptionHandle.decrypt(encryptedPayload, derivedKey2);
-
-                    expect(decryptedPayload).to.deep.equal(payload);
-                }
+                expect(decryptedPayload).to.deep.equal(payload);
             });
         });
     }

@@ -2,7 +2,7 @@
     "ignorePatterns": ["/*", "!/src", "!/test", "!/test-crypto-layer"],
     "extends": ["@js-soft/ts", "@js-soft/ts/mocha"],
     "parserOptions": {
-        "project": ["tsconfig.json", "test/tsconfig.json"]
+        "project": ["tsconfig.json", "test/tsconfig.json", "test-crypto-layer/tsconfig.json"]
     },
     "rules": {
         "jest/expect-expect": [
