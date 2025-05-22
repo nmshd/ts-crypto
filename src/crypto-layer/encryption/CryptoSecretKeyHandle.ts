@@ -34,14 +34,7 @@ export class CryptoSecretKeyHandle extends CryptoSerializableAsync implements IC
     @serialize()
     public providerName: string;
 
-    @validate({
-        customValidator: (value) => {
-            if (isKeySpec(value)) {
-                return undefined;
-            }
-            return "Not KeySpec";
-        }
-    })
+    // ts-serval does not give the option to skip validation and only do custom validation.
     @serialize()
     public spec: KeySpec;
 
@@ -79,6 +72,12 @@ export class CryptoSecretKeyHandle extends CryptoSerializableAsync implements IC
                 providerName: value.pnm,
                 spec: value.spc
             };
+        }
+        if (!isKeySpec(value.spec)) {
+            throw new CryptoError(
+                CryptoErrorCode.DeserializeValidation,
+                "Validating key spec in preFrom of crypto secret key handle failed."
+            );
         }
         return value;
     }
