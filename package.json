@@ -13,8 +13,8 @@
     ],
     "scripts": {
         "bt": "npm run test:node && npm run build:node && npm run build:test && npm run bundle:test && npm run test:web",
-        "build": "npm run build:node && npm run build:test && npm run bundle",
-        "build:ci": "npm run build:node && .ci/writeBuildInformation.sh && npm run build:test && npm run bundle",
+        "build": "npm run build:node && npm run build:test && npm run bundle:test",
+        "build:ci": "npm run build:node && .ci/writeBuildInformation.sh && npm run build:test && npm run bundle:test",
         "build:node": "tsc -p tsconfig.json",
         "build:test": "tsc -p tsconfig.test.json",
         "bundle:test": "webpack --stats-all --config webpack.test.config.js",
