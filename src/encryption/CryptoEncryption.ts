@@ -44,6 +44,8 @@ export abstract class CryptoEncryption {
                 }
 
                 break;
+            case CryptoEncryptionAlgorithm.AES128_GCM:
+            case CryptoEncryptionAlgorithm.AES256_GCM:
             default:
                 throw new CryptoError(CryptoErrorCode.NotYetImplemented);
         }
@@ -113,6 +115,8 @@ export abstract class CryptoEncryption {
                     throw new CryptoError(CryptoErrorCode.EncryptionEncrypt, `${e}`);
                 }
                 break;
+            case CryptoEncryptionAlgorithm.AES128_GCM:
+            case CryptoEncryptionAlgorithm.AES256_GCM:
             default:
                 throw new CryptoError(CryptoErrorCode.NotYetImplemented);
         }
@@ -169,6 +173,8 @@ export abstract class CryptoEncryption {
                 } catch (e) {
                     throw new CryptoError(CryptoErrorCode.EncryptionEncrypt, `${e}`);
                 }
+            case CryptoEncryptionAlgorithm.AES128_GCM:
+            case CryptoEncryptionAlgorithm.AES256_GCM:
             default:
                 throw new CryptoError(CryptoErrorCode.NotYetImplemented);
         }
@@ -229,6 +235,8 @@ export abstract class CryptoEncryption {
                     const error = new CryptoError(CryptoErrorCode.EncryptionDecrypt, `${e}`);
                     throw error;
                 }
+            case CryptoEncryptionAlgorithm.AES128_GCM:
+            case CryptoEncryptionAlgorithm.AES256_GCM:
             default:
                 throw new CryptoError(CryptoErrorCode.NotYetImplemented);
         }

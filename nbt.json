@@ -2,12 +2,8 @@
     "testFolder": "./lib-web",
     "runners": [
         {
-            "dependencies": ["tsserval.js", "nmshd.crypto.js", "nmshd.crypto.test.js"],
-            "globals": ["TSServal", "NMSHDCrypto", "NMSHDCryptoTest"]
-        },
-        {
-            "dependencies": ["tsserval.js", "nmshd.crypto.min.js", "nmshd.crypto.test.js"],
-            "globals": ["TSServal", "NMSHDCrypto", "NMSHDCryptoTest"]
+            "dependencies": ["nmshd.crypto.test.js"],
+            "globals": ["NMSHDCryptoTest"]
         }
     ],
     "proxies": [],

@@ -148,7 +148,7 @@ export class CoreBuffer extends Serializable implements ICoreBuffer {
     }
 
     private bufferToPem(label?: string) {
-        if (!label) label = "PUBLIC KEY";
+        label ??= "PUBLIC KEY";
         const base64Cert: string = this.bufferToBase64();
         let pemCert = `-----BEGIN ${label}-----\r\n`;
         let nextIndex = 0;

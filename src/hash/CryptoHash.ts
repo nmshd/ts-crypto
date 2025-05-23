@@ -64,6 +64,7 @@ export class CryptoHash implements ICryptoHash {
             case CryptoHashAlgorithm.SHA512:
                 hashBuffer = sodium.crypto_hash_sha512(content.buffer);
                 break;
+            case CryptoHashAlgorithm.BLAKE2B:
             default:
                 throw new Error("This hash algorithm is not supported.");
         }

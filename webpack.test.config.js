@@ -15,17 +15,15 @@ module.exports = {
         umdNamedDefine: true
     },
     resolve: {
-        extensions: [".js", ".json"]
+        extensions: [".js", ".json"],
+        alias: {
+            "@nmshd/crypto": __dirname
+        }
     },
     devtool: "source-map",
     externals: {
-        "../src": "NMSHDCrypto",
-        "../../src": "NMSHDCrypto",
-        "./tmp-browser/src": "NMSHDCrypto",
-        "./src": "NMSHDCrypto",
-        "@nmshd": "NMSHDCrypto",
         chai: "chai",
-        "@nmshd/crypto": "NMSHDCrypto",
-        "@js-soft/ts-serval": "TSServal"
+        path: "NMSHDCrypto",
+        crypto: "NMSHDCrypto"
     }
 };
