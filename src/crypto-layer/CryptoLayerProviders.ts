@@ -76,14 +76,17 @@ async function createProviderFromProviderFilter(
         return await factoryFunctions.createProvider(providerToBeInitialized.providerConfig, providerImplConfig);
     }
 
-    throw new CryptoError(CryptoErrorCode.WrongParameters);
+    throw new CryptoError(
+        CryptoErrorCode.WrongParameters,
+        `No available provider matches the given requirements: ${JSON.stringify(providerToBeInitialized)}`
+    );
 }
 
 /**
  * Initializes a list of global providers with the given configuration.
  */
-export async function initCryptoLayerProviders(config: CryptoLayerConfig): Promise<void> {
-    if (PROVIDERS_BY_NAME || PROVIDERS_BY_SECURITY) {
+export async function initCryptoLayerProviders(config: CryptoLayerConfig, continueOnError = false): Promise<void> {
+    if (PROVIDERS_BY_NAME !== undefined && PROVIDERS_BY_SECURITY !== undefined) {
         return;
     }
 
@@ -101,9 +104,14 @@ export async function initCryptoLayerProviders(config: CryptoLayerConfig): Promi
             providerImplConfig
         );
 
-        if (!provider) {
-            continue;
-            // throw new CryptoError(CryptoErrorCode.CalFailedLoadingProvider, `Failed loading provider.`);
+        if (provider === undefined) {
+            if (continueOnError) {
+                continue;
+            }
+            throw new CryptoError(
+                CryptoErrorCode.CalFailedLoadingProvider,
+                `Failed loading provider with given requirements: ${JSON.stringify(providerFilter)}`
+            );
         }
 
         providers.set(await provider.providerName(), provider);
@@ -121,8 +129,11 @@ export type ProviderIdentifier = Exclude<CryptoLayerProviderFilter, { providerCo
  * Providers need to be initialized via the {@link initCryptoLayerProviders} function.
  */
 export function getProvider(identifier: ProviderIdentifier): Provider | undefined {
-    if (!PROVIDERS_BY_NAME || !PROVIDERS_BY_SECURITY) {
-        return undefined;
+    if (PROVIDERS_BY_NAME === undefined || PROVIDERS_BY_SECURITY === undefined) {
+        throw new CryptoError(
+            CryptoErrorCode.CalProvidersNotInitialized,
+            "Failed to get providers as providers are not initialized."
+        );
     }
 
     if ("providerName" in identifier) {
@@ -132,7 +143,10 @@ export function getProvider(identifier: ProviderIdentifier): Provider | undefine
         return PROVIDERS_BY_SECURITY.get(identifier.securityLevel)?.[0];
     }
 
-    throw new CryptoError(CryptoErrorCode.WrongParameters);
+    throw new CryptoError(
+        CryptoErrorCode.WrongParameters,
+        "Provider identifier was not able to be parsed while trying to get a provider."
+    );
 }
 
 /** @see getProvider */
@@ -148,10 +162,13 @@ export function getProviderOrThrow(identifier: ProviderIdentifier): Provider {
 }
 
 export function hasProviderForSecurityLevel(securityLevel: SecurityLevel): boolean {
-    if (!PROVIDERS_BY_SECURITY) {
-        return false;
+    if (PROVIDERS_BY_SECURITY === undefined) {
+        throw new CryptoError(
+            CryptoErrorCode.CalProvidersNotInitialized,
+            "Failed to get providers as providers are not initialized."
+        );
     }
 
     const providers = PROVIDERS_BY_SECURITY.get(securityLevel);
-    return !!providers && providers.length > 0;
+    return providers !== undefined && providers.length > 0;
 }

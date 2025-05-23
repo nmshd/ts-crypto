@@ -53,6 +53,7 @@ export enum CryptoErrorCode {
     CalWrongProvider = "error.crypto.cal.wrongProvider",
     CalUninitializedKey = "error.crypto.cal.uninitializedKey",
     CalFailedLoadingProvider = "error.crypto.cal.failedLoadingProvider",
+    CalProvidersNotInitialized = "error.crypto.cal.providersNotInitialized",
 
     DeserializeValidation = "error.deserialize.validation"
 }
