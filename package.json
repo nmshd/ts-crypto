@@ -33,30 +33,28 @@
     },
     "dependencies": {
         "libsodium-wrappers-sumo": "0.7.15",
-        "uuid": "10.0.0"
+        "uuid": "11.1.0"
     },
     "devDependencies": {
-        "@js-soft/eslint-config-ts": "^1.6.13",
+        "@js-soft/eslint-config-ts": "^1.6.14",
         "@js-soft/license-check": "1.0.9",
         "@js-soft/ts-serval": "^2.0.12",
-        "@types/chai": "^5.0.0",
+        "@types/chai": "^5.2.2",
         "@types/libsodium-wrappers-sumo": "^0.7.8",
-        "@types/mocha": "^10.0.9",
-        "@types/node": "^22.7.7",
+        "@types/mocha": "^10.0.10",
+        "@types/node": "^22.15.21",
         "@types/uuid": "^10.0.0",
-        "@typescript-eslint/eslint-plugin": "^8.10.0",
         "bt-runner": "^4.0.6",
         "chai": "^4.4.1",
         "eslint": "^8.57.1",
         "madge": "^8.0.0",
         "mocha": "^10.7.3",
-        "prettier": "^3.3.3",
-        "terser-webpack-plugin": "^5.3.10",
+        "prettier": "^3.5.3",
         "ts-node": "^10.9.2",
         "tsconfig-paths": "^4.2.0",
-        "typescript": "^5.6.3",
-        "webpack": "^5.95.0",
-        "webpack-cli": "^5.1.4"
+        "typescript": "^5.8.3",
+        "webpack": "^5.99.9",
+        "webpack-cli": "^6.0.1"
     },
     "publishConfig": {
         "access": "public",

@@ -38,4 +38,4 @@ To start the test, type "mocha.run()" into the browser's console.
 
 ts-crypto so far depends on following packages, which cannot be updated:
 
--   chai ^5.1.1 results in an \*.ts error
+- chai ^5.1.1 results in an \*.ts error
