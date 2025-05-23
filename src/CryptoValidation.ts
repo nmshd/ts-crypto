@@ -144,6 +144,7 @@ export class CryptoValidation {
             case CryptoStateType.Receive:
             case CryptoStateType.Transmit:
                 return;
+            case undefined:
             default:
                 const error = new CryptoError(CryptoErrorCode.StateWrongType, "State type is not supported.");
                 if (throwError) throw error;
@@ -239,6 +240,7 @@ export class CryptoValidation {
                         errorLength = 32;
                     }
                     break;
+                case undefined:
                 default:
                     error = new CryptoError(
                         CryptoErrorCode.EncryptionWrongAlgorithm,
