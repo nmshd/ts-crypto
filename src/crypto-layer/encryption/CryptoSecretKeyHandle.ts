@@ -113,7 +113,18 @@ export class CryptoSecretKeyHandle extends CryptoSerializableAsync implements IC
         spec: KeySpec
     ): Promise<CryptoSecretKeyHandle> {
         const provider = getProviderOrThrow(providerIdent);
-        const keyHandle = await provider.importKey(spec, rawKey.buffer);
+        let keyHandle;
+        try {
+            keyHandle = await provider.importKey(spec, rawKey.buffer);
+        } catch (e) {
+            throw new CryptoError(
+                CryptoErrorCode.CalImportOfKey,
+                "Failed to import raw symmetric key.",
+                undefined,
+                e as Error,
+                CryptoSecretKeyHandle.fromRawKey
+            );
+        }
         return await this.fromProviderAndKeyHandle(provider, keyHandle, { keySpec: spec });
     }
 

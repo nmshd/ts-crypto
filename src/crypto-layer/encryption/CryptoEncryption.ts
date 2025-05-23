@@ -26,7 +26,7 @@ export class CryptoEncryptionHandle {
     ): Promise<CryptoCipher> {
         const encryptionAlgorithm = CryptoLayerUtils.cryptoEncryptionAlgorithmFromCipher(secretKeyHandle.spec.cipher);
 
-        if (!nonce || nonce.buffer.length === 0) {
+        if (nonce === undefined || nonce.buffer.length === 0) {
             nonce = await this.createNonce(encryptionAlgorithm, secretKeyHandle.provider);
         } else {
             CryptoValidation.checkNonceForAlgorithm(nonce, encryptionAlgorithm);
@@ -36,7 +36,13 @@ export class CryptoEncryptionHandle {
         try {
             cipher = await secretKeyHandle.keyHandle.encryptWithIv(plaintext.buffer, nonce.buffer);
         } catch (e) {
-            throw new CryptoError(CryptoErrorCode.EncryptionEncrypt, `${e}`, undefined, e as Error);
+            throw new CryptoError(
+                CryptoErrorCode.EncryptionEncrypt,
+                `${e}`,
+                undefined,
+                e as Error,
+                CryptoEncryptionHandle.generateKey
+            );
         }
 
         return CryptoCipher.from({
@@ -63,7 +69,13 @@ export class CryptoEncryptionHandle {
         try {
             cipher = await secretKeyHandle.keyHandle.encryptWithIv(plaintext.buffer, publicNonce.buffer);
         } catch (e) {
-            throw new CryptoError(CryptoErrorCode.EncryptionEncrypt, `${e}`, undefined, e as Error);
+            throw new CryptoError(
+                CryptoErrorCode.EncryptionEncrypt,
+                `${e}`,
+                undefined,
+                e as Error,
+                CryptoEncryptionHandle.encryptWithCounter
+            );
         }
 
         return CryptoCipher.from({
@@ -81,23 +93,29 @@ export class CryptoEncryptionHandle {
         const encryptionAlgorithm = CryptoLayerUtils.cryptoEncryptionAlgorithmFromCipher(secretKeyHandle.spec.cipher);
 
         let publicNonce;
-        if (typeof nonce !== "undefined") {
+        if (nonce !== undefined) {
             CryptoValidation.checkNonceForAlgorithm(nonce, encryptionAlgorithm);
             publicNonce = nonce.buffer;
-        } else if (typeof cipher.nonce !== "undefined") {
+        } else if (cipher.nonce !== undefined) {
             publicNonce = cipher.nonce.buffer;
         } else {
             throw new CryptoError(
                 CryptoErrorCode.EncryptionWrongNonce,
                 "Cipher does not contain a nonce and no nonce is given."
-            );
+            ).setContext(CryptoEncryptionHandle.decrypt);
         }
 
         try {
             const buffer = await secretKeyHandle.keyHandle.decryptData(cipher.cipher.buffer, publicNonce);
             return CoreBuffer.from(buffer);
         } catch (e) {
-            throw new CryptoError(CryptoErrorCode.EncryptionEncrypt, `${e}`, undefined, e as Error);
+            throw new CryptoError(
+                CryptoErrorCode.EncryptionEncrypt,
+                `${e}`,
+                undefined,
+                e as Error,
+                CryptoEncryptionHandle.decrypt
+            );
         }
     }
 
@@ -118,7 +136,13 @@ export class CryptoEncryptionHandle {
             const buffer = await secretKeyHandle.keyHandle.decryptData(cipher.cipher.buffer, publicNonce.buffer);
             return CoreBuffer.from(buffer);
         } catch (e) {
-            throw new CryptoError(CryptoErrorCode.EncryptionDecrypt, `${e}`, undefined, e as Error);
+            throw new CryptoError(
+                CryptoErrorCode.EncryptionDecrypt,
+                `${e}`,
+                undefined,
+                e as Error,
+                CryptoEncryptionHandle.decryptWithCounter
+            );
         }
     }
 
@@ -150,7 +174,9 @@ export class CryptoEncryptionHandle {
         } else if (nonce instanceof CoreBuffer) {
             buffer = nonce;
         } else {
-            throw new CryptoError(CryptoErrorCode.EncryptionWrongNonce);
+            throw new CryptoError(CryptoErrorCode.EncryptionWrongNonce).setContext(
+                CryptoEncryptionHandle.decryptWithCounter
+            );
         }
 
         const clone = buffer.clone().add(counter);

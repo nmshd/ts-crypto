@@ -30,15 +30,15 @@ async function providerBySecurityMapFromProviderByNameMap(
         const capabilities = await provider.getCapabilities();
         if (!capabilities) {
             throw new CryptoError(
-                CryptoErrorCode.CalFailedLoadingProvider,
+                CryptoErrorCode.CalLoadingProvider,
                 `Failed fetching capabilities or security levels of provider ${providerName}`
-            );
+            ).setContext(providerBySecurityMapFromProviderByNameMap);
         }
         if (capabilities.max_security_level !== capabilities.min_security_level) {
             throw new CryptoError(
-                CryptoErrorCode.CalFailedLoadingProvider,
+                CryptoErrorCode.CalLoadingProvider,
                 `Minimum and maximum security levels of provider ${providerName} must be the same.`
-            );
+            ).setContext(providerBySecurityMapFromProviderByNameMap);
         }
         const securityLevel = capabilities.min_security_level;
 
@@ -79,7 +79,7 @@ async function createProviderFromProviderFilter(
     throw new CryptoError(
         CryptoErrorCode.WrongParameters,
         `No available provider matches the given requirements: ${JSON.stringify(providerToBeInitialized)}`
-    );
+    ).setContext(createProviderFromProviderFilter);
 }
 
 /**
@@ -109,9 +109,9 @@ export async function initCryptoLayerProviders(config: CryptoLayerConfig, contin
                 continue;
             }
             throw new CryptoError(
-                CryptoErrorCode.CalFailedLoadingProvider,
+                CryptoErrorCode.CalLoadingProvider,
                 `Failed loading provider with given requirements: ${JSON.stringify(providerFilter)}`
-            );
+            ).setContext(initCryptoLayerProviders);
         }
 
         providers.set(await provider.providerName(), provider);
@@ -133,7 +133,7 @@ export function getProvider(identifier: ProviderIdentifier): Provider | undefine
         throw new CryptoError(
             CryptoErrorCode.CalProvidersNotInitialized,
             "Failed to get providers as providers are not initialized."
-        );
+        ).setContext(getProvider);
     }
 
     if ("providerName" in identifier) {
@@ -146,7 +146,7 @@ export function getProvider(identifier: ProviderIdentifier): Provider | undefine
     throw new CryptoError(
         CryptoErrorCode.WrongParameters,
         "Provider identifier was not able to be parsed while trying to get a provider."
-    );
+    ).setContext(getProvider);
 }
 
 /** @see getProvider */
@@ -156,7 +156,7 @@ export function getProviderOrThrow(identifier: ProviderIdentifier): Provider {
         throw new CryptoError(
             CryptoErrorCode.WrongParameters,
             `Failed finding provider with name or security level ${identifier}`
-        );
+        ).setContext(getProviderOrThrow);
     }
     return provider;
 }
@@ -166,7 +166,7 @@ export function hasProviderForSecurityLevel(securityLevel: SecurityLevel): boole
         throw new CryptoError(
             CryptoErrorCode.CalProvidersNotInitialized,
             "Failed to get providers as providers are not initialized."
-        );
+        ).setContext(hasProviderForSecurityLevel);
     }
 
     const providers = PROVIDERS_BY_SECURITY.get(securityLevel);
