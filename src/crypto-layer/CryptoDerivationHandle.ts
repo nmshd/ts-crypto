@@ -2,7 +2,7 @@ import { KDF, KeySpec } from "@nmshd/rs-crypto-types";
 import { CoreBuffer, ICoreBuffer } from "../CoreBuffer";
 import { CryptoError } from "../CryptoError";
 import { CryptoErrorCode } from "../CryptoErrorCode";
-import { getProviderOrThrow, ProviderIdentifier } from "./CryptoLayerProviders";
+import { getProvider, ProviderIdentifier } from "./CryptoLayerProviders";
 import { CryptoSecretKeyHandle } from "./encryption/CryptoSecretKeyHandle";
 
 export class CryptoDerivationHandle {
@@ -16,7 +16,7 @@ export class CryptoDerivationHandle {
         keySpecOfResultingKey: KeySpec,
         kdfOptions: KDF
     ): Promise<CryptoSecretKeyHandle> {
-        const provider = getProviderOrThrow(providerIdent);
+        const provider = getProvider(providerIdent);
 
         let keyHandle;
         try {

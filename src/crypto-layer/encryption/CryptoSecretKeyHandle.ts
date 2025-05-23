@@ -5,7 +5,7 @@ import { CoreBuffer, ICoreBuffer } from "../../CoreBuffer";
 import { CryptoError } from "../../CryptoError";
 import { CryptoErrorCode } from "../../CryptoErrorCode";
 import { CryptoSerializableAsync } from "../../CryptoSerializable";
-import { getProviderOrThrow, ProviderIdentifier } from "../CryptoLayerProviders";
+import { getProvider, ProviderIdentifier } from "../CryptoLayerProviders";
 
 export interface ICryptoSecretKeyHandleSerialized extends ISerialized {
     kid: string;
@@ -111,7 +111,7 @@ export class CryptoSecretKeyHandle extends CryptoSerializableAsync implements IC
         rawKey: ICoreBuffer,
         spec: KeySpec
     ): Promise<CryptoSecretKeyHandle> {
-        const provider = getProviderOrThrow(providerIdent);
+        const provider = getProvider(providerIdent);
         let keyHandle;
         try {
             keyHandle = await provider.importKey(spec, rawKey.buffer);
@@ -154,7 +154,7 @@ export class CryptoSecretKeyHandle extends CryptoSerializableAsync implements IC
             );
         }
 
-        const provider = getProviderOrThrow({ providerName: value.providerName });
+        const provider = getProvider({ providerName: value.providerName });
         const keyHandle = await provider.loadKey(value.id);
 
         value.keyHandle = keyHandle;

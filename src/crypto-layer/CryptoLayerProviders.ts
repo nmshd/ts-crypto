@@ -85,9 +85,12 @@ async function createProviderFromProviderFilter(
 /**
  * Initializes a list of global providers with the given configuration.
  */
-export async function initCryptoLayerProviders(config: CryptoLayerConfig, continueOnError = false): Promise<void> {
+export async function initCryptoLayerProviders(config: CryptoLayerConfig): Promise<void> {
     if (PROVIDERS_BY_NAME !== undefined && PROVIDERS_BY_SECURITY !== undefined) {
-        return;
+        throw new CryptoError(
+            CryptoErrorCode.CalProvidersAlreadyInitialized,
+            "Providers cannot be initialized again."
+        ).setContext(initCryptoLayerProviders);
     }
 
     const providerImplConfig: ProviderImplConfig = { additional_config: [config.keyMetadataStoreConfig] };
@@ -97,20 +100,17 @@ export async function initCryptoLayerProviders(config: CryptoLayerConfig, contin
 
     const providers: Map<string, Provider> = new Map();
 
-    for (const providerFilter of config.providersToBeInitialized) {
+    for (const providerToBeInitialized of config.providersToBeInitialized) {
         const provider = await createProviderFromProviderFilter(
-            providerFilter,
+            providerToBeInitialized,
             config.factoryFunctions,
             providerImplConfig
         );
 
         if (provider === undefined) {
-            if (continueOnError) {
-                continue;
-            }
             throw new CryptoError(
                 CryptoErrorCode.CalLoadingProvider,
-                `Failed loading provider with given requirements: ${JSON.stringify(providerFilter)}`
+                `Failed loading provider with given requirements: ${JSON.stringify(providerToBeInitialized)}`
             ).setContext(initCryptoLayerProviders);
         }
 
@@ -124,11 +124,13 @@ export async function initCryptoLayerProviders(config: CryptoLayerConfig, contin
 export type ProviderIdentifier = Exclude<CryptoLayerProviderFilter, { providerConfig: any }>;
 
 /**
- * Returns an initialized provider with the given name or security level if possible, otherwise undefined.
+ * Returns an initialized provider with the given name or security level if possible,
+ * otherwise throws {@link CryptoError} with {@link CryptoErrorCode.CalThisProviderNotInitialized}.
  *
- * Providers need to be initialized via the {@link initCryptoLayerProviders} function.
+ * Providers need to be initialized via the {@link initCryptoLayerProviders} function,
+ * else throws {@link CryptoError} with  {@link CryptoErrorCode.CalProvidersNotInitialized}.
  */
-export function getProvider(identifier: ProviderIdentifier): Provider | undefined {
+export function getProvider(identifier: ProviderIdentifier): Provider {
     if (PROVIDERS_BY_NAME === undefined || PROVIDERS_BY_SECURITY === undefined) {
         throw new CryptoError(
             CryptoErrorCode.CalProvidersNotInitialized,
@@ -136,27 +138,24 @@ export function getProvider(identifier: ProviderIdentifier): Provider | undefine
         ).setContext(getProvider);
     }
 
+    let provider: Provider | undefined;
+
     if ("providerName" in identifier) {
-        return PROVIDERS_BY_NAME.get(identifier.providerName);
-    }
-    if ("securityLevel" in identifier) {
-        return PROVIDERS_BY_SECURITY.get(identifier.securityLevel)?.[0];
-    }
-
-    throw new CryptoError(
-        CryptoErrorCode.WrongParameters,
-        "Provider identifier was not able to be parsed while trying to get a provider."
-    ).setContext(getProvider);
-}
-
-/** @see getProvider */
-export function getProviderOrThrow(identifier: ProviderIdentifier): Provider {
-    const provider = getProvider(identifier);
-    if (!provider) {
+        provider = PROVIDERS_BY_NAME.get(identifier.providerName);
+    } else if ("securityLevel" in identifier) {
+        provider = PROVIDERS_BY_SECURITY.get(identifier.securityLevel)?.[0];
+    } else {
         throw new CryptoError(
             CryptoErrorCode.WrongParameters,
+            "Provider identifier was not able to be parsed while trying to get a provider."
+        ).setContext(getProvider);
+    }
+
+    if (provider === undefined) {
+        throw new CryptoError(
+            CryptoErrorCode.CalThisProviderNotInitialized,
             `Failed finding provider with name or security level ${identifier}`
-        ).setContext(getProviderOrThrow);
+        ).setContext(getProvider);
     }
     return provider;
 }

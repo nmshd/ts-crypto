@@ -5,13 +5,13 @@ import { CryptoErrorCode } from "../../CryptoErrorCode";
 import { CryptoValidation } from "../../CryptoValidation";
 import { CryptoCipher } from "../../encryption/CryptoCipher";
 import { CryptoEncryptionAlgorithm } from "../../encryption/CryptoEncryption";
-import { getProviderOrThrow, ProviderIdentifier } from "../CryptoLayerProviders";
+import { getProvider, ProviderIdentifier } from "../CryptoLayerProviders";
 import { CryptoLayerUtils } from "../CryptoLayerUtils";
 import { CryptoSecretKeyHandle } from "./CryptoSecretKeyHandle";
 
 export class CryptoEncryptionHandle {
     public static async generateKey(providerIdent: ProviderIdentifier, spec: KeySpec): Promise<CryptoSecretKeyHandle> {
-        const provider = getProviderOrThrow(providerIdent);
+        const provider = getProvider(providerIdent);
         const keyHandle = await provider.createKey(spec);
         const secretKeyHandle = await CryptoSecretKeyHandle.fromProviderAndKeyHandle(provider, keyHandle, {
             keySpec: spec
