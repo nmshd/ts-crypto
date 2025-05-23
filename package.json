@@ -9,22 +9,14 @@
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "files": [
-        "dist",
-        "lib-web/nmshd.crypto.js",
-        "lib-web/nmshd.crypto.min.js",
-        "lib-web/nmshd.crypto.js.map",
-        "lib-web/nmshd.crypto.min.js.map",
-        "ui5.yaml"
+        "dist"
     ],
     "scripts": {
-        "bt": "npm run test:node && npm run build:node && npm run build:test && npm run bundle && npm run test:web",
+        "bt": "npm run test:node && npm run build:node && npm run build:test && npm run bundle:test && npm run test:web",
         "build": "npm run build:node && npm run build:test && npm run bundle",
         "build:ci": "npm run build:node && .ci/writeBuildInformation.sh && npm run build:test && npm run bundle",
         "build:node": "tsc -p tsconfig.json",
         "build:test": "tsc -p tsconfig.test.json",
-        "bundle": "npm run bundle:lib && npm run bundle:min && npm run bundle:test",
-        "bundle:lib": "webpack --stats-all",
-        "bundle:min": "webpack --stats-all --config webpack.min.config.js",
         "bundle:test": "webpack --stats-all --config webpack.test.config.js",
         "cdep": "tsc && madge --circular dist",
         "lint": "npm run lint:prettier && npm run lint:eslint && npm run lint:tsc",
@@ -46,7 +38,7 @@
     "devDependencies": {
         "@js-soft/eslint-config-ts": "^1.6.13",
         "@js-soft/license-check": "1.0.9",
-        "@js-soft/ts-serval": "2.0.10",
+        "@js-soft/ts-serval": "^2.0.12",
         "@types/chai": "^5.0.0",
         "@types/libsodium-wrappers-sumo": "^0.7.8",
         "@types/mocha": "^10.0.9",
