@@ -30,7 +30,7 @@
         "lint": "npm run lint:prettier && npm run lint:eslint && npm run lint:tsc",
         "lint:eslint": "eslint --ext .ts ./src ./test ./test-crypto-layer",
         "lint:prettier": "prettier --check .",
-        "lint:tsc": "tsc --noEmit && tsc -p test/tsconfig.json --noEmit",
+        "lint:tsc": "tsc --noEmit && tsc -p test/tsconfig.json --noEmit && tsc -p test-crypto-layer/tsconfig.json --noEmit",
         "test": "npm run test:node && npm run test:web",
         "test:local": "npm run test",
         "test:ci": "npm run test",
