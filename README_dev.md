@@ -33,9 +33,3 @@ Afterwards, open your browser and enter
 `http://localhost:7777/test-browser/index_manual.html`
 
 To start the test, type "mocha.run()" into the browser's console.
-
-# Updates
-
-ts-crypto so far depends on following packages, which cannot be updated:
-
-- chai ^5.1.1 results in an \*.ts error
