@@ -27,6 +27,8 @@ export class CryptoSignatures {
                 } catch (e) {
                     throw new CryptoError(CryptoErrorCode.SignatureKeyGeneration, `${e}`);
                 }
+            case CryptoSignatureAlgorithm.ECDSA_P256:
+            case CryptoSignatureAlgorithm.ECDSA_P521:
             default:
                 throw new CryptoError(CryptoErrorCode.NotYetImplemented);
         }
@@ -50,6 +52,8 @@ export class CryptoSignatures {
                     throw new CryptoError(CryptoErrorCode.SignatureKeyGeneration, `${e}`);
                 }
                 break;
+            case CryptoSignatureAlgorithm.ECDSA_P256:
+            case CryptoSignatureAlgorithm.ECDSA_P521:
             default:
                 throw new CryptoError(CryptoErrorCode.NotYetImplemented);
         }

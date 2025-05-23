@@ -54,6 +54,8 @@ export class CryptoExchangePrivateKey extends CryptoPrivateKey implements ICrypt
                     throw new CryptoError(CryptoErrorCode.ExchangeKeyGeneration, `${e}`);
                 }
                 break;
+            case CryptoExchangeAlgorithm.ECDH_P256:
+            case CryptoExchangeAlgorithm.ECDH_P521:
             default:
                 throw new CryptoError(CryptoErrorCode.NotYetImplemented);
         }
