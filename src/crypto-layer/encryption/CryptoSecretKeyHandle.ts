@@ -34,7 +34,6 @@ export class CryptoSecretKeyHandle extends CryptoSerializableAsync implements IC
     @serialize()
     public providerName: string;
 
-    // Validating here will error when using the ts-serval provided setter in `fromProviderAndKeyHandle`.
     @serialize()
     public spec: KeySpec;
 
@@ -137,6 +136,13 @@ export class CryptoSecretKeyHandle extends CryptoSerializableAsync implements IC
             };
         }
 
+        if (!isKeySpec(value.spec)) {
+            throw new CryptoError(
+                CryptoErrorCode.DeserializeValidation,
+                "Validating key spec in preFrom of crypto secret key handle failed."
+            );
+        }
+
         return value;
     }
 
@@ -145,14 +151,6 @@ export class CryptoSecretKeyHandle extends CryptoSerializableAsync implements IC
             throw new CryptoError(
                 CryptoErrorCode.DeserializeValidation,
                 "Expected 'CryptoSecretKeyHandle' in postFrom."
-            );
-        }
-
-        // This validation compensates the missing validation from ts-serval.
-        if (!isKeySpec(value.spec)) {
-            throw new CryptoError(
-                CryptoErrorCode.DeserializeValidation,
-                "Validating key spec in preFrom of crypto secret key handle failed."
             );
         }
 
