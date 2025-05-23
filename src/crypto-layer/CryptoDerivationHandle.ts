@@ -1,12 +1,11 @@
 import { KDF, KeySpec } from "@nmshd/rs-crypto-types";
-import { ICoreBuffer } from "../CoreBuffer";
+import { CoreBuffer, ICoreBuffer } from "../CoreBuffer";
 import { CryptoError } from "../CryptoError";
 import { CryptoErrorCode } from "../CryptoErrorCode";
-import { CryptoSerializableAsync } from "../CryptoSerializable";
 import { getProviderOrThrow, ProviderIdentifier } from "./CryptoLayerProviders";
 import { CryptoSecretKeyHandle } from "./encryption/CryptoSecretKeyHandle";
 
-export class CryptoDerivationHandle extends CryptoSerializableAsync {
+export class CryptoDerivationHandle {
     /**
      * Derive an ephemeral {@link CryptoSecretKeyHandle} from a password.
      */
@@ -43,24 +42,23 @@ export class CryptoDerivationHandle extends CryptoSerializableAsync {
     /**
      * Derive an ephemeral {@link CryptoSecretKeyHandle} from another with the same key spec and algorithm.
      */
-    public static async deriveKeyHandleFromBase(
+    public static async deriveKeyFromBaseKeyHandle(
         baseKey: CryptoSecretKeyHandle,
         keyId: number,
         context: string
     ): Promise<CryptoSecretKeyHandle> {
-        const encoder = new TextEncoder();
-        const bytes = encoder.encode(`id:${keyId};ctx:${context}`);
+        const bytes = CoreBuffer.fromUtf8(`id:${keyId};ctx:${context}`);
 
         let keyHandle;
         try {
-            keyHandle = await baseKey.keyHandle.deriveKey(bytes);
+            keyHandle = await baseKey.keyHandle.deriveKey(bytes.buffer);
         } catch (e) {
             throw new CryptoError(
                 CryptoErrorCode.CalKeyDerivation,
                 `Failed to derive key from base key.`,
                 undefined,
                 e as Error,
-                CryptoDerivationHandle.deriveKeyHandleFromBase
+                CryptoDerivationHandle.deriveKeyFromBaseKeyHandle
             );
         }
 
