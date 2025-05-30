@@ -5,10 +5,12 @@ import { CryptoErrorCode } from "../../CryptoErrorCode";
 import { CryptoValidation } from "../../CryptoValidation";
 import { CryptoCipher } from "../../encryption/CryptoCipher";
 import { CryptoEncryptionAlgorithm } from "../../encryption/CryptoEncryption";
+import { CryptoSecretKey, ICryptoSecretKey } from "../../encryption/CryptoSecretKey";
 import { getProvider, ProviderIdentifier } from "../CryptoLayerProviders";
 import { CryptoLayerUtils } from "../CryptoLayerUtils";
 import { BaseKeyHandle, BaseKeyHandleConstructor } from "./BaseKeyHandle";
 import { DeviceBoundKeyHandle } from "./DeviceBoundKeyHandle";
+import { PortableDerivedKeyHandle } from "./PortableDerivedKeyHandle";
 import { PortableKeyHandle } from "./PortableKeyHandle";
 
 export class CryptoEncryptionHandle {
@@ -187,6 +189,25 @@ export class CryptoEncryptionHandle {
 
         const buffer = await provider.getRandom(nonceLength);
         return CoreBuffer.from(buffer);
+    }
+
+    public static async extractRawKey(
+        portableKeyHandle: PortableKeyHandle | PortableDerivedKeyHandle
+    ): Promise<CoreBuffer> {
+        const rawKey = await portableKeyHandle.keyHandle.extractKey();
+        return new CoreBuffer(rawKey);
+    }
+
+    public static async cryptoSecretKeyFromPortableKeyHandle(
+        portableKeyHandle: PortableKeyHandle | PortableDerivedKeyHandle
+    ): Promise<CryptoSecretKey> {
+        const rawKeyPromise = CryptoEncryptionHandle.extractRawKey(portableKeyHandle);
+        const algorithm = CryptoLayerUtils.cryptoEncryptionAlgorithmFromCipher(portableKeyHandle.spec.cipher);
+        const cryptoSecretKeyObj: ICryptoSecretKey = {
+            algorithm: algorithm,
+            secretKey: await rawKeyPromise
+        };
+        return CryptoSecretKey.from(cryptoSecretKeyObj);
     }
 
     private static _addCounter(nonce: Uint8Array | CoreBuffer, counter: number): CoreBuffer {
