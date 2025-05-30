@@ -9,6 +9,7 @@ import { getProvider, ProviderIdentifier } from "../CryptoLayerProviders";
 import { CryptoLayerUtils } from "../CryptoLayerUtils";
 import { BaseKeyHandle, BaseKeyHandleConstructor } from "./BaseKeyHandle";
 import { DeviceBoundKeyHandle } from "./DeviceBoundKeyHandle";
+import { PortableKeyHandle } from "./PortableKeyHandle";
 
 export class CryptoEncryptionHandle {
     private static async generateKeyHandle<T extends BaseKeyHandle>(
@@ -26,12 +27,23 @@ export class CryptoEncryptionHandle {
 
     public static async generateDeviceBoundKeyHandle(
         providerIdent: ProviderIdentifier,
-        spec: KeySpec
-    ): Promise<DeviceBoundKeyHandle>;
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        spec: KeySpec & { non_exportable: true }
+    ): Promise<DeviceBoundKeyHandle> {
+        return await this.generateKeyHandle<DeviceBoundKeyHandle>(DeviceBoundKeyHandle, providerIdent, spec);
+    }
 
-    public static async encrypt(
+    public static async generatePortableKeyHandle(
+        providerIdent: ProviderIdentifier,
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        spec: KeySpec & { non_exportable: false }
+    ): Promise<PortableKeyHandle> {
+        return await this.generateKeyHandle<PortableKeyHandle>(PortableKeyHandle, providerIdent, spec);
+    }
+
+    public static async encrypt<T extends BaseKeyHandle>(
         plaintext: CoreBuffer,
-        secretKeyHandle: CryptoSecretKeyHandle,
+        secretKeyHandle: T,
         nonce?: CoreBuffer
     ): Promise<CryptoCipher> {
         const encryptionAlgorithm = CryptoLayerUtils.cryptoEncryptionAlgorithmFromCipher(secretKeyHandle.spec.cipher);
@@ -51,7 +63,7 @@ export class CryptoEncryptionHandle {
                 `${e}`,
                 undefined,
                 e as Error,
-                CryptoEncryptionHandle.generateKey
+                CryptoEncryptionHandle.encrypt
             );
         }
 
@@ -62,9 +74,9 @@ export class CryptoEncryptionHandle {
         });
     }
 
-    public static async encryptWithCounter(
+    public static async encryptWithCounter<T extends BaseKeyHandle>(
         plaintext: CoreBuffer,
-        secretKeyHandle: CryptoSecretKeyHandle,
+        secretKeyHandle: T,
         nonce: CoreBuffer,
         counter: number
     ): Promise<CryptoCipher> {
@@ -95,9 +107,9 @@ export class CryptoEncryptionHandle {
         });
     }
 
-    public static async decrypt(
+    public static async decrypt<T extends BaseKeyHandle>(
         cipher: CryptoCipher,
-        secretKeyHandle: CryptoSecretKeyHandle,
+        secretKeyHandle: T,
         nonce?: CoreBuffer
     ): Promise<CoreBuffer> {
         const encryptionAlgorithm = CryptoLayerUtils.cryptoEncryptionAlgorithmFromCipher(secretKeyHandle.spec.cipher);
@@ -129,9 +141,9 @@ export class CryptoEncryptionHandle {
         }
     }
 
-    public static async decryptWithCounter(
+    public static async decryptWithCounter<T extends BaseKeyHandle>(
         cipher: CryptoCipher,
-        secretKeyHandle: CryptoSecretKeyHandle,
+        secretKeyHandle: T,
         nonce: CoreBuffer,
         counter: number
     ): Promise<CoreBuffer> {
