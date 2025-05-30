@@ -1,4 +1,4 @@
-import { KeySpec, Provider } from "@nmshd/rs-crypto-types";
+import { CryptoHash, KeySpec, Provider } from "@nmshd/rs-crypto-types";
 import { CoreBuffer } from "../../CoreBuffer";
 import { CryptoError } from "../../CryptoError";
 import { CryptoErrorCode } from "../../CryptoErrorCode";
@@ -208,6 +208,57 @@ export class CryptoEncryptionHandle {
             secretKey: await rawKeyPromise
         };
         return CryptoSecretKey.from(cryptoSecretKeyObj);
+    }
+
+    private static async keyHandleFromCryptoSecretKey<T extends BaseKeyHandle>(
+        constructor: BaseKeyHandleConstructor<T>,
+        providerIdent: ProviderIdentifier,
+        cryptoSecretKey: CryptoSecretKey,
+        signingHash: CryptoHash,
+        ephemeral: boolean
+    ): Promise<T> {
+        const cipher = CryptoLayerUtils.cipherFromCryptoEncryptionAlgorithm(cryptoSecretKey.algorithm);
+        const keySpec: KeySpec = {
+            cipher: cipher,
+            ephemeral: ephemeral,
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            signing_hash: signingHash,
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            non_exportable: false
+        };
+
+        const provider = getProvider(providerIdent);
+        const keyHandle = await provider.importKey(keySpec, cryptoSecretKey.secretKey.buffer);
+
+        return await constructor.fromProviderAndKeyHandle(provider, keyHandle);
+    }
+
+    public static async portableKeyHandleFromCryptoSecretKey(
+        providerIdent: ProviderIdentifier,
+        cryptoSecretKey: CryptoSecretKey,
+        signingHash: CryptoHash = "Sha2_512"
+    ): Promise<PortableKeyHandle> {
+        return await CryptoEncryptionHandle.keyHandleFromCryptoSecretKey<PortableKeyHandle>(
+            PortableKeyHandle,
+            providerIdent,
+            cryptoSecretKey,
+            signingHash,
+            false
+        );
+    }
+
+    public static async portableDerivedKeyHandleFromCryptoSecretKey(
+        providerIdent: ProviderIdentifier,
+        cryptoSecretKey: CryptoSecretKey,
+        signingHash: CryptoHash = "Sha2_512"
+    ): Promise<PortableDerivedKeyHandle> {
+        return await CryptoEncryptionHandle.keyHandleFromCryptoSecretKey<PortableDerivedKeyHandle>(
+            PortableDerivedKeyHandle,
+            providerIdent,
+            cryptoSecretKey,
+            signingHash,
+            true
+        );
     }
 
     private static _addCounter(nonce: Uint8Array | CoreBuffer, counter: number): CoreBuffer {
