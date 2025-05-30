@@ -1,5 +1,11 @@
-import { CryptoDerivationHandle, CryptoEncryptionHandle } from "@nmshd/crypto";
+import {
+    CryptoDerivationHandle,
+    CryptoEncryptionHandle,
+    DeviceBoundDerivedKeyHandle,
+    PortableDerivedKeyHandle
+} from "@nmshd/crypto";
 import { KeySpec } from "@nmshd/rs-crypto-types";
+import { expect } from "chai";
 import { TEST_PROVIDER_IDENT } from "../index";
 import { parameterizedKeySpec } from "./CryptoLayerTestUtil";
 import { assertSecretKeyHandleEqual, assertSecretKeyHandleValid } from "./KeyValidation";
@@ -21,6 +27,7 @@ export class CryptoDerivationHandleTest {
                         "testTest"
                     );
                     await assertSecretKeyHandleValid(derivedKey);
+                    expect(derivedKey).instanceOf(DeviceBoundDerivedKeyHandle);
 
                     const derivedKey2 = await CryptoDerivationHandle.deriveDeviceBoundKeyHandle(
                         keyHandle,
@@ -28,6 +35,7 @@ export class CryptoDerivationHandleTest {
                         "testTest"
                     );
                     await assertSecretKeyHandleValid(derivedKey2);
+                    expect(derivedKey2).instanceOf(DeviceBoundDerivedKeyHandle);
 
                     await assertSecretKeyHandleEqual(derivedKey, derivedKey2);
                 },
@@ -48,6 +56,7 @@ export class CryptoDerivationHandleTest {
                         "testTest"
                     );
                     await assertSecretKeyHandleValid(derivedKey);
+                    expect(derivedKey).instanceOf(PortableDerivedKeyHandle);
 
                     const derivedKey2 = await CryptoDerivationHandle.deriveDeviceBoundKeyHandle(
                         keyHandle,
@@ -55,6 +64,7 @@ export class CryptoDerivationHandleTest {
                         "testTest"
                     );
                     await assertSecretKeyHandleValid(derivedKey2);
+                    expect(derivedKey2).instanceOf(PortableDerivedKeyHandle);
 
                     await assertSecretKeyHandleEqual(derivedKey, derivedKey2);
                 },
