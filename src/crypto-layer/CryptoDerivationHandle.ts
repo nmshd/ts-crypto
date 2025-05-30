@@ -108,7 +108,7 @@ export class CryptoDerivationHandle {
     /**
      * Derive an ephemeral {@link DeviceBoundDerivedKeyHandle} from a {@link DeviceBoundKeyHandle} with the same algorithms.
      */
-    private static async deriveDeviceBoundKeyHandle(
+    public static async deriveDeviceBoundKeyHandle(
         baseKey: DeviceBoundKeyHandle,
         keyId: number,
         context: string
@@ -122,7 +122,7 @@ export class CryptoDerivationHandle {
     /**
      * Derive an ephemeral {@link PortableDerivedKeyHandle} from a {@link PortableKeyHandle} with the same algorithms.
      */
-    private static async derivePortableKeyHandle(
+    public static async derivePortableKeyHandle(
         baseKey: PortableKeyHandle,
         keyId: number,
         context: string
