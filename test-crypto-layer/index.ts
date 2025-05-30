@@ -17,11 +17,20 @@ export const TEST_PROVIDER_IDENT: ProviderIdentifier = { providerName: "Software
     await Promise.all([
         initCryptoLayerProviders({
             factoryFunctions: { getAllProviders, createProvider, createProviderFromName, getProviderCapabilities },
-            // eslint-disable-next-line @typescript-eslint/naming-convention
-            keyMetadataStoreConfig: { FileStoreConfig: { db_dir: "./test_cal_db" } },
-            // eslint-disable-next-line @typescript-eslint/naming-convention
-            keyMetadataStoreAuth: { StorageConfigPass: "12345678" },
-            providersToBeInitialized: [TEST_PROVIDER_IDENT]
+            providersToBeInitialized: [
+                [
+                    TEST_PROVIDER_IDENT,
+                    {
+                        // eslint-disable-next-line @typescript-eslint/naming-convention
+                        additional_config: [
+                            // eslint-disable-next-line @typescript-eslint/naming-convention
+                            { StorageConfigPass: "12345678" },
+                            // eslint-disable-next-line @typescript-eslint/naming-convention
+                            { FileStoreConfig: { db_dir: "./test_cal_db" } }
+                        ]
+                    }
+                ]
+            ]
         }),
         SodiumWrapper.ready()
     ]);

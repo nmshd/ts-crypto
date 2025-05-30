@@ -9,7 +9,7 @@ import {
 
 import { CryptoError } from "../CryptoError";
 import { CryptoErrorCode } from "../CryptoErrorCode";
-import { CryptoLayerConfig, CryptoLayerProviderFilter } from "./CryptoLayerConfig";
+import { CryptoLayerConfig, CryptoLayerProviderToBeInitialized } from "./CryptoLayerConfig";
 
 let PROVIDERS_BY_SECURITY: Map<SecurityLevel, Provider[]> | undefined = undefined;
 let PROVIDERS_BY_NAME: Map<string, Provider> | undefined = undefined;
@@ -57,7 +57,7 @@ async function providerBySecurityMapFromProviderByNameMap(
  * If a `SecurityLevel` is given, the default provider config {@link DEFAULT_PROVIDER_CONFIG} will be used to fill in the rest for the selection.
  */
 async function createProviderFromProviderFilter(
-    providerToBeInitialized: CryptoLayerProviderFilter,
+    providerToBeInitialized: CryptoLayerProviderToBeInitialized,
     factoryFunctions: ProviderFactoryFunctions,
     providerImplConfig: ProviderImplConfig
 ): Promise<Provider | undefined> {
@@ -93,14 +93,9 @@ export async function initCryptoLayerProviders(config: CryptoLayerConfig): Promi
         ).setContext(initCryptoLayerProviders);
     }
 
-    const providerImplConfig: ProviderImplConfig = { additional_config: [config.keyMetadataStoreConfig] };
-    if (config.keyMetadataStoreAuth) {
-        providerImplConfig.additional_config.push(config.keyMetadataStoreAuth);
-    }
-
     const providers: Map<string, Provider> = new Map();
 
-    for (const providerToBeInitialized of config.providersToBeInitialized) {
+    for (const [providerToBeInitialized, providerImplConfig] of config.providersToBeInitialized) {
         const provider = await createProviderFromProviderFilter(
             providerToBeInitialized,
             config.factoryFunctions,
@@ -121,7 +116,7 @@ export async function initCryptoLayerProviders(config: CryptoLayerConfig): Promi
     PROVIDERS_BY_SECURITY = await providerBySecurityMapFromProviderByNameMap(PROVIDERS_BY_NAME);
 }
 
-export type ProviderIdentifier = Exclude<CryptoLayerProviderFilter, { providerConfig: any }>;
+export type ProviderIdentifier = Exclude<CryptoLayerProviderToBeInitialized, { providerConfig: any }>;
 
 /**
  * Returns an initialized provider with the given name or security level if possible,
