@@ -1,11 +1,21 @@
-import { CryptoSecretKeyHandle } from "@nmshd/crypto";
+import {
+    BaseKeyHandle,
+    CoreBuffer,
+    CryptoCipher,
+    CryptoEncryptionHandle,
+    CryptoLayerUtils,
+    DeviceBoundDerivedKeyHandle,
+    DeviceBoundKeyHandle,
+    PortableDerivedKeyHandle,
+    PortableKeyHandle
+} from "@nmshd/crypto";
 import { assertKeyHandle, assertKeySpec, assertProvider } from "@nmshd/rs-crypto-types/checks";
 import { expect } from "chai";
 
 /**
  * Tests SecretKeyHandle for validity and executes the id function.
  */
-export async function assertSecretKeyHandleValid<T extends CryptoSecretKeyHandle>(handle: T): Promise<void> {
+export async function assertSecretKeyHandleValid<T extends BaseKeyHandle>(handle: T): Promise<void> {
     expect(handle).to.exist;
     expect(handle.id).to.exist.and.to.be.a("string");
     expect(handle.keyHandle).to.exist;
@@ -19,12 +29,51 @@ export async function assertSecretKeyHandleValid<T extends CryptoSecretKeyHandle
 
     expect(await handle.keyHandle.id()).to.exist.and.to.be.a("string").and.to.be.not.empty;
     expect(await handle.keyHandle.spec()).to.exist.and.to.deep.equal(handle.spec);
+
+    if (handle instanceof DeviceBoundKeyHandle) {
+        expect(handle.spec.ephemeral).to.be.false;
+        expect(handle.spec.non_exportable).to.be.true;
+    } else if (handle instanceof DeviceBoundDerivedKeyHandle) {
+        expect(handle.spec.ephemeral).to.be.true;
+        expect(handle.spec.non_exportable).to.be.true;
+    } else if (handle instanceof PortableKeyHandle) {
+        expect(handle.spec.ephemeral).to.be.false;
+        expect(handle.spec.non_exportable).to.be.false;
+    } else if (handle instanceof PortableDerivedKeyHandle) {
+        expect(handle.spec.ephemeral).to.be.true;
+        expect(handle.spec.non_exportable).to.be.false;
+    } else {
+        throw new Error("Test: unknown key handle instance.");
+    }
+}
+
+async function testDecryptEncryptIsIdentityFunction<T extends BaseKeyHandle>(before: T, after: T): Promise<void> {
+    const payload = CoreBuffer.fromUtf8("Hello World!");
+
+    const encryptedPayload = await CryptoEncryptionHandle.encrypt(payload, before);
+
+    expect(encryptedPayload).to.exist;
+    expect(encryptedPayload).to.be.instanceOf(CryptoCipher);
+    expect(encryptedPayload.algorithm).to.be.equal(
+        CryptoLayerUtils.cryptoEncryptionAlgorithmFromCipher(before.spec.cipher)
+    );
+    expect(encryptedPayload.counter).to.not.exist;
+    expect(encryptedPayload.nonce).to.exist;
+    expect(encryptedPayload.nonce?.buffer.byteLength).to.be.greaterThanOrEqual(12);
+
+    const decryptedPayload = await CryptoEncryptionHandle.decrypt(encryptedPayload, after);
+
+    expect(decryptedPayload).to.deep.equal(payload);
 }
 
 /**
  * Test that the content of two SecretKeys match.
  */
-export async function assertSecretKeyHandleEqual<T extends CryptoSecretKeyHandle>(before: T, after: T): Promise<void> {
+export async function assertSecretKeyHandleEqual<T extends BaseKeyHandle>(before: T, after: T): Promise<void> {
     expect(before.spec).to.deep.equal(after.spec);
-    expect(await before.keyHandle.extractKey()).to.deep.eq(await after.keyHandle.extractKey());
+    if (before instanceof PortableKeyHandle || before instanceof PortableDerivedKeyHandle) {
+        expect(await before.keyHandle.extractKey()).to.deep.eq(await after.keyHandle.extractKey());
+    } else {
+        await testDecryptEncryptIsIdentityFunction(before, after);
+    }
 }
