@@ -7,17 +7,27 @@ import { CryptoCipher } from "../../encryption/CryptoCipher";
 import { CryptoEncryptionAlgorithm } from "../../encryption/CryptoEncryption";
 import { getProvider, ProviderIdentifier } from "../CryptoLayerProviders";
 import { CryptoLayerUtils } from "../CryptoLayerUtils";
-import { CryptoSecretKeyHandle } from "./CryptoSecretKeyHandle";
+import { BaseKeyHandle, BaseKeyHandleConstructor } from "./BaseKeyHandle";
+import { DeviceBoundKeyHandle } from "./DeviceBoundKeyHandle";
 
 export class CryptoEncryptionHandle {
-    public static async generateKey(providerIdent: ProviderIdentifier, spec: KeySpec): Promise<CryptoSecretKeyHandle> {
+    private static async generateKeyHandle<T extends BaseKeyHandle>(
+        constructor: BaseKeyHandleConstructor<T>,
+        providerIdent: ProviderIdentifier,
+        spec: KeySpec
+    ): Promise<T> {
         const provider = getProvider(providerIdent);
         const keyHandle = await provider.createKey(spec);
-        const secretKeyHandle = await CryptoSecretKeyHandle.fromProviderAndKeyHandle(provider, keyHandle, {
+        const secretKeyHandle = await constructor.fromProviderAndKeyHandle(provider, keyHandle, {
             keySpec: spec
         });
         return secretKeyHandle;
     }
+
+    public static async generateDeviceBoundKeyHandle(
+        providerIdent: ProviderIdentifier,
+        spec: KeySpec
+    ): Promise<DeviceBoundKeyHandle>;
 
     public static async encrypt(
         plaintext: CoreBuffer,
