@@ -5,6 +5,8 @@ import { BaseKeyHandle, IBaseKeyHandleSerialized } from "./BaseKeyHandle";
 /** Key handle that is non exportable (the key cannot be extracted). */
 @type("DeviceBoundKeyHandle")
 export class DeviceBoundKeyHandle extends BaseKeyHandle {
+    public readonly _isDeviceBoundKeyHandle = true;
+
     public override toJSON(verbose = true): IBaseKeyHandleSerialized {
         return {
             kid: this.id,

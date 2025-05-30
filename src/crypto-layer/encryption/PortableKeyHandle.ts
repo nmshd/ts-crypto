@@ -5,6 +5,8 @@ import { IBaseKeyHandleSerialized, ImportableBaseKeyHandle } from "./BaseKeyHand
 /** Key handle that is exportable and can also be created by importing a key. */
 @type("PortableKeyHandle")
 export class PortableKeyHandle extends ImportableBaseKeyHandle {
+    public readonly _isPortableKeyHandle = true;
+
     public override toJSON(verbose = true): IBaseKeyHandleSerialized {
         return {
             kid: this.id,

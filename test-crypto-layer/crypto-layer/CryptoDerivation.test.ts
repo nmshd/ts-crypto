@@ -50,7 +50,7 @@ export class CryptoDerivationHandleTest {
                 async function (spec: KeySpec) {
                     const keyHandle = await CryptoEncryptionHandle.generatePortableKeyHandle(TEST_PROVIDER_IDENT, spec);
 
-                    const derivedKey = await CryptoDerivationHandle.deriveDeviceBoundKeyHandle(
+                    const derivedKey = await CryptoDerivationHandle.derivePortableKeyHandle(
                         keyHandle,
                         1234,
                         "testTest"
@@ -58,7 +58,7 @@ export class CryptoDerivationHandleTest {
                     await assertSecretKeyHandleValid(derivedKey);
                     expect(derivedKey).instanceOf(PortableDerivedKeyHandle);
 
-                    const derivedKey2 = await CryptoDerivationHandle.deriveDeviceBoundKeyHandle(
+                    const derivedKey2 = await CryptoDerivationHandle.derivePortableKeyHandle(
                         keyHandle,
                         1234,
                         "testTest"

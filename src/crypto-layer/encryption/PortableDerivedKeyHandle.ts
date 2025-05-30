@@ -4,6 +4,8 @@ import { BaseKeyHandle, IBaseKeyHandleSerialized } from "./BaseKeyHandle";
 
 @type("PortableDerivedKeyHandle")
 export class PortableDerivedKeyHandle extends BaseKeyHandle {
+    public readonly _isPortableDeriveKeyHandle = true;
+
     public override toJSON(verbose = true): IBaseKeyHandleSerialized {
         return {
             kid: this.id,
