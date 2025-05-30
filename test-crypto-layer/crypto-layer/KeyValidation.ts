@@ -71,8 +71,13 @@ async function testDecryptEncryptIsIdentityFunction<T extends BaseKeyHandle>(bef
  */
 export async function assertSecretKeyHandleEqual<T extends BaseKeyHandle>(before: T, after: T): Promise<void> {
     expect(before.spec).to.deep.equal(after.spec);
-    if (before instanceof PortableKeyHandle || before instanceof PortableDerivedKeyHandle) {
-        expect(await before.keyHandle.extractKey()).to.deep.eq(await after.keyHandle.extractKey());
+    if (
+        (before instanceof PortableKeyHandle && after instanceof PortableKeyHandle) ||
+        (before instanceof PortableDerivedKeyHandle && after instanceof PortableDerivedKeyHandle)
+    ) {
+        expect((await CryptoEncryptionHandle.extractRawKey(before)).buffer).to.deep.eq(
+            (await CryptoEncryptionHandle.extractRawKey(after)).buffer
+        );
     } else {
         await testDecryptEncryptIsIdentityFunction(before, after);
     }

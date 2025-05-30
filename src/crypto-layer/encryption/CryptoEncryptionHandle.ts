@@ -29,18 +29,28 @@ export class CryptoEncryptionHandle {
 
     public static async generateDeviceBoundKeyHandle(
         providerIdent: ProviderIdentifier,
-        // eslint-disable-next-line @typescript-eslint/naming-convention
-        spec: KeySpec & { non_exportable: true }
+        spec: Omit<KeySpec, "non_exportable" | "ephemeral">
     ): Promise<DeviceBoundKeyHandle> {
-        return await this.generateKeyHandle<DeviceBoundKeyHandle>(DeviceBoundKeyHandle, providerIdent, spec);
+        const deviceBoundSpec: KeySpec = {
+            ...spec,
+            ephemeral: false,
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            non_exportable: true
+        };
+        return await this.generateKeyHandle<DeviceBoundKeyHandle>(DeviceBoundKeyHandle, providerIdent, deviceBoundSpec);
     }
 
     public static async generatePortableKeyHandle(
         providerIdent: ProviderIdentifier,
-        // eslint-disable-next-line @typescript-eslint/naming-convention
-        spec: KeySpec & { non_exportable: false }
+        spec: Omit<KeySpec, "non_exportable" | "ephemeral">
     ): Promise<PortableKeyHandle> {
-        return await this.generateKeyHandle<PortableKeyHandle>(PortableKeyHandle, providerIdent, spec);
+        const portableSpec: KeySpec = {
+            ...spec,
+            ephemeral: false,
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            non_exportable: false
+        };
+        return await this.generateKeyHandle<PortableKeyHandle>(PortableKeyHandle, providerIdent, portableSpec);
     }
 
     public static async encrypt<T extends BaseKeyHandle>(
