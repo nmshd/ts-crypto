@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import { Cipher, CryptoHash, KeySpec } from "@nmshd/rs-crypto-types";
+import { expect } from "chai";
 
 export interface ParametersKeySpec {
     cipher: Cipher[];
@@ -44,4 +45,22 @@ export function parameterizedKeySpec(
             });
         });
     });
+}
+
+export async function expectThrows(
+    method: Function | Promise<any>,
+    errorMessageRegexp?: RegExp | string
+): Promise<void> {
+    let error: Error | undefined;
+    try {
+        if (typeof method === "function") {
+            await method();
+        }
+    } catch (err: any) {
+        error = err;
+    }
+    expect(error).to.be.instanceOf(Error);
+    if (errorMessageRegexp) {
+        expect(error!.message).to.match(new RegExp(`^${errorMessageRegexp}`));
+    }
 }

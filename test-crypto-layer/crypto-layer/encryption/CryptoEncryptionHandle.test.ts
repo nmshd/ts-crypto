@@ -16,7 +16,7 @@ import {
 import { KeySpec } from "@nmshd/rs-crypto-types";
 import { expect } from "chai";
 import { TEST_PROVIDER_IDENT } from "../../index";
-import { parameterizedKeySpec } from "../CryptoLayerTestUtil";
+import { expectThrows, parameterizedKeySpec } from "../CryptoLayerTestUtil";
 import { assertSecretKeyHandleEqual, assertSecretKeyHandleValid } from "../KeyValidation";
 
 export async function generateKey(spec: KeySpec): Promise<DeviceBoundKeyHandle | PortableKeyHandle> {
@@ -238,6 +238,32 @@ export class CryptoEncryptionHandleTest {
                         assertSecretKeyHandleEqual(key, deserialized)
                     ]);
                     expect(deserialized.id).to.equal(key.id);
+                });
+
+                it("should export the key as json and deserialize the key correctly", async function () {
+                    const serialized = key.toJSON();
+                    const deserialized = await PortableKeyHandle.fromJSON(serialized);
+                    await Promise.all([
+                        assertSecretKeyHandleValid(deserialized),
+                        assertSecretKeyHandleEqual(key, deserialized)
+                    ]);
+                    expect(deserialized.id).to.equal(key.id);
+                });
+
+                it("should deserialize a wrong KeySpec correctly", async function () {
+                    await expectThrows(() => {
+                        return PortableKeyHandle.fromJSON({
+                            kid: "3KpnHNPtcG",
+                            pnm: "SoftwareProvider",
+                            spc: {
+                                cipher: "XChaCha20Poly1305",
+                                signing_hash: "Sha2_256a",
+                                ephemeral: false,
+                                non_exportable: false
+                            },
+                            "@type": "PortableKeyHandle"
+                        } as any);
+                    }, "error.deserialize.validation: 'Validating key spec in preFrom of crypto secret key handle failed.");
                 });
 
                 it("should serialize and deserialize the key using base64 correctly", async function () {
