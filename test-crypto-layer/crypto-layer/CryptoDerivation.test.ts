@@ -58,7 +58,7 @@ export class CryptoDerivationHandleTest {
                 const keyHandle = await CryptoDerivationHandle.deriveDeviceBoundKeyHandleFromPassword({
                     providerIdent: TEST_PROVIDER_IDENT,
                     password: CoreBuffer.fromUtf8("password1234"),
-                    salt: CoreBuffer.fromUtf8("1234"),
+                    salt: CoreBuffer.fromUtf8("12345678"),
                     resultingKeyEncryptionAlgorithm: crypto,
                     resultingKeyHashAlgorithm: hash,
                     derivationAlgorithm: CryptoDerivationAlgorithm.ARGON2ID,
@@ -74,7 +74,7 @@ export class CryptoDerivationHandleTest {
                 const keyHandle = await CryptoDerivationHandle.derivePortableKeyHandleFromPassword({
                     providerIdent: TEST_PROVIDER_IDENT,
                     password: CoreBuffer.fromUtf8("password1234"),
-                    salt: CoreBuffer.fromUtf8("1234"),
+                    salt: CoreBuffer.fromUtf8("12345678"),
                     resultingKeyEncryptionAlgorithm: crypto,
                     resultingKeyHashAlgorithm: hash,
                     derivationAlgorithm: CryptoDerivationAlgorithm.ARGON2ID,

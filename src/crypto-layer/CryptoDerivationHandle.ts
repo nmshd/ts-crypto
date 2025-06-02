@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import { KDF, KeySpec } from "@nmshd/rs-crypto-types";
 import { CryptoDerivationAlgorithm } from "src/CryptoDerivation";
+import { CryptoValidation } from "src/CryptoValidation";
 import { CryptoEncryptionAlgorithm } from "src/encryption/CryptoEncryption";
 import { CryptoHashAlgorithm } from "src/hash/CryptoHash";
 import { CoreBuffer, ICoreBuffer } from "../CoreBuffer";
@@ -40,6 +41,8 @@ export class CryptoDerivationHandle {
         }: DeriveKeyHandleFromPasswordParameters,
         keySpecOfResultingKey: KeySpec
     ): Promise<T> {
+        CryptoValidation.checkBuffer(new CoreBuffer(salt), 8, 64, "salt", true);
+
         const provider = getProvider(providerIdent);
 
         const kdfParameters: KDF = CryptoLayerUtils.kdfFromCryptoDerivation(
