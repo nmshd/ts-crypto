@@ -15,7 +15,7 @@ import { DeviceBoundKeyHandle } from "./encryption/DeviceBoundKeyHandle";
 import { PortableDerivedKeyHandle } from "./encryption/PortableDerivedKeyHandle";
 import { PortableKeyHandle } from "./encryption/PortableKeyHandle";
 
-interface DeriveKeyHandleFromPasswordParameters {
+export interface DeriveKeyHandleFromPasswordParameters {
     providerIdent: ProviderIdentifier;
     password: ICoreBuffer;
     salt: ICoreBuffer;
