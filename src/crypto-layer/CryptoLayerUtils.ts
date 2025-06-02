@@ -1,5 +1,5 @@
-import { AsymmetricKeySpec, Cipher, CryptoHash } from "@nmshd/rs-crypto-types";
-import { CryptoEncryptionAlgorithm } from "..";
+import { Argon2Options, AsymmetricKeySpec, Cipher, CryptoHash, KDF } from "@nmshd/rs-crypto-types";
+import { CryptoDerivationAlgorithm, CryptoEncryptionAlgorithm } from "..";
 import { CryptoError } from "../CryptoError";
 import { CryptoErrorCode } from "../CryptoErrorCode";
 import { CryptoExchangeAlgorithm } from "../exchange/CryptoExchange";
@@ -86,5 +86,61 @@ export class CryptoLayerUtils {
             case "ChaCha20Poly1305":
                 return CryptoEncryptionAlgorithm.CHACHA20_POLY1305;
         }
+    }
+
+    public static argon2OptionsFromIterationsMemLimitAndParallelism(
+        iterations: number,
+        memlimit: number,
+        parallelism: number
+    ): Argon2Options {
+        const kibiByteBase = 2 ^ 10;
+        if (memlimit % kibiByteBase !== 0) {
+            throw new CryptoError(
+                CryptoErrorCode.WrongParameters,
+                "rust-crypto uses kibibytes for Argon2. The `memlimit` parameter (in bytes) is not a multiple of `2^10` and thus not convertible without loss."
+            ).setContext(CryptoLayerUtils.argon2OptionsFromIterationsMemLimitAndParallelism);
+        }
+        const memory = memlimit / kibiByteBase;
+
+        const options: Argon2Options = {
+            memory: memory,
+            iterations: iterations,
+            parallelism: parallelism
+        };
+
+        return options;
+    }
+
+    public static kdfFromCryptoDerivation(
+        derivationAlgorithm: CryptoDerivationAlgorithm,
+        iterations: number,
+        memlimit: number,
+        parallelism: number
+    ): KDF {
+        const options: Argon2Options = CryptoLayerUtils.argon2OptionsFromIterationsMemLimitAndParallelism(
+            iterations,
+            memlimit,
+            parallelism
+        );
+
+        let kdf: KDF;
+
+        switch (derivationAlgorithm) {
+            case CryptoDerivationAlgorithm.ARGON2ID:
+                // eslint-disable-next-line @typescript-eslint/naming-convention
+                kdf = { Argon2id: options };
+                break;
+            case CryptoDerivationAlgorithm.ARGON2I:
+                // eslint-disable-next-line @typescript-eslint/naming-convention
+                kdf = { Argon2i: options };
+                break;
+            default:
+                throw new CryptoError(
+                    CryptoErrorCode.WrongParameters,
+                    `Crypto derivation algorithm '${derivationAlgorithm}' not supported.`
+                ).setContext(CryptoLayerUtils.kdfFromCryptoDerivation);
+        }
+
+        return kdf;
     }
 }

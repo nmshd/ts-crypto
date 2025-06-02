@@ -9,6 +9,8 @@
         "ciphertext",
         "globalsals",
         "Keypair",
+        "kibi",
+        "kibibytes",
         "libsodium",
         "MEMLIMIT",
         "memzero",

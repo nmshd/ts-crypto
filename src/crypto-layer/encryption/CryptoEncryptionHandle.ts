@@ -237,9 +237,7 @@ export class CryptoEncryptionHandle {
         const keySpec: KeySpec = {
             cipher: cipher,
             ephemeral: ephemeral,
-            // eslint-disable-next-line @typescript-eslint/naming-convention
             signing_hash: signingHash,
-            // eslint-disable-next-line @typescript-eslint/naming-convention
             non_exportable: false
         };
 
