@@ -4,6 +4,7 @@ import { BaseKeyHandle, IBaseKeyHandleSerialized } from "./BaseKeyHandle";
 
 @type("PortableDerivedKeyHandle")
 export class PortableDerivedKeyHandle extends BaseKeyHandle {
+    // Phantom marker to make this type incompatible to other types that extend `BaseKeyHandle`.
     public readonly _isPortableDeriveKeyHandle = true;
 
     public override toJSON(verbose = true): IBaseKeyHandleSerialized {
