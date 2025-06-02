@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-import { CryptoHash, KeySpec, Provider } from "@nmshd/rs-crypto-types";
+import { KeySpec, Provider } from "@nmshd/rs-crypto-types";
 import { CryptoHashAlgorithm } from "src/hash/CryptoHash";
 import { CoreBuffer } from "../../CoreBuffer";
 import { CryptoError } from "../../CryptoError";
@@ -230,14 +230,14 @@ export class CryptoEncryptionHandle {
         constructor: BaseKeyHandleConstructor<T>,
         providerIdent: ProviderIdentifier,
         cryptoSecretKey: CryptoSecretKey,
-        signingHash: CryptoHash,
+        signingHash: CryptoHashAlgorithm,
         ephemeral: boolean
     ): Promise<T> {
         const cipher = CryptoLayerUtils.cipherFromCryptoEncryptionAlgorithm(cryptoSecretKey.algorithm);
         const keySpec: KeySpec = {
             cipher: cipher,
             ephemeral: ephemeral,
-            signing_hash: signingHash,
+            signing_hash: CryptoLayerUtils.cryptoHashFromCryptoHashAlgorithm(signingHash),
             non_exportable: false
         };
 
@@ -250,7 +250,7 @@ export class CryptoEncryptionHandle {
     public static async portableKeyHandleFromCryptoSecretKey(
         providerIdent: ProviderIdentifier,
         cryptoSecretKey: CryptoSecretKey,
-        signingHash: CryptoHash = "Sha2_512"
+        signingHash: CryptoHashAlgorithm = CryptoHashAlgorithm.SHA512
     ): Promise<PortableKeyHandle> {
         return await CryptoEncryptionHandle.keyHandleFromCryptoSecretKey<PortableKeyHandle>(
             PortableKeyHandle,
@@ -264,7 +264,7 @@ export class CryptoEncryptionHandle {
     public static async portableDerivedKeyHandleFromCryptoSecretKey(
         providerIdent: ProviderIdentifier,
         cryptoSecretKey: CryptoSecretKey,
-        signingHash: CryptoHash = "Sha2_512"
+        signingHash: CryptoHashAlgorithm = CryptoHashAlgorithm.SHA512
     ): Promise<PortableDerivedKeyHandle> {
         return await CryptoEncryptionHandle.keyHandleFromCryptoSecretKey<PortableDerivedKeyHandle>(
             PortableDerivedKeyHandle,
