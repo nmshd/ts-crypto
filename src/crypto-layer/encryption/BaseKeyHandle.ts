@@ -116,13 +116,6 @@ export abstract class BaseKeyHandle extends CryptoSerializableAsync implements I
             };
         }
 
-        if (!isKeySpec(value.spec)) {
-            throw new CryptoError(
-                CryptoErrorCode.DeserializeValidation,
-                "Validating key spec in preFrom of crypto secret key handle failed."
-            );
-        }
-
         return value;
     }
 
