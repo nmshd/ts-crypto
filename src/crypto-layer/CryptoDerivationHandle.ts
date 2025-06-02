@@ -14,24 +14,48 @@ import { DeviceBoundKeyHandle } from "./encryption/DeviceBoundKeyHandle";
 import { PortableDerivedKeyHandle } from "./encryption/PortableDerivedKeyHandle";
 import { PortableKeyHandle } from "./encryption/PortableKeyHandle";
 
+interface DeriveKeyHandleFromPasswordParameters {
+    providerIdent: ProviderIdentifier;
+    password: ICoreBuffer;
+    salt: ICoreBuffer;
+    resultingKeyEncryptionAlgorithm: CryptoEncryptionAlgorithm;
+    resultingKeyHashAlgorithm: CryptoHashAlgorithm;
+    derivationAlgorithm: CryptoDerivationAlgorithm;
+    derivationIterations: number;
+    derivationMemoryLimit: number;
+    derivationParallelism: number;
+}
+
 export class CryptoDerivationHandle {
     private static async deriveKeyHandleFromPassword<T extends BaseKeyHandle>(
         constructor: BaseKeyHandleConstructor<T>,
-        providerIdent: ProviderIdentifier,
-        password: ICoreBuffer,
-        salt: ICoreBuffer,
-        keySpecOfResultingKey: KeySpec,
-        kdfOptions: KDF
+        {
+            providerIdent,
+            password,
+            salt,
+            derivationAlgorithm,
+            derivationIterations,
+            derivationMemoryLimit,
+            derivationParallelism
+        }: DeriveKeyHandleFromPasswordParameters,
+        keySpecOfResultingKey: KeySpec
     ): Promise<T> {
         const provider = getProvider(providerIdent);
-        // TODO update according to deriveDeviceBoundKeyHandleFromPassword
+
+        const kdfParameters: KDF = CryptoLayerUtils.kdfFromCryptoDerivation(
+            derivationAlgorithm,
+            derivationIterations,
+            derivationMemoryLimit,
+            derivationParallelism
+        );
+
         let keyHandle;
         try {
             keyHandle = await provider.deriveKeyFromPassword(
                 password.toUtf8(),
                 salt.buffer,
                 keySpecOfResultingKey,
-                kdfOptions
+                kdfParameters
             );
         } catch (e) {
             throw new CryptoError(
@@ -50,50 +74,19 @@ export class CryptoDerivationHandle {
      * Derive an ephemeral {@link DeviceBoundDerivedKeyHandle} from a password.
      */
     public static async deriveDeviceBoundKeyHandleFromPassword(
-        providerIdent: ProviderIdentifier,
-        password: ICoreBuffer,
-        salt: ICoreBuffer,
-        encryptionAlgorithm: CryptoEncryptionAlgorithm,
-        hashAlgorithm: CryptoHashAlgorithm,
-        derivationAlgorithm: CryptoDerivationAlgorithm,
-        iterations: number,
-        memlimit: number,
-        parallelism: number
+        parameters: DeriveKeyHandleFromPasswordParameters
     ): Promise<DeviceBoundDerivedKeyHandle> {
-        // TODO: Move to separate utility class
-        let kdfParameters: KDF;
-        switch (derivationAlgorithm) {
-            case CryptoDerivationAlgorithm.ARGON2I:
-                kdfParameters = {
-                    Argon2d: {
-                        iterations,
-                        memory: memlimit,
-                        parallelism
-                    }
-                };
-                break;
-            case CryptoDerivationAlgorithm.ARGON2ID:
-                kdfParameters = {
-                    Argon2id: {
-                        iterations,
-                        memory: memlimit,
-                        parallelism
-                    }
-                };
-                break;
-        }
+        const keySpec: KeySpec = {
+            cipher: CryptoLayerUtils.cipherFromCryptoEncryptionAlgorithm(parameters.resultingKeyEncryptionAlgorithm),
+            signing_hash: CryptoLayerUtils.cryptoHashFromCryptoHashAlgorithm(parameters.resultingKeyHashAlgorithm),
+            ephemeral: true,
+            non_exportable: true
+        };
+
         return await CryptoDerivationHandle.deriveKeyHandleFromPassword<DeviceBoundDerivedKeyHandle>(
             DeviceBoundDerivedKeyHandle,
-            providerIdent,
-            password,
-            salt,
-            {
-                cipher: CryptoLayerUtils.cipherFromCryptoEncryptionAlgorithm(encryptionAlgorithm),
-                signing_hash: CryptoLayerUtils.cryptoHashFromCryptoHashAlgorithm(hashAlgorithm),
-                ephemeral: true,
-                non_exportable: false
-            },
-            kdfParameters
+            parameters,
+            keySpec
         );
     }
 
@@ -101,20 +94,19 @@ export class CryptoDerivationHandle {
      * Derive an ephemeral {@link PortableDerivedKeyHandle} from a password.
      */
     public static async derivePortableKeyHandleFromPassword(
-        providerIdent: ProviderIdentifier,
-        password: ICoreBuffer,
-        salt: ICoreBuffer,
-        keySpecOfResultingKey: KeySpec,
-        kdfOptions: KDF
+        parameters: DeriveKeyHandleFromPasswordParameters
     ): Promise<PortableDerivedKeyHandle> {
-        // TODO update according to deriveDeviceBoundKeyHandleFromPassword
+        const keySpec: KeySpec = {
+            cipher: CryptoLayerUtils.cipherFromCryptoEncryptionAlgorithm(parameters.resultingKeyEncryptionAlgorithm),
+            signing_hash: CryptoLayerUtils.cryptoHashFromCryptoHashAlgorithm(parameters.resultingKeyHashAlgorithm),
+            ephemeral: true,
+            non_exportable: false
+        };
+
         return await CryptoDerivationHandle.deriveKeyHandleFromPassword<PortableDerivedKeyHandle>(
             PortableDerivedKeyHandle,
-            providerIdent,
-            password,
-            salt,
-            keySpecOfResultingKey,
-            kdfOptions
+            parameters,
+            keySpec
         );
     }
 
