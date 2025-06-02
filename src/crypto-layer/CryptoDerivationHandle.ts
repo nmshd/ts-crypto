@@ -30,33 +30,25 @@ export interface DeriveKeyHandleFromPasswordParameters {
 export class CryptoDerivationHandle {
     private static async deriveKeyHandleFromPassword<T extends BaseKeyHandle>(
         constructor: BaseKeyHandleConstructor<T>,
-        {
-            providerIdent,
-            password,
-            salt,
-            derivationAlgorithm,
-            derivationIterations,
-            derivationMemoryLimit,
-            derivationParallelism
-        }: DeriveKeyHandleFromPasswordParameters,
+        derivationParameters: DeriveKeyHandleFromPasswordParameters,
         keySpecOfResultingKey: KeySpec
     ): Promise<T> {
-        CryptoValidation.checkBuffer(new CoreBuffer(salt), 8, 64, "salt", true);
+        CryptoValidation.checkBuffer(new CoreBuffer(derivationParameters.salt), 8, 64, "salt", true);
 
-        const provider = getProvider(providerIdent);
+        const provider = getProvider(derivationParameters.providerIdent);
 
         const kdfParameters: KDF = CryptoLayerUtils.kdfFromCryptoDerivation(
-            derivationAlgorithm,
-            derivationIterations,
-            derivationMemoryLimit,
-            derivationParallelism
+            derivationParameters.derivationAlgorithm,
+            derivationParameters.derivationIterations,
+            derivationParameters.derivationMemoryLimit,
+            derivationParameters.derivationParallelism
         );
 
         let keyHandle;
         try {
             keyHandle = await provider.deriveKeyFromPassword(
-                password.toUtf8(),
-                salt.buffer,
+                derivationParameters.password.toUtf8(),
+                derivationParameters.salt.buffer,
                 keySpecOfResultingKey,
                 kdfParameters
             );
