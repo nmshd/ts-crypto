@@ -46,6 +46,12 @@ export abstract class BaseKeyHandle extends CryptoSerializableAsync implements I
     @serialize()
     public providerName: string;
 
+    @validate({
+        customValidator: (value) => {
+            if (isKeySpec(value)) return undefined;
+            return "is not of type keySpec";
+        }
+    })
     @serialize()
     public spec: KeySpec;
 
