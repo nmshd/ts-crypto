@@ -123,24 +123,18 @@ export class CryptoLayerUtils {
             parallelism
         );
 
-        let kdf: KDF;
-
         switch (derivationAlgorithm) {
             case CryptoDerivationAlgorithm.ARGON2ID:
                 // eslint-disable-next-line @typescript-eslint/naming-convention
-                kdf = { Argon2id: options };
-                break;
+                return { Argon2id: options };
             case CryptoDerivationAlgorithm.ARGON2I:
                 // eslint-disable-next-line @typescript-eslint/naming-convention
-                kdf = { Argon2i: options };
-                break;
+                return { Argon2i: options };
             default:
                 throw new CryptoError(
                     CryptoErrorCode.WrongParameters,
                     `Crypto derivation algorithm '${derivationAlgorithm}' not supported.`
                 ).setContext(CryptoLayerUtils.kdfFromCryptoDerivation);
         }
-
-        return kdf;
     }
 }
