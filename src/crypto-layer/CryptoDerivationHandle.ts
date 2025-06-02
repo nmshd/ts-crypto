@@ -1,8 +1,13 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import { KDF, KeySpec } from "@nmshd/rs-crypto-types";
+import { CryptoDerivationAlgorithm } from "src/CryptoDerivation";
+import { CryptoEncryptionAlgorithm } from "src/encryption/CryptoEncryption";
+import { CryptoHashAlgorithm } from "src/hash/CryptoHash";
 import { CoreBuffer, ICoreBuffer } from "../CoreBuffer";
 import { CryptoError } from "../CryptoError";
 import { CryptoErrorCode } from "../CryptoErrorCode";
 import { getProvider, ProviderIdentifier } from "./CryptoLayerProviders";
+import { CryptoLayerUtils } from "./CryptoLayerUtils";
 import { BaseKeyHandle, BaseKeyHandleConstructor } from "./encryption/BaseKeyHandle";
 import { DeviceBoundDerivedKeyHandle } from "./encryption/DeviceBoundDerivedKeyHandle";
 import { DeviceBoundKeyHandle } from "./encryption/DeviceBoundKeyHandle";
@@ -19,7 +24,7 @@ export class CryptoDerivationHandle {
         kdfOptions: KDF
     ): Promise<T> {
         const provider = getProvider(providerIdent);
-
+        // TODO update according to deriveDeviceBoundKeyHandleFromPassword
         let keyHandle;
         try {
             keyHandle = await provider.deriveKeyFromPassword(
@@ -48,16 +53,47 @@ export class CryptoDerivationHandle {
         providerIdent: ProviderIdentifier,
         password: ICoreBuffer,
         salt: ICoreBuffer,
-        keySpecOfResultingKey: KeySpec,
-        kdfOptions: KDF
+        encryptionAlgorithm: CryptoEncryptionAlgorithm,
+        hashAlgorithm: CryptoHashAlgorithm,
+        derivationAlgorithm: CryptoDerivationAlgorithm,
+        iterations: number,
+        memlimit: number,
+        parallelism: number
     ): Promise<DeviceBoundDerivedKeyHandle> {
+        // TODO: Move to separate utility class
+        let kdfParameters: KDF;
+        switch (derivationAlgorithm) {
+            case CryptoDerivationAlgorithm.ARGON2I:
+                kdfParameters = {
+                    Argon2d: {
+                        iterations,
+                        memory: memlimit,
+                        parallelism
+                    }
+                };
+                break;
+            case CryptoDerivationAlgorithm.ARGON2ID:
+                kdfParameters = {
+                    Argon2id: {
+                        iterations,
+                        memory: memlimit,
+                        parallelism
+                    }
+                };
+                break;
+        }
         return await CryptoDerivationHandle.deriveKeyHandleFromPassword<DeviceBoundDerivedKeyHandle>(
             DeviceBoundDerivedKeyHandle,
             providerIdent,
             password,
             salt,
-            keySpecOfResultingKey,
-            kdfOptions
+            {
+                cipher: CryptoLayerUtils.cipherFromCryptoEncryptionAlgorithm(encryptionAlgorithm),
+                signing_hash: CryptoLayerUtils.cryptoHashFromCryptoHashAlgorithm(hashAlgorithm),
+                ephemeral: true,
+                non_exportable: false
+            },
+            kdfParameters
         );
     }
 
@@ -71,6 +107,7 @@ export class CryptoDerivationHandle {
         keySpecOfResultingKey: KeySpec,
         kdfOptions: KDF
     ): Promise<PortableDerivedKeyHandle> {
+        // TODO update according to deriveDeviceBoundKeyHandleFromPassword
         return await CryptoDerivationHandle.deriveKeyHandleFromPassword<PortableDerivedKeyHandle>(
             PortableDerivedKeyHandle,
             providerIdent,

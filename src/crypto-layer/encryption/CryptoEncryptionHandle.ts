@@ -1,4 +1,6 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import { CryptoHash, KeySpec, Provider } from "@nmshd/rs-crypto-types";
+import { CryptoHashAlgorithm } from "src/hash/CryptoHash";
 import { CoreBuffer } from "../../CoreBuffer";
 import { CryptoError } from "../../CryptoError";
 import { CryptoErrorCode } from "../../CryptoErrorCode";
@@ -29,27 +31,31 @@ export class CryptoEncryptionHandle {
 
     public static async generateDeviceBoundKeyHandle(
         providerIdent: ProviderIdentifier,
-        spec: Omit<KeySpec, "non_exportable" | "ephemeral">
+        encryptionAlgorithm: CryptoEncryptionAlgorithm,
+        hashAlgorithm: CryptoHashAlgorithm
     ): Promise<DeviceBoundKeyHandle> {
         const deviceBoundSpec: KeySpec = {
-            ...spec,
+            cipher: CryptoLayerUtils.cipherFromCryptoEncryptionAlgorithm(encryptionAlgorithm),
+            signing_hash: CryptoLayerUtils.cryptoHashFromCryptoHashAlgorithm(hashAlgorithm),
             ephemeral: false,
-            // eslint-disable-next-line @typescript-eslint/naming-convention
             non_exportable: true
         };
+
         return await this.generateKeyHandle<DeviceBoundKeyHandle>(DeviceBoundKeyHandle, providerIdent, deviceBoundSpec);
     }
 
     public static async generatePortableKeyHandle(
         providerIdent: ProviderIdentifier,
-        spec: Omit<KeySpec, "non_exportable" | "ephemeral">
+        encryptionAlgorithm: CryptoEncryptionAlgorithm,
+        hashAlgorithm: CryptoHashAlgorithm
     ): Promise<PortableKeyHandle> {
         const portableSpec: KeySpec = {
-            ...spec,
+            cipher: CryptoLayerUtils.cipherFromCryptoEncryptionAlgorithm(encryptionAlgorithm),
+            signing_hash: CryptoLayerUtils.cryptoHashFromCryptoHashAlgorithm(hashAlgorithm),
             ephemeral: false,
-            // eslint-disable-next-line @typescript-eslint/naming-convention
             non_exportable: false
         };
+
         return await this.generateKeyHandle<PortableKeyHandle>(PortableKeyHandle, providerIdent, portableSpec);
     }
 
