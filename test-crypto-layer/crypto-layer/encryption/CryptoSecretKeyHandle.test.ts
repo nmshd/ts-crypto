@@ -1,6 +1,10 @@
-/* eslint-disable @typescript-eslint/naming-convention */
-import { CryptoEncryptionHandle, DeviceBoundKeyHandle, PortableKeyHandle } from "@nmshd/crypto";
-import { KeySpec } from "@nmshd/rs-crypto-types";
+import {
+    CryptoEncryptionAlgorithm,
+    CryptoEncryptionHandle,
+    CryptoHashAlgorithm,
+    DeviceBoundKeyHandle,
+    PortableKeyHandle
+} from "@nmshd/crypto";
 import { expect } from "chai";
 import { TEST_PROVIDER_IDENT } from "test-crypto-layer";
 import { testSerializeDeserializeOfBase64AndJson } from "../CommonSerialize";
@@ -10,36 +14,27 @@ import { assertSecretKeyHandleEqual, assertSecretKeyHandleValid } from "../KeyVa
 export class CryptoSecretKeyHandleTest {
     public static run(): void {
         describe("PortableKeyHandle and DeviceBoundKeyHandle", function () {
-            const portableSpec: KeySpec = {
-                cipher: "XChaCha20Poly1305",
-                signing_hash: "Sha2_256",
-                ephemeral: false,
-                non_exportable: false
-            };
-
             testSerializeDeserializeOfBase64AndJson(
                 "PortableKeyHandle",
                 async () => {
-                    return await CryptoEncryptionHandle.generatePortableKeyHandle(TEST_PROVIDER_IDENT, portableSpec);
+                    return await CryptoEncryptionHandle.generatePortableKeyHandle(
+                        TEST_PROVIDER_IDENT,
+                        CryptoEncryptionAlgorithm.XCHACHA20_POLY1305,
+                        CryptoHashAlgorithm.SHA256
+                    );
                 },
                 PortableKeyHandle,
                 assertSecretKeyHandleValid,
                 assertSecretKeyHandleEqual
             );
 
-            const deviceBoundSpec: KeySpec = {
-                cipher: "XChaCha20Poly1305",
-                signing_hash: "Sha2_256",
-                ephemeral: false,
-                non_exportable: true
-            };
-
             testSerializeDeserializeOfBase64AndJson(
                 "DeviceBoundKeyHandle",
                 async () => {
                     return await CryptoEncryptionHandle.generateDeviceBoundKeyHandle(
                         TEST_PROVIDER_IDENT,
-                        deviceBoundSpec
+                        CryptoEncryptionAlgorithm.XCHACHA20_POLY1305,
+                        CryptoHashAlgorithm.SHA256
                     );
                 },
                 DeviceBoundKeyHandle,
@@ -49,10 +44,11 @@ export class CryptoSecretKeyHandleTest {
 
             parameterizedKeySpec(
                 "from IBaseKeyHandle should load a device bound key handle",
-                async function (spec: KeySpec) {
+                async function (crypto, hash) {
                     const keyHandle = await CryptoEncryptionHandle.generateDeviceBoundKeyHandle(
                         TEST_PROVIDER_IDENT,
-                        spec
+                        crypto,
+                        hash
                     );
                     await assertSecretKeyHandleValid(keyHandle);
 
@@ -68,19 +64,16 @@ export class CryptoSecretKeyHandleTest {
                         assertSecretKeyHandleValid(loadedKeyHandle),
                         assertSecretKeyHandleEqual(keyHandle, loadedKeyHandle)
                     ]);
-                },
-                {
-                    ephemeral: [false],
-                    nonExportable: [true]
                 }
             );
 
             parameterizedKeySpec(
                 "from DeviceBoundKeyHandle should load a device bound key handle",
-                async function (spec: KeySpec) {
+                async function (crypto, hash) {
                     const keyHandle = await CryptoEncryptionHandle.generateDeviceBoundKeyHandle(
                         TEST_PROVIDER_IDENT,
-                        spec
+                        crypto,
+                        hash
                     );
                     await assertSecretKeyHandleValid(keyHandle);
 
@@ -92,10 +85,6 @@ export class CryptoSecretKeyHandleTest {
                         assertSecretKeyHandleValid(loadedKeyHandle),
                         assertSecretKeyHandleEqual(keyHandle, loadedKeyHandle)
                     ]);
-                },
-                {
-                    ephemeral: [false],
-                    nonExportable: [true]
                 }
             );
         });

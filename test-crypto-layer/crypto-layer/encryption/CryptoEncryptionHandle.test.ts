@@ -7,9 +7,9 @@ import {
     CryptoEncryptionAlgorithm,
     CryptoEncryptionHandle,
     CryptoError,
+    CryptoHashAlgorithm,
     CryptoLayerUtils,
     CryptoSecretKey,
-    DeviceBoundKeyHandle,
     ICryptoSecretKeySerialized,
     PortableKeyHandle
 } from "@nmshd/crypto";
@@ -19,53 +19,54 @@ import { TEST_PROVIDER_IDENT } from "../../index";
 import { expectThrows, parameterizedKeySpec } from "../CryptoLayerTestUtil";
 import { assertSecretKeyHandleEqual, assertSecretKeyHandleValid } from "../KeyValidation";
 
-export async function generateKey(spec: KeySpec): Promise<DeviceBoundKeyHandle | PortableKeyHandle> {
-    if (spec.non_exportable) {
-        return await CryptoEncryptionHandle.generateDeviceBoundKeyHandle(TEST_PROVIDER_IDENT, spec);
-    }
-    return await CryptoEncryptionHandle.generatePortableKeyHandle(TEST_PROVIDER_IDENT, spec);
-}
-
 export class CryptoEncryptionHandleTest {
     public static run(): void {
         describe("CryptoEncryptionHandle", function () {
             describe("Key Creation and Usage", function () {
-                parameterizedKeySpec(
-                    "should generate secret key handle with",
-                    async function (spec: KeySpec) {
-                        const keyHandle = await generateKey(spec);
-                        await assertSecretKeyHandleValid(keyHandle);
-                    },
-                    {
-                        ephemeral: [false]
-                    }
-                );
+                parameterizedKeySpec("should generate device bound key handle with", async function (crypto, hash) {
+                    const keyHandle = await CryptoEncryptionHandle.generateDeviceBoundKeyHandle(
+                        TEST_PROVIDER_IDENT,
+                        crypto,
+                        hash
+                    );
+                    await assertSecretKeyHandleValid(keyHandle);
+                });
+                parameterizedKeySpec("should generate device bound key handle with", async function (crypto, hash) {
+                    const keyHandle = await CryptoEncryptionHandle.generatePortableKeyHandle(
+                        TEST_PROVIDER_IDENT,
+                        crypto,
+                        hash
+                    );
+                    await assertSecretKeyHandleValid(keyHandle);
+                });
 
-                parameterizedKeySpec(
-                    "decrypt encrypt should be an identity function",
-                    async function (spec: KeySpec) {
-                        const cryptoSecretKeyHandle = await generateKey(spec);
+                parameterizedKeySpec("decrypt encrypt should be an identity function", async function (crypto, hash) {
+                    const cryptoSecretKeyHandle = await CryptoEncryptionHandle.generateDeviceBoundKeyHandle(
+                        TEST_PROVIDER_IDENT,
+                        crypto,
+                        hash
+                    );
 
-                        const data = new CoreBuffer("0123456789ABCDEF");
-                        const encrypted = await CryptoEncryptionHandle.encrypt(data, cryptoSecretKeyHandle);
-                        expect(encrypted).to.be.ok.and.to.be.instanceOf(CryptoCipher);
-                        expect(encrypted.algorithm).to.equal(
-                            CryptoLayerUtils.cryptoEncryptionAlgorithmFromCipher(cryptoSecretKeyHandle.spec.cipher)
-                        );
+                    const data = new CoreBuffer("0123456789ABCDEF");
+                    const encrypted = await CryptoEncryptionHandle.encrypt(data, cryptoSecretKeyHandle);
+                    expect(encrypted).to.be.ok.and.to.be.instanceOf(CryptoCipher);
+                    expect(encrypted.algorithm).to.equal(
+                        CryptoLayerUtils.cryptoEncryptionAlgorithmFromCipher(cryptoSecretKeyHandle.spec.cipher)
+                    );
 
-                        const decrypted = await CryptoEncryptionHandle.decrypt(encrypted, cryptoSecretKeyHandle);
+                    const decrypted = await CryptoEncryptionHandle.decrypt(encrypted, cryptoSecretKeyHandle);
 
-                        expect(decrypted.buffer).to.deep.equal(data.buffer);
-                    },
-                    {
-                        ephemeral: [false]
-                    }
-                );
+                    expect(decrypted.buffer).to.deep.equal(data.buffer);
+                });
 
                 parameterizedKeySpec(
                     "decrypt encrypt with counter should be an identity function",
-                    async function (spec: KeySpec) {
-                        const cryptoSecretKeyHandle = await generateKey(spec);
+                    async function (crypto, hash) {
+                        const cryptoSecretKeyHandle = await CryptoEncryptionHandle.generateDeviceBoundKeyHandle(
+                            TEST_PROVIDER_IDENT,
+                            crypto,
+                            hash
+                        );
                         const cryptoEncryptionAlgorithm = CryptoLayerUtils.cryptoEncryptionAlgorithmFromCipher(
                             cryptoSecretKeyHandle.spec.cipher
                         );
@@ -93,16 +94,17 @@ export class CryptoEncryptionHandleTest {
                         );
 
                         expect(decrypted.buffer).to.deep.equal(data.buffer);
-                    },
-                    {
-                        ephemeral: [false]
                     }
                 );
 
                 parameterizedKeySpec(
                     "decrypt encrypt with provided nonce should be an identity function",
-                    async function (spec: KeySpec) {
-                        const cryptoSecretKeyHandle = await generateKey(spec);
+                    async function (crypto, hash) {
+                        const cryptoSecretKeyHandle = await CryptoEncryptionHandle.generateDeviceBoundKeyHandle(
+                            TEST_PROVIDER_IDENT,
+                            crypto,
+                            hash
+                        );
 
                         const cryptoEncryptionAlgorithm = CryptoLayerUtils.cryptoEncryptionAlgorithmFromCipher(
                             cryptoSecretKeyHandle.spec.cipher
@@ -121,47 +123,39 @@ export class CryptoEncryptionHandleTest {
                         const decrypted = await CryptoEncryptionHandle.decrypt(encrypted, cryptoSecretKeyHandle, nonce);
 
                         expect(decrypted.buffer).to.deep.equal(data.buffer);
-                    },
-                    {
-                        ephemeral: [false]
                     }
                 );
 
-                parameterizedKeySpec(
-                    "encrypt with a wrong nonce should fail",
-                    async function (spec: KeySpec) {
-                        const cryptoSecretKeyHandle = await generateKey(spec);
+                parameterizedKeySpec("encrypt with a wrong nonce should fail", async function (crypto, hash) {
+                    const cryptoSecretKeyHandle = await CryptoEncryptionHandle.generateDeviceBoundKeyHandle(
+                        TEST_PROVIDER_IDENT,
+                        crypto,
+                        hash
+                    );
 
-                        const nonce = new CoreBuffer("ZnZj");
+                    const nonce = new CoreBuffer("ZnZj");
 
-                        const data = new CoreBuffer("0123456789ABCDEF");
+                    const data = new CoreBuffer("0123456789ABCDEF");
 
-                        let error;
-                        try {
-                            await CryptoEncryptionHandle.encrypt(data, cryptoSecretKeyHandle, nonce);
-                        } catch (e: any) {
-                            error = e;
-                        }
-
-                        expect(error).to.be.instanceOf(CryptoError);
-                        expect(error.code).to.equal("error.crypto.encryption.wrongNonce");
-                    },
-                    {
-                        ephemeral: [false]
+                    let error;
+                    try {
+                        await CryptoEncryptionHandle.encrypt(data, cryptoSecretKeyHandle, nonce);
+                    } catch (e: any) {
+                        error = e;
                     }
-                );
+
+                    expect(error).to.be.instanceOf(CryptoError);
+                    expect(error.code).to.equal("error.crypto.encryption.wrongNonce");
+                });
             });
 
             describe("Validation against CryptoSecretKey", function () {
-                const spec: KeySpec = {
-                    cipher: "XChaCha20Poly1305",
-                    signing_hash: "Sha2_256",
-                    ephemeral: false,
-                    non_exportable: false
-                };
-
                 it("extracted key imported in libsodium should be able to decrypt", async function () {
-                    const key = await CryptoEncryptionHandle.generatePortableKeyHandle(TEST_PROVIDER_IDENT, spec);
+                    const key = await CryptoEncryptionHandle.generatePortableKeyHandle(
+                        TEST_PROVIDER_IDENT,
+                        CryptoEncryptionAlgorithm.XCHACHA20_POLY1305,
+                        CryptoHashAlgorithm.SHA256
+                    );
 
                     const keyBufferPromise = CryptoEncryptionHandle.extractRawKey(key);
                     const algorithm = CryptoLayerUtils.cryptoEncryptionAlgorithmFromCipher(key.spec.cipher);
@@ -215,7 +209,11 @@ export class CryptoEncryptionHandleTest {
 
                 let key: PortableKeyHandle;
                 before(async function () {
-                    key = await CryptoEncryptionHandle.generatePortableKeyHandle(TEST_PROVIDER_IDENT, spec);
+                    key = await CryptoEncryptionHandle.generatePortableKeyHandle(
+                        TEST_PROVIDER_IDENT,
+                        CryptoEncryptionAlgorithm.XCHACHA20_POLY1305,
+                        CryptoHashAlgorithm.SHA256
+                    );
                     await assertSecretKeyHandleValid(key);
                 });
 
@@ -250,7 +248,7 @@ export class CryptoEncryptionHandleTest {
                     expect(deserialized.id).to.equal(key.id);
                 });
 
-                it("should deserialize a wrong KeySpec correctly", async function () {
+                it("should not deserialize a wrong KeySpec", async function () {
                     await expectThrows(() => {
                         return PortableKeyHandle.fromJSON({
                             kid: "3KpnHNPtcG",
@@ -263,7 +261,7 @@ export class CryptoEncryptionHandleTest {
                             },
                             "@type": "PortableKeyHandle"
                         } as any);
-                    }, "error.deserialize.validation: 'Validating key spec in preFrom of crypto secret key handle failed.");
+                    }, "PortableKeyHandle.spec:Object :: Is not of type KeySpec.");
                 });
 
                 it("should serialize and deserialize the key using base64 correctly", async function () {
@@ -292,18 +290,21 @@ export class CryptoEncryptionHandleTest {
                 let key: PortableKeyHandle;
                 let key2: PortableKeyHandle;
                 const text: CoreBuffer = CoreBuffer.random(4);
-                const spec: KeySpec = {
-                    cipher: "XChaCha20Poly1305",
-                    signing_hash: "Sha2_256",
-                    ephemeral: false,
-                    non_exportable: false
-                };
-                const expectedAlgorithm = CryptoLayerUtils.cryptoEncryptionAlgorithmFromCipher(spec.cipher);
+                const portableEncryptionAlgorithm = CryptoEncryptionAlgorithm.XCHACHA20_POLY1305;
+                const portableHashAlgorithm = CryptoHashAlgorithm.SHA256;
 
                 before(async function () {
                     [key, key2] = await Promise.all([
-                        CryptoEncryptionHandle.generatePortableKeyHandle(TEST_PROVIDER_IDENT, spec),
-                        CryptoEncryptionHandle.generatePortableKeyHandle(TEST_PROVIDER_IDENT, spec)
+                        CryptoEncryptionHandle.generatePortableKeyHandle(
+                            TEST_PROVIDER_IDENT,
+                            portableEncryptionAlgorithm,
+                            portableHashAlgorithm
+                        ),
+                        CryptoEncryptionHandle.generatePortableKeyHandle(
+                            TEST_PROVIDER_IDENT,
+                            portableEncryptionAlgorithm,
+                            portableHashAlgorithm
+                        )
                     ]);
 
                     await Promise.all([assertSecretKeyHandleValid(key), assertSecretKeyHandleValid(key2)]);
@@ -313,7 +314,7 @@ export class CryptoEncryptionHandleTest {
                     const cipher = await CryptoEncryptionHandle.encrypt(text, key);
                     expect(cipher).to.exist;
                     expect(cipher).to.be.instanceOf(CryptoCipher);
-                    expect(cipher.algorithm).to.be.equal(expectedAlgorithm);
+                    expect(cipher.algorithm).to.be.equal(portableEncryptionAlgorithm);
                     expect(cipher.counter).to.not.exist;
                     expect(cipher.nonce).to.exist;
                     expect(cipher.nonce?.buffer.byteLength).to.equal(24);
