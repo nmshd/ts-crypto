@@ -1,4 +1,4 @@
-set -eAdd commentMore actions
+set -e
 set -x
 
 if [ -z "$VERSION" ]; then
