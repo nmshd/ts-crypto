@@ -26,6 +26,8 @@ if [ "$DEPENDENCIES" = "null" ]; then
     DEPENDENCIES="{}"
 fi
 
+DEPENDENCIES="${DEPENDENCIES//[\/]/\\/}" # replace '/' with '\/' because it's a special char
+
 DATE=$(date -u --iso-8601=seconds)
 
 echo "Writing the following properties into $TARGET_FILE"
