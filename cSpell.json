@@ -1,0 +1,28 @@
+{
+    "words": [
+        "asym",
+        "browsertest",
+        "cdep",
+        "CHACHA",
+        "chaimodule",
+        "cipherbuffer",
+        "ciphertext",
+        "globalsals",
+        "Keypair",
+        "kibi",
+        "kibibytes",
+        "libsodium",
+        "MEMLIMIT",
+        "memzero",
+        "nmshd",
+        "nopadding",
+        "OPSLIMIT",
+        "publicnonce",
+        "pwhash",
+        "SALTBYTES",
+        "Templator",
+        "urlsafe",
+        "XCHACHA",
+        "zeroize"
+    ]
+}

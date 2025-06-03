@@ -25,7 +25,13 @@ export const enum CryptoEncryptionAlgorithm {
     // eslint-disable-next-line @typescript-eslint/naming-convention
     AES256_GCM = 2,
     // eslint-disable-next-line @typescript-eslint/naming-convention
-    XCHACHA20_POLY1305 = 3
+    XCHACHA20_POLY1305 = 3,
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    AES128_CBC = 4,
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    AES256_CBC = 5,
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    CHACHA20_POLY1305 = 6
 }
 
 export abstract class CryptoEncryption {
