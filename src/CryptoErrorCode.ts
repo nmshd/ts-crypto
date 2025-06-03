@@ -46,5 +46,18 @@ export enum CryptoErrorCode {
     StateWrongNonce = "error.crypto.state.wrongNonce",
     StateWrongCounter = "error.crypto.state.wrongCounter",
     StateWrongOrder = "error.crypto.state.orderDoesNotMatch",
-    StateWrongType = "error.crypto.state.wrongType"
+    StateWrongType = "error.crypto.state.wrongType",
+
+    CalNonExtractable = "error.crypto.cal.nonExtractable",
+    CalUnsupportedAlgorithm = "error.crypto.cal.unsupportedAlgorithm",
+    CalWrongProvider = "error.crypto.cal.wrongProvider",
+    CalUninitializedKey = "error.crypto.cal.uninitializedKey",
+    CalLoadingProvider = "error.crypto.cal.loadingProvider",
+    CalProvidersNotInitialized = "error.crypto.cal.providersNotInitialized",
+    CalThisProviderNotInitialized = "error.crypto.cal.thisProviderNotInitialized",
+    CalProvidersAlreadyInitialized = "error.crypto.cal.providersAlreadyInitialized",
+    CalImportOfKey = "error.crypto.cal.calImportOfKey",
+    CalKeyDerivation = "error.crypto.cal.keyDerivation",
+
+    DeserializeValidation = "error.deserialize.validation"
 }
