@@ -6,6 +6,11 @@ if [ -z "$(which jq)" ]; then
     exit 1
 fi
 
+if [ -z "$VERSION" ]; then
+    echo "The environment variable 'VERSION' must be set."
+    exit 1
+fi
+
 if [ -z "$BUILD_NUMBER" ]; then
     echo "The environment variable 'BUILD_NUMBER' must be set."
     exit 1
@@ -21,12 +26,6 @@ if [ "$DEPENDENCIES" = "null" ]; then
     DEPENDENCIES="{}"
 fi
 
-VERSION=$(jq .version package.json -cr)
-if [ -z "$VERSION" ]; then
-    echo "Couldn't read the version from package.json."
-    exit 1
-fi
-
 DATE=$(date -u --iso-8601=seconds)
 
 echo "Writing the following properties into $TARGET_FILE"
@@ -38,7 +37,7 @@ echo "  - DATE: $DATE"
 
 TARGET_FILE="./dist/buildInformation.js"
 
-sed -i "s/\"{{dependencies}}\"/$DEPENDENCIES/" $TARGET_FILE
+sed -i "s/\"{{dependencies}}\"/"$DEPENDENCIES"/" $TARGET_FILE
 sed -i "s/{{version}}/$VERSION/" $TARGET_FILE
 sed -i "s/{{build}}/$BUILD_NUMBER/" $TARGET_FILE
 sed -i "s/{{commit}}/$COMMIT_HASH/" $TARGET_FILE
