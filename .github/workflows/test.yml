@@ -10,6 +10,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: bash .ci/runChecks.sh
+
   test:
     runs-on: ubuntu-latest
     steps:
