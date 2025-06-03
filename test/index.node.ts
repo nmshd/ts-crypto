@@ -76,7 +76,5 @@ Promise.all([
 
         // Derivation
         CryptoDerivationHandleTest.run();
-
-        run();
     })
     .catch((e) => console.log(e));
