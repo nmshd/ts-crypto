@@ -6,7 +6,7 @@ import {
     PortableKeyHandle
 } from "@nmshd/crypto";
 import { expect } from "chai";
-import { TEST_PROVIDER_IDENT } from "test-crypto-layer";
+import { TEST_PROVIDER_IDENT } from "../../index.node";
 import { testSerializeDeserializeOfBase64AndJson } from "../CommonSerialize";
 import { parameterizedKeySpec } from "../CryptoLayerTestUtil";
 import { assertSecretKeyHandleEqual, assertSecretKeyHandleValid } from "../KeyValidation";
