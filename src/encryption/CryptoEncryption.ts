@@ -52,6 +52,9 @@ export abstract class CryptoEncryption {
                 break;
             case CryptoEncryptionAlgorithm.AES128_GCM:
             case CryptoEncryptionAlgorithm.AES256_GCM:
+            case CryptoEncryptionAlgorithm.AES128_CBC:
+            case CryptoEncryptionAlgorithm.AES256_CBC:
+            case CryptoEncryptionAlgorithm.CHACHA20_POLY1305:
             default:
                 throw new CryptoError(CryptoErrorCode.NotYetImplemented);
         }
@@ -123,6 +126,9 @@ export abstract class CryptoEncryption {
                 break;
             case CryptoEncryptionAlgorithm.AES128_GCM:
             case CryptoEncryptionAlgorithm.AES256_GCM:
+            case CryptoEncryptionAlgorithm.AES128_CBC:
+            case CryptoEncryptionAlgorithm.AES256_CBC:
+            case CryptoEncryptionAlgorithm.CHACHA20_POLY1305:
             default:
                 throw new CryptoError(CryptoErrorCode.NotYetImplemented);
         }
@@ -181,6 +187,9 @@ export abstract class CryptoEncryption {
                 }
             case CryptoEncryptionAlgorithm.AES128_GCM:
             case CryptoEncryptionAlgorithm.AES256_GCM:
+            case CryptoEncryptionAlgorithm.AES128_CBC:
+            case CryptoEncryptionAlgorithm.AES256_CBC:
+            case CryptoEncryptionAlgorithm.CHACHA20_POLY1305:
             default:
                 throw new CryptoError(CryptoErrorCode.NotYetImplemented);
         }
@@ -243,6 +252,9 @@ export abstract class CryptoEncryption {
                 }
             case CryptoEncryptionAlgorithm.AES128_GCM:
             case CryptoEncryptionAlgorithm.AES256_GCM:
+            case CryptoEncryptionAlgorithm.AES128_CBC:
+            case CryptoEncryptionAlgorithm.AES256_CBC:
+            case CryptoEncryptionAlgorithm.CHACHA20_POLY1305:
             default:
                 throw new CryptoError(CryptoErrorCode.NotYetImplemented);
         }
@@ -285,6 +297,9 @@ export abstract class CryptoEncryption {
             case CryptoEncryptionAlgorithm.XCHACHA20_POLY1305:
                 nonceLength = 24;
                 break;
+            case CryptoEncryptionAlgorithm.AES128_CBC:
+            case CryptoEncryptionAlgorithm.AES256_CBC:
+            case CryptoEncryptionAlgorithm.CHACHA20_POLY1305:
             default:
                 throw new CryptoError(
                     CryptoErrorCode.EncryptionWrongAlgorithm,

@@ -1,7 +1,7 @@
 import { getProvider } from "@nmshd/crypto";
 import { assertProvider } from "@nmshd/rs-crypto-types/checks";
 import { expect } from "chai";
-import { TEST_PROVIDER_IDENT } from "../index";
+import { TEST_PROVIDER_IDENT } from "../index.node";
 
 export class CryptoLayerProviderTest {
     public static run(): void {

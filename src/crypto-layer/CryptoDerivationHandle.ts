@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import { KDF, KeySpec } from "@nmshd/rs-crypto-types";
-import { CryptoDerivationAlgorithm } from "src/CryptoDerivation";
-import { CryptoValidation } from "src/CryptoValidation";
-import { CryptoEncryptionAlgorithm } from "src/encryption/CryptoEncryption";
-import { CryptoHashAlgorithm } from "src/hash/CryptoHash";
 import { CoreBuffer, ICoreBuffer } from "../CoreBuffer";
+import { CryptoDerivationAlgorithm } from "../CryptoDerivation";
 import { CryptoError } from "../CryptoError";
 import { CryptoErrorCode } from "../CryptoErrorCode";
+import { CryptoValidation } from "../CryptoValidation";
+import { CryptoEncryptionAlgorithm } from "../encryption/CryptoEncryption";
+import { CryptoHashAlgorithm } from "../hash/CryptoHash";
 import { getProvider, ProviderIdentifier } from "./CryptoLayerProviders";
 import { CryptoLayerUtils } from "./CryptoLayerUtils";
 import { BaseKeyHandle, BaseKeyHandleConstructor } from "./encryption/BaseKeyHandle";

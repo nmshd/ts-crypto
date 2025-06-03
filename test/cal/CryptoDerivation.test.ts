@@ -9,7 +9,7 @@ import {
     PortableDerivedKeyHandle
 } from "@nmshd/crypto";
 import { expect } from "chai";
-import { TEST_PROVIDER_IDENT } from "../index";
+import { TEST_PROVIDER_IDENT } from "../index.node";
 import { expectThrows, parameterizedKeySpec } from "./CryptoLayerTestUtil";
 import { assertSecretKeyHandleEqual, assertSecretKeyHandleValid } from "./KeyValidation";
 

@@ -15,7 +15,7 @@ import {
 } from "@nmshd/crypto";
 import { KeySpec } from "@nmshd/rs-crypto-types";
 import { expect } from "chai";
-import { TEST_PROVIDER_IDENT } from "../../index";
+import { TEST_PROVIDER_IDENT } from "../../index.node";
 import { expectThrows, parameterizedKeySpec } from "../CryptoLayerTestUtil";
 import { assertSecretKeyHandleEqual, assertSecretKeyHandleValid } from "../KeyValidation";
 

@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import { KeySpec, Provider } from "@nmshd/rs-crypto-types";
-import { CryptoHashAlgorithm } from "src/hash/CryptoHash";
 import { CoreBuffer } from "../../CoreBuffer";
 import { CryptoError } from "../../CryptoError";
 import { CryptoErrorCode } from "../../CryptoErrorCode";
@@ -8,6 +7,7 @@ import { CryptoValidation } from "../../CryptoValidation";
 import { CryptoCipher } from "../../encryption/CryptoCipher";
 import { CryptoEncryptionAlgorithm } from "../../encryption/CryptoEncryption";
 import { CryptoSecretKey, ICryptoSecretKey } from "../../encryption/CryptoSecretKey";
+import { CryptoHashAlgorithm } from "../../hash/CryptoHash";
 import { getProvider, ProviderIdentifier } from "../CryptoLayerProviders";
 import { CryptoLayerUtils } from "../CryptoLayerUtils";
 import { BaseKeyHandle, BaseKeyHandleConstructor } from "./BaseKeyHandle";
