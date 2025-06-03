@@ -5,6 +5,11 @@ on:
     branches-ignore: [main, release/**]
 
 jobs:
+  run-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash .ci/runChecks.sh
   test:
     runs-on: ubuntu-latest
     steps:
@@ -13,8 +18,7 @@ jobs:
         with:
           node-version: 22
       - uses: browser-actions/setup-chrome@v1
-      - run: bash .ci/build.sh
-        env:
-          BUILD_NUMBER: ${{ github.run_number }}
-          COMMIT_HASH: ${{ github.sha }}
+      - run: npm ci
+      - run: npm run build
       - run: bash .ci/test.sh
+    needs: ["run-checks"]
