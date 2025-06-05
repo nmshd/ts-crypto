@@ -1,6 +1,5 @@
 import { ISerializable, ISerialized, SerializableAsync, serialize, type, validate } from "@js-soft/ts-serval";
 import { KeyHandle, Provider } from "@nmshd/rs-crypto-types";
-import { CoreBuffer } from "../../CoreBuffer";
 import { CryptoError } from "../../CryptoError";
 import { CryptoErrorCode } from "../../CryptoErrorCode";
 import { CryptoSerializableAsync } from "../../CryptoSerializable";
@@ -60,34 +59,6 @@ export abstract class BaseKeyHandle extends CryptoSerializableAsync implements I
     public async hashAlgorithm(): Promise<CryptoHashAlgorithm> {
         const spec = await this.keyHandle.spec();
         return CryptoLayerUtils.cryptoHashAlgorithmFromCryptoHash(spec.signing_hash);
-    }
-
-    /**
-     * Deserializes an object representation of a {@link BaseKeyHandle}.
-     *
-     * This method is not able to import raw keys or {@link KeyHandle}.
-     */
-    public static async from<T extends BaseKeyHandle>(
-        this: BaseKeyHandleConstructor<T>,
-        value: BaseKeyHandleConstructor<T> | IBaseKeyHandle | CoreBuffer
-    ): Promise<T> {
-        return await this.fromAny(value);
-    }
-
-    /** @see from */
-    public static async fromJSON<T extends BaseKeyHandle>(
-        this: BaseKeyHandleConstructor<T>,
-        value: IBaseKeyHandleSerialized
-    ): Promise<T> {
-        return await this.fromAny(value);
-    }
-
-    /** @see from */
-    public static async fromBase64<T extends BaseKeyHandle>(
-        this: BaseKeyHandleConstructor<T>,
-        value: string
-    ): Promise<T> {
-        return await this.deserialize(CoreBuffer.base64_utf8(value));
     }
 
     protected static override preFrom(value: any): any {
