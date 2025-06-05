@@ -1,8 +1,7 @@
-// filepath: m:\DEV\WorkProjects\nmshd2\ts-crypto\src\crypto-layer\encryption\DerivedBaseKeyHandle.ts
 import { KeyHandle, Provider } from "@nmshd/rs-crypto-types";
-import { CryptoEncryptionAlgorithm } from "../../encryption/CryptoEncryption"; // Path relative to src/crypto-layer/encryption/
-import { CryptoHashAlgorithm } from "../../hash/CryptoHash"; // Assuming 'src/' is a root path or alias
-import { CryptoLayerUtils } from "../CryptoLayerUtils"; // Path relative to src/crypto-layer/encryption/
+import { CryptoEncryptionAlgorithm } from "../../encryption/CryptoEncryption";
+import { CryptoHashAlgorithm } from "../../hash/CryptoHash";
+import { CryptoLayerUtils } from "../CryptoLayerUtils";
 
 /**
  * Variant of {@link BaseKeyHandle} without serialization and deserialization.

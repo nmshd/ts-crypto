@@ -11,7 +11,7 @@ import { CryptoHashAlgorithm } from "../../hash/CryptoHash";
 import { getProvider, ProviderIdentifier } from "../CryptoLayerProviders";
 import { CryptoLayerUtils } from "../CryptoLayerUtils";
 import { BaseDerivedKeyHandle } from "./BaseDerivedKeyHandle";
-import { BaseKeyHandle, BaseKeyHandleConstructor } from "./BaseKeyHandle";
+import { BaseKeyHandle } from "./BaseKeyHandle";
 import { DeviceBoundKeyHandle } from "./DeviceBoundKeyHandle";
 import { PortableDerivedKeyHandle } from "./PortableDerivedKeyHandle";
 import { PortableKeyHandle } from "./PortableKeyHandle";
@@ -35,7 +35,7 @@ export class CryptoEncryptionHandle {
     }
 
     private static async generateKeyHandle<T extends BaseKeyHandle>(
-        constructor: BaseKeyHandleConstructor<T>,
+        constructor: new () => T,
         providerIdent: ProviderIdentifier,
         spec: KeySpec
     ): Promise<T> {

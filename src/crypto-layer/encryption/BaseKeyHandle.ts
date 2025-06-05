@@ -18,13 +18,6 @@ export interface IBaseKeyHandle extends ISerializable {
     providerName: string;
 }
 
-export interface BaseKeyHandleConstructor<T> {
-    new (): T;
-
-    deserialize(value: string): Promise<T>;
-    fromAny(value: any): Promise<T>;
-}
-
 /**
  * Represents a handle to a secret key used for symmetric encryption/decryption within the crypto layer.
  * This handle encapsulates a reference to the key material, managed by the underlying crypto provider,
