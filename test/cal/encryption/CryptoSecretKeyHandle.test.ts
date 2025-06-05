@@ -54,7 +54,6 @@ export class CryptoSecretKeyHandleTest {
 
                     const loadedKeyHandle = await DeviceBoundKeyHandle.from({
                         id: keyHandle.id,
-                        spec: keyHandle.spec,
                         providerName: keyHandle.providerName
                     });
 
