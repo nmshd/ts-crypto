@@ -1,11 +1,11 @@
 import { ISerializable, ISerialized, SerializableAsync, serialize, type, validate } from "@js-soft/ts-serval";
 import { KeyHandle, KeySpec, Provider } from "@nmshd/rs-crypto-types";
-import { CryptoHashAlgorithm } from "src/hash/CryptoHash";
 import { CoreBuffer, ICoreBuffer } from "../../CoreBuffer";
 import { CryptoError } from "../../CryptoError";
 import { CryptoErrorCode } from "../../CryptoErrorCode";
 import { CryptoSerializableAsync } from "../../CryptoSerializable";
 import { CryptoEncryptionAlgorithm } from "../../encryption/CryptoEncryption";
+import { CryptoHashAlgorithm } from "../../hash/CryptoHash";
 import { getProvider, ProviderIdentifier } from "../CryptoLayerProviders";
 import { CryptoLayerUtils } from "../CryptoLayerUtils";
 
@@ -19,15 +19,11 @@ export interface IBaseKeyHandle extends ISerializable {
     providerName: string;
 }
 
-export interface BaseKeyHandleConstructor<T extends BaseKeyHandle> {
+export interface BaseKeyHandleConstructor<T> {
     new (): T;
 
     deserialize(value: string): Promise<T>;
-    fromProviderAndKeyHandle(
-        provider: Provider,
-        keyHandle: KeyHandle,
-        other?: { providerName?: string; keyId?: string; keySpec?: KeySpec }
-    ): Promise<T>;
+    fromProviderAndKeyHandle(provider: Provider, keyHandle: KeyHandle): Promise<T>;
     fromAny(value: any): Promise<T>;
 }
 

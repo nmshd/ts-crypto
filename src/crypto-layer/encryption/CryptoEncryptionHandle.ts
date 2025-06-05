@@ -11,6 +11,7 @@ import { CryptoHashAlgorithm } from "../../hash/CryptoHash";
 import { getProvider, ProviderIdentifier } from "../CryptoLayerProviders";
 import { CryptoLayerUtils } from "../CryptoLayerUtils";
 import { BaseKeyHandle, BaseKeyHandleConstructor } from "./BaseKeyHandle";
+import { DerivedBaseKeyHandle, DerivedBaseKeyHandleConstructor } from "./DerivedBaseKeyHandle";
 import { DeviceBoundKeyHandle } from "./DeviceBoundKeyHandle";
 import { PortableDerivedKeyHandle } from "./PortableDerivedKeyHandle";
 import { PortableKeyHandle } from "./PortableKeyHandle";
@@ -23,9 +24,7 @@ export class CryptoEncryptionHandle {
     ): Promise<T> {
         const provider = getProvider(providerIdent);
         const keyHandle = await provider.createKey(spec);
-        const secretKeyHandle = await constructor.fromProviderAndKeyHandle(provider, keyHandle, {
-            keySpec: spec
-        });
+        const secretKeyHandle = await constructor.fromProviderAndKeyHandle(provider, keyHandle);
         return secretKeyHandle;
     }
 
@@ -59,7 +58,7 @@ export class CryptoEncryptionHandle {
         return await this.generateKeyHandle<PortableKeyHandle>(PortableKeyHandle, providerIdent, portableSpec);
     }
 
-    public static async encrypt<T extends BaseKeyHandle>(
+    public static async encrypt<T extends BaseKeyHandle | DerivedBaseKeyHandle>(
         plaintext: CoreBuffer,
         secretKeyHandle: T,
         nonce?: CoreBuffer
@@ -92,7 +91,7 @@ export class CryptoEncryptionHandle {
         });
     }
 
-    public static async encryptWithCounter<T extends BaseKeyHandle>(
+    public static async encryptWithCounter<T extends BaseKeyHandle | DerivedBaseKeyHandle>(
         plaintext: CoreBuffer,
         secretKeyHandle: T,
         nonce: CoreBuffer,
@@ -125,7 +124,7 @@ export class CryptoEncryptionHandle {
         });
     }
 
-    public static async decrypt<T extends BaseKeyHandle>(
+    public static async decrypt<T extends BaseKeyHandle | DerivedBaseKeyHandle>(
         cipher: CryptoCipher,
         secretKeyHandle: T,
         nonce?: CoreBuffer
@@ -159,7 +158,7 @@ export class CryptoEncryptionHandle {
         }
     }
 
-    public static async decryptWithCounter<T extends BaseKeyHandle>(
+    public static async decryptWithCounter<T extends BaseKeyHandle | DerivedBaseKeyHandle>(
         cipher: CryptoCipher,
         secretKeyHandle: T,
         nonce: CoreBuffer,
@@ -226,8 +225,8 @@ export class CryptoEncryptionHandle {
         return CryptoSecretKey.from(cryptoSecretKeyObj);
     }
 
-    private static async keyHandleFromCryptoSecretKey<T extends BaseKeyHandle>(
-        constructor: BaseKeyHandleConstructor<T>,
+    private static async keyHandleFromCryptoSecretKey<T extends BaseKeyHandle | DerivedBaseKeyHandle>(
+        constructor: DerivedBaseKeyHandleConstructor<T>,
         providerIdent: ProviderIdentifier,
         cryptoSecretKey: CryptoSecretKey,
         signingHash: CryptoHashAlgorithm,

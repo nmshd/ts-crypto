@@ -9,7 +9,8 @@ import { CryptoEncryptionAlgorithm } from "../encryption/CryptoEncryption";
 import { CryptoHashAlgorithm } from "../hash/CryptoHash";
 import { getProvider, ProviderIdentifier } from "./CryptoLayerProviders";
 import { CryptoLayerUtils } from "./CryptoLayerUtils";
-import { BaseKeyHandle, BaseKeyHandleConstructor } from "./encryption/BaseKeyHandle";
+import { BaseKeyHandle } from "./encryption/BaseKeyHandle";
+import { DerivedBaseKeyHandle, DerivedBaseKeyHandleConstructor } from "./encryption/DerivedBaseKeyHandle";
 import { DeviceBoundDerivedKeyHandle } from "./encryption/DeviceBoundDerivedKeyHandle";
 import { DeviceBoundKeyHandle } from "./encryption/DeviceBoundKeyHandle";
 import { PortableDerivedKeyHandle } from "./encryption/PortableDerivedKeyHandle";
@@ -28,8 +29,8 @@ export interface DeriveKeyHandleFromPasswordParameters {
 }
 
 export class CryptoDerivationHandle {
-    private static async deriveKeyHandleFromPassword<T extends BaseKeyHandle>(
-        constructor: BaseKeyHandleConstructor<T>,
+    private static async deriveKeyHandleFromPassword<T extends DerivedBaseKeyHandle>(
+        constructor: DerivedBaseKeyHandleConstructor<T>,
         derivationParameters: DeriveKeyHandleFromPasswordParameters,
         keySpecOfResultingKey: KeySpec
     ): Promise<T> {
@@ -105,8 +106,8 @@ export class CryptoDerivationHandle {
         );
     }
 
-    private static async deriveKeyFromBaseKeyHandle<T extends BaseKeyHandle, R extends BaseKeyHandle>(
-        constructor: BaseKeyHandleConstructor<R>,
+    private static async deriveKeyFromBaseKeyHandle<T extends BaseKeyHandle, R extends DerivedBaseKeyHandle>(
+        constructor: DerivedBaseKeyHandleConstructor<R>,
         baseKey: T,
         keyId: number,
         context: string

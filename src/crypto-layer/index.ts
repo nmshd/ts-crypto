@@ -4,6 +4,7 @@ export * from "./CryptoLayerProviders";
 export * from "./CryptoLayerUtils";
 export * from "./encryption/BaseKeyHandle";
 export * from "./encryption/CryptoEncryptionHandle";
+export * from "./encryption/DerivedBaseKeyHandle";
 export * from "./encryption/DeviceBoundDerivedKeyHandle";
 export * from "./encryption/DeviceBoundKeyHandle";
 export * from "./encryption/PortableDerivedKeyHandle";

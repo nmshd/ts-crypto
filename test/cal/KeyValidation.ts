@@ -3,6 +3,7 @@ import {
     CoreBuffer,
     CryptoCipher,
     CryptoEncryptionHandle,
+    DerivedBaseKeyHandle,
     DeviceBoundDerivedKeyHandle,
     DeviceBoundKeyHandle,
     PortableDerivedKeyHandle,
@@ -14,7 +15,9 @@ import { expect } from "chai";
 /**
  * Tests SecretKeyHandle for validity and executes the id function.
  */
-export async function assertSecretKeyHandleValid<T extends BaseKeyHandle>(handle: T): Promise<void> {
+export async function assertSecretKeyHandleValid<T extends BaseKeyHandle | DerivedBaseKeyHandle>(
+    handle: T
+): Promise<void> {
     expect(handle).to.exist;
     expect(handle.id).to.exist.and.to.be.a("string");
     expect(handle.keyHandle).to.exist;
@@ -44,7 +47,10 @@ export async function assertSecretKeyHandleValid<T extends BaseKeyHandle>(handle
     }
 }
 
-async function testDecryptEncryptIsIdentityFunction<T extends BaseKeyHandle>(before: T, after: T): Promise<void> {
+async function testDecryptEncryptIsIdentityFunction<T extends BaseKeyHandle | DerivedBaseKeyHandle>(
+    before: T,
+    after: T
+): Promise<void> {
     const payload = CoreBuffer.fromUtf8("Hello World!");
 
     const encryptedPayload = await CryptoEncryptionHandle.encrypt(payload, before);
@@ -64,7 +70,10 @@ async function testDecryptEncryptIsIdentityFunction<T extends BaseKeyHandle>(bef
 /**
  * Test that the content of two SecretKeys match.
  */
-export async function assertSecretKeyHandleEqual<T extends BaseKeyHandle>(before: T, after: T): Promise<void> {
+export async function assertSecretKeyHandleEqual<T extends BaseKeyHandle | DerivedBaseKeyHandle>(
+    before: T,
+    after: T
+): Promise<void> {
     const [beforeSpec, afterSpec] = await Promise.all([before.keyHandle.spec(), after.keyHandle.spec()]);
     expect(beforeSpec).to.deep.equal(afterSpec);
     if (
