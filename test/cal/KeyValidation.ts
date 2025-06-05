@@ -1,9 +1,9 @@
 import {
+    BaseDerivedKeyHandle,
     BaseKeyHandle,
     CoreBuffer,
     CryptoCipher,
     CryptoEncryptionHandle,
-    DerivedBaseKeyHandle,
     DeviceBoundDerivedKeyHandle,
     DeviceBoundKeyHandle,
     PortableDerivedKeyHandle,
@@ -15,7 +15,7 @@ import { expect } from "chai";
 /**
  * Tests SecretKeyHandle for validity and executes the id function.
  */
-export async function assertSecretKeyHandleValid<T extends BaseKeyHandle | DerivedBaseKeyHandle>(
+export async function assertSecretKeyHandleValid<T extends BaseKeyHandle | BaseDerivedKeyHandle>(
     handle: T
 ): Promise<void> {
     expect(handle).to.exist;
@@ -47,7 +47,7 @@ export async function assertSecretKeyHandleValid<T extends BaseKeyHandle | Deriv
     }
 }
 
-async function testDecryptEncryptIsIdentityFunction<T extends BaseKeyHandle | DerivedBaseKeyHandle>(
+async function testDecryptEncryptIsIdentityFunction<T extends BaseKeyHandle | BaseDerivedKeyHandle>(
     before: T,
     after: T
 ): Promise<void> {
@@ -70,7 +70,7 @@ async function testDecryptEncryptIsIdentityFunction<T extends BaseKeyHandle | De
 /**
  * Test that the content of two SecretKeys match.
  */
-export async function assertSecretKeyHandleEqual<T extends BaseKeyHandle | DerivedBaseKeyHandle>(
+export async function assertSecretKeyHandleEqual<T extends BaseKeyHandle | BaseDerivedKeyHandle>(
     before: T,
     after: T
 ): Promise<void> {

@@ -1,12 +1,12 @@
 import { ISerializable, ISerialized, SerializableAsync, serialize, type, validate } from "@js-soft/ts-serval";
-import { KeyHandle, KeySpec, Provider } from "@nmshd/rs-crypto-types";
-import { CoreBuffer, ICoreBuffer } from "../../CoreBuffer";
+import { KeyHandle, Provider } from "@nmshd/rs-crypto-types";
+import { CoreBuffer } from "../../CoreBuffer";
 import { CryptoError } from "../../CryptoError";
 import { CryptoErrorCode } from "../../CryptoErrorCode";
 import { CryptoSerializableAsync } from "../../CryptoSerializable";
 import { CryptoEncryptionAlgorithm } from "../../encryption/CryptoEncryption";
 import { CryptoHashAlgorithm } from "../../hash/CryptoHash";
-import { getProvider, ProviderIdentifier } from "../CryptoLayerProviders";
+import { getProvider } from "../CryptoLayerProviders";
 import { CryptoLayerUtils } from "../CryptoLayerUtils";
 
 export interface IBaseKeyHandleSerialized extends ISerialized {
@@ -23,7 +23,6 @@ export interface BaseKeyHandleConstructor<T> {
     new (): T;
 
     deserialize(value: string): Promise<T>;
-    fromProviderAndKeyHandle(provider: Provider, keyHandle: KeyHandle): Promise<T>;
     fromAny(value: any): Promise<T>;
 }
 
@@ -91,23 +90,6 @@ export abstract class BaseKeyHandle extends CryptoSerializableAsync implements I
         return await this.deserialize(CoreBuffer.base64_utf8(value));
     }
 
-    /**
-     * Creates a new {@link BaseKeyHandle} or its child from an existing {@link KeyHandle}.
-     */
-    public static async fromProviderAndKeyHandle<T extends BaseKeyHandle>(
-        this: new () => T,
-        provider: Provider,
-        keyHandle: KeyHandle
-    ): Promise<T> {
-        const result = new this();
-
-        [result.providerName, result.id] = await Promise.all([provider.providerName(), keyHandle.id()]);
-
-        result.provider = provider;
-        result.keyHandle = keyHandle;
-        return result;
-    }
-
     protected static override preFrom(value: any): any {
         if (value.kid) {
             value = {
@@ -146,28 +128,6 @@ export abstract class BaseKeyHandle extends CryptoSerializableAsync implements I
 }
 
 export abstract class ImportableBaseKeyHandle extends BaseKeyHandle {
-    /**
-     * Creates a new {@link BaseKeyHandle} or its child by importing a raw key into a provider.
-     */
-    public static async fromRawKey<T extends ImportableBaseKeyHandle>(
-        this: BaseKeyHandleConstructor<T>,
-        providerIdent: ProviderIdentifier,
-        rawKey: ICoreBuffer,
-        spec: KeySpec
-    ): Promise<T> {
-        const provider = getProvider(providerIdent);
-        let keyHandle;
-        try {
-            keyHandle = await provider.importKey(spec, rawKey.buffer);
-        } catch (e) {
-            throw new CryptoError(
-                CryptoErrorCode.CalImportOfKey,
-                "Failed to import raw symmetric key.",
-                undefined,
-                e as Error,
-                ImportableBaseKeyHandle.fromRawKey
-            );
-        }
-        return await this.fromProviderAndKeyHandle(provider, keyHandle);
-    }
+    // Phantom marker to make this type incompatible with `BaseKeyHandle`.
+    public readonly _importable = true;
 }

@@ -8,7 +8,6 @@ import {
     CryptoEncryptionHandle,
     CryptoError,
     CryptoHashAlgorithm,
-    CryptoLayerUtils,
     CryptoSecretKey,
     ICryptoSecretKeySerialized,
     PortableKeyHandle
@@ -170,23 +169,33 @@ export class CryptoEncryptionHandleTest {
                     expect(decrypted.buffer).to.deep.equal(payload.buffer);
                 });
 
-                it("libsodium key should be importable", async function () {
+                it("libsodium key should be importable as portable key handle", async function () {
                     const libsodiumKey = await CryptoEncryption.generateKey(
                         CryptoEncryptionAlgorithm.XCHACHA20_POLY1305
                     );
 
-                    const spec: KeySpec = {
-                        cipher: CryptoLayerUtils.cipherFromCryptoEncryptionAlgorithm(libsodiumKey.algorithm),
-                        signing_hash: "Sha2_256",
-                        ephemeral: false,
-                        non_exportable: false
-                    };
-
-                    const keyHandle = await PortableKeyHandle.fromRawKey(
+                    const keyHandle = await CryptoEncryptionHandle.portableKeyHandleFromCryptoSecretKey(
                         TEST_PROVIDER_IDENT,
-                        libsodiumKey.secretKey,
-                        spec
+                        libsodiumKey,
+                        CryptoHashAlgorithm.SHA256
                     );
+
+                    await assertSecretKeyHandleValid(keyHandle);
+
+                    expect(await keyHandle.keyHandle.extractKey()).to.deep.equal(libsodiumKey.secretKey.buffer);
+                });
+
+                it("libsodium key should be importable as portable derived key handle", async function () {
+                    const libsodiumKey = await CryptoEncryption.generateKey(
+                        CryptoEncryptionAlgorithm.XCHACHA20_POLY1305
+                    );
+
+                    const keyHandle = await CryptoEncryptionHandle.portableDerivedKeyHandleFromCryptoSecretKey(
+                        TEST_PROVIDER_IDENT,
+                        libsodiumKey,
+                        CryptoHashAlgorithm.SHA256
+                    );
+
                     await assertSecretKeyHandleValid(keyHandle);
 
                     expect(await keyHandle.keyHandle.extractKey()).to.deep.equal(libsodiumKey.secretKey.buffer);
