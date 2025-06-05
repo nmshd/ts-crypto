@@ -20,7 +20,7 @@ export class CryptoEncryptionHandle {
     /**
      * Creates a new {@link BaseKeyHandle} / {@link DerivedBaseKeyHandle} or its child from an existing {@link KeyHandle}.
      */
-    public static async _KeyHandleFromProviderAndCalKeyHandle<T extends BaseKeyHandle | BaseDerivedKeyHandle>(
+    public static async _keyHandleFromProviderAndCalKeyHandle<T extends BaseKeyHandle | BaseDerivedKeyHandle>(
         constructor: new () => T,
         provider: Provider,
         keyHandle: KeyHandle
@@ -41,7 +41,7 @@ export class CryptoEncryptionHandle {
     ): Promise<T> {
         const provider = getProvider(providerIdent);
         const keyHandle = await provider.createKey(spec);
-        const secretKeyHandle = await CryptoEncryptionHandle._KeyHandleFromProviderAndCalKeyHandle(
+        const secretKeyHandle = await CryptoEncryptionHandle._keyHandleFromProviderAndCalKeyHandle(
             constructor,
             provider,
             keyHandle
@@ -87,7 +87,7 @@ export class CryptoEncryptionHandle {
         const encryptionAlgorithm = await secretKeyHandle.encryptionAlgorithm();
 
         if (nonce === undefined || nonce.buffer.length === 0) {
-            nonce = await this.createNonce(encryptionAlgorithm, secretKeyHandle.provider);
+            nonce = await this.createNonce({ providerName: secretKeyHandle.providerName }, encryptionAlgorithm);
         } else {
             CryptoValidation.checkNonceForAlgorithm(nonce, encryptionAlgorithm);
         }
@@ -206,7 +206,12 @@ export class CryptoEncryptionHandle {
         }
     }
 
-    public static async createNonce(algorithm: CryptoEncryptionAlgorithm, provider: Provider): Promise<CoreBuffer> {
+    public static async createNonce(
+        providerIdent: ProviderIdentifier,
+        algorithm: CryptoEncryptionAlgorithm
+    ): Promise<CoreBuffer> {
+        const provider = getProvider(providerIdent);
+
         let nonceLength;
         switch (algorithm) {
             case CryptoEncryptionAlgorithm.AES128_GCM:
@@ -262,9 +267,20 @@ export class CryptoEncryptionHandle {
         };
 
         const provider = getProvider(providerIdent);
-        const keyHandle = await provider.importKey(keySpec, cryptoSecretKey.secretKey.buffer);
+        let keyHandle: KeyHandle;
+        try {
+            keyHandle = await provider.importKey(keySpec, cryptoSecretKey.secretKey.buffer);
+        } catch (e) {
+            throw new CryptoError(
+                CryptoErrorCode.CalImportOfKey,
+                "Failed to import crypto secret key.",
+                undefined,
+                e as Error,
+                CryptoEncryptionHandle.keyHandleFromCryptoSecretKey
+            );
+        }
 
-        return await CryptoEncryptionHandle._KeyHandleFromProviderAndCalKeyHandle(constructor, provider, keyHandle);
+        return await CryptoEncryptionHandle._keyHandleFromProviderAndCalKeyHandle(constructor, provider, keyHandle);
     }
 
     public static async portableKeyHandleFromCryptoSecretKey(

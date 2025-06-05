@@ -67,8 +67,8 @@ export class CryptoEncryptionHandleTest {
                         const cryptoEncryptionAlgorithm = await cryptoSecretKeyHandle.encryptionAlgorithm();
 
                         const nonce = await CryptoEncryptionHandle.createNonce(
-                            cryptoEncryptionAlgorithm,
-                            cryptoSecretKeyHandle.provider
+                            TEST_PROVIDER_IDENT,
+                            cryptoEncryptionAlgorithm
                         );
 
                         const data = new CoreBuffer("0123456789ABCDEF");
@@ -104,8 +104,8 @@ export class CryptoEncryptionHandleTest {
                         const cryptoEncryptionAlgorithm = await cryptoSecretKeyHandle.encryptionAlgorithm();
 
                         const nonce = await CryptoEncryptionHandle.createNonce(
-                            cryptoEncryptionAlgorithm,
-                            cryptoSecretKeyHandle.provider
+                            TEST_PROVIDER_IDENT,
+                            cryptoEncryptionAlgorithm
                         );
 
                         const data = new CoreBuffer("0123456789ABCDEF");

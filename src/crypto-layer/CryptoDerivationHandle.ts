@@ -64,7 +64,7 @@ export class CryptoDerivationHandle {
             );
         }
 
-        return await CryptoEncryptionHandle._KeyHandleFromProviderAndCalKeyHandle(constructor, provider, keyHandle);
+        return await CryptoEncryptionHandle._keyHandleFromProviderAndCalKeyHandle(constructor, provider, keyHandle);
     }
 
     /**
@@ -128,7 +128,7 @@ export class CryptoDerivationHandle {
             );
         }
 
-        return await CryptoEncryptionHandle._KeyHandleFromProviderAndCalKeyHandle(
+        return await CryptoEncryptionHandle._keyHandleFromProviderAndCalKeyHandle(
             constructor,
             baseKey.provider,
             keyHandle
