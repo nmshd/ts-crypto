@@ -11,7 +11,6 @@ export class PortableDerivedKeyHandle extends BaseKeyHandle {
         return {
             kid: this.id,
             pnm: this.providerName,
-            spc: this.spec,
             "@type": verbose ? "PortableDerivedKeyHandle" : undefined
         };
     }

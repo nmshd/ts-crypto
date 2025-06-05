@@ -50,9 +50,7 @@ export class CryptoEncryptionHandleTest {
                     const data = new CoreBuffer("0123456789ABCDEF");
                     const encrypted = await CryptoEncryptionHandle.encrypt(data, cryptoSecretKeyHandle);
                     expect(encrypted).to.be.ok.and.to.be.instanceOf(CryptoCipher);
-                    expect(encrypted.algorithm).to.equal(
-                        CryptoLayerUtils.cryptoEncryptionAlgorithmFromCipher(cryptoSecretKeyHandle.spec.cipher)
-                    );
+                    expect(encrypted.algorithm).to.equal(await cryptoSecretKeyHandle.encryptionAlgorithm());
 
                     const decrypted = await CryptoEncryptionHandle.decrypt(encrypted, cryptoSecretKeyHandle);
 
@@ -67,9 +65,7 @@ export class CryptoEncryptionHandleTest {
                             crypto,
                             hash
                         );
-                        const cryptoEncryptionAlgorithm = CryptoLayerUtils.cryptoEncryptionAlgorithmFromCipher(
-                            cryptoSecretKeyHandle.spec.cipher
-                        );
+                        const cryptoEncryptionAlgorithm = await cryptoSecretKeyHandle.encryptionAlgorithm();
 
                         const nonce = await CryptoEncryptionHandle.createNonce(
                             cryptoEncryptionAlgorithm,
@@ -106,9 +102,7 @@ export class CryptoEncryptionHandleTest {
                             hash
                         );
 
-                        const cryptoEncryptionAlgorithm = CryptoLayerUtils.cryptoEncryptionAlgorithmFromCipher(
-                            cryptoSecretKeyHandle.spec.cipher
-                        );
+                        const cryptoEncryptionAlgorithm = await cryptoSecretKeyHandle.encryptionAlgorithm();
 
                         const nonce = await CryptoEncryptionHandle.createNonce(
                             cryptoEncryptionAlgorithm,
@@ -158,7 +152,7 @@ export class CryptoEncryptionHandleTest {
                     );
 
                     const keyBufferPromise = CryptoEncryptionHandle.extractRawKey(key);
-                    const algorithm = CryptoLayerUtils.cryptoEncryptionAlgorithmFromCipher(key.spec.cipher);
+                    const algorithm = await key.encryptionAlgorithm();
                     const keyObject: ICryptoSecretKeySerialized = {
                         alg: algorithm,
                         key: (await keyBufferPromise).toBase64URL()
@@ -220,12 +214,11 @@ export class CryptoEncryptionHandleTest {
                 it("should return a SecretKey", function () {
                     expect(key).to.exist;
                     expect(key).to.be.instanceOf(PortableKeyHandle);
-                    expect(key.spec).to.exist;
                     expect(key.keyHandle).to.exist;
                 });
 
-                it("should return a correct algorithm in the key", function () {
-                    expect(key.spec).to.deep.equal(spec);
+                it("should return a correct algorithm in the key", async function () {
+                    expect(await key.keyHandle.spec()).to.deep.equal(spec);
                 });
 
                 it("should serialize and deserialize the key correctly", async function () {
@@ -248,20 +241,24 @@ export class CryptoEncryptionHandleTest {
                     expect(deserialized.id).to.equal(key.id);
                 });
 
-                it("should not deserialize a wrong KeySpec", async function () {
+                it("should not deserialize a non existing key", async function () {
+                    await expectThrows(() => {
+                        return PortableKeyHandle.fromJSON({
+                            kid: "this_key_does_not_exist",
+                            pnm: "SoftwareProvider",
+                            "@type": "PortableKeyHandle"
+                        } as any);
+                    }, /.*error\.crypto\.cal\.loadKey.*Failed to load key during deserialization.*/);
+                });
+
+                it("should not deserialize with a non initialized provider", async function () {
                     await expectThrows(() => {
                         return PortableKeyHandle.fromJSON({
                             kid: "3KpnHNPtcG",
-                            pnm: "SoftwareProvider",
-                            spc: {
-                                cipher: "XChaCha20Poly1305",
-                                signing_hash: "Sha2_256a",
-                                ephemeral: false,
-                                non_exportable: false
-                            },
+                            pnm: "ProviderThatDoesNotExist",
                             "@type": "PortableKeyHandle"
                         } as any);
-                    }, "PortableKeyHandle.spec:Object :: Is not of type KeySpec.");
+                    }, /.*error\.crypto\.cal\.thisProviderNotInitialized.*/);
                 });
 
                 it("should serialize and deserialize the key using base64 correctly", async function () {

@@ -1,22 +1,22 @@
 import { ISerializable, ISerialized, SerializableAsync, serialize, type, validate } from "@js-soft/ts-serval";
 import { KeyHandle, KeySpec, Provider } from "@nmshd/rs-crypto-types";
-import { isKeySpec } from "@nmshd/rs-crypto-types/checks";
+import { CryptoHashAlgorithm } from "src/hash/CryptoHash";
 import { CoreBuffer, ICoreBuffer } from "../../CoreBuffer";
 import { CryptoError } from "../../CryptoError";
 import { CryptoErrorCode } from "../../CryptoErrorCode";
 import { CryptoSerializableAsync } from "../../CryptoSerializable";
+import { CryptoEncryptionAlgorithm } from "../../encryption/CryptoEncryption";
 import { getProvider, ProviderIdentifier } from "../CryptoLayerProviders";
+import { CryptoLayerUtils } from "../CryptoLayerUtils";
 
 export interface IBaseKeyHandleSerialized extends ISerialized {
     kid: string;
     pnm: string;
-    spc: KeySpec;
 }
 
 export interface IBaseKeyHandle extends ISerializable {
     id: string;
     providerName: string;
-    spec: KeySpec;
 }
 
 export interface BaseKeyHandleConstructor<T extends BaseKeyHandle> {
@@ -46,17 +46,26 @@ export abstract class BaseKeyHandle extends CryptoSerializableAsync implements I
     @serialize()
     public providerName: string;
 
-    @validate({
-        customValidator: (value) => {
-            if (isKeySpec(value)) return undefined;
-            return "Is not of type KeySpec.";
-        }
-    })
-    @serialize()
-    public spec: KeySpec;
-
     public provider: Provider;
     public keyHandle: KeyHandle;
+
+    public async encryptionAndHashAlgorithm(): Promise<[CryptoEncryptionAlgorithm, CryptoHashAlgorithm]> {
+        const spec = await this.keyHandle.spec();
+        return [
+            CryptoLayerUtils.cryptoEncryptionAlgorithmFromCipher(spec.cipher),
+            CryptoLayerUtils.cryptoHashAlgorithmFromCryptoHash(spec.signing_hash)
+        ];
+    }
+
+    public async encryptionAlgorithm(): Promise<CryptoEncryptionAlgorithm> {
+        const spec = await this.keyHandle.spec();
+        return CryptoLayerUtils.cryptoEncryptionAlgorithmFromCipher(spec.cipher);
+    }
+
+    public async hashAlgorithm(): Promise<CryptoHashAlgorithm> {
+        const spec = await this.keyHandle.spec();
+        return CryptoLayerUtils.cryptoHashAlgorithmFromCryptoHash(spec.signing_hash);
+    }
 
     /**
      * Deserializes an object representation of a {@link BaseKeyHandle}.
@@ -96,11 +105,7 @@ export abstract class BaseKeyHandle extends CryptoSerializableAsync implements I
     ): Promise<T> {
         const result = new this();
 
-        [result.providerName, result.id, result.spec] = await Promise.all([
-            provider.providerName(),
-            keyHandle.id(),
-            keyHandle.spec()
-        ]);
+        [result.providerName, result.id] = await Promise.all([provider.providerName(), keyHandle.id()]);
 
         result.provider = provider;
         result.keyHandle = keyHandle;
@@ -125,7 +130,18 @@ export abstract class BaseKeyHandle extends CryptoSerializableAsync implements I
         }
 
         const provider = getProvider({ providerName: value.providerName });
-        const keyHandle = await provider.loadKey(value.id);
+        let keyHandle: KeyHandle;
+        try {
+            keyHandle = await provider.loadKey(value.id);
+        } catch (e) {
+            throw new CryptoError(
+                CryptoErrorCode.CalLoadKey,
+                "Failed to load key during deserialization.",
+                undefined,
+                e as Error,
+                BaseKeyHandle.postFrom
+            );
+        }
 
         value.keyHandle = keyHandle;
         value.provider = provider;

@@ -64,7 +64,7 @@ export class CryptoEncryptionHandle {
         secretKeyHandle: T,
         nonce?: CoreBuffer
     ): Promise<CryptoCipher> {
-        const encryptionAlgorithm = CryptoLayerUtils.cryptoEncryptionAlgorithmFromCipher(secretKeyHandle.spec.cipher);
+        const encryptionAlgorithm = await secretKeyHandle.encryptionAlgorithm();
 
         if (nonce === undefined || nonce.buffer.length === 0) {
             nonce = await this.createNonce(encryptionAlgorithm, secretKeyHandle.provider);
@@ -98,7 +98,7 @@ export class CryptoEncryptionHandle {
         nonce: CoreBuffer,
         counter: number
     ): Promise<CryptoCipher> {
-        const encryptionAlgorithm = CryptoLayerUtils.cryptoEncryptionAlgorithmFromCipher(secretKeyHandle.spec.cipher);
+        const encryptionAlgorithm = await secretKeyHandle.encryptionAlgorithm();
 
         CryptoValidation.checkCounter(counter);
         CryptoValidation.checkNonceForAlgorithm(nonce, encryptionAlgorithm);
@@ -130,7 +130,7 @@ export class CryptoEncryptionHandle {
         secretKeyHandle: T,
         nonce?: CoreBuffer
     ): Promise<CoreBuffer> {
-        const encryptionAlgorithm = CryptoLayerUtils.cryptoEncryptionAlgorithmFromCipher(secretKeyHandle.spec.cipher);
+        const encryptionAlgorithm = await secretKeyHandle.encryptionAlgorithm();
 
         let publicNonce;
         if (nonce !== undefined) {
@@ -165,7 +165,7 @@ export class CryptoEncryptionHandle {
         nonce: CoreBuffer,
         counter: number
     ): Promise<CoreBuffer> {
-        const encryptionAlgorithm = CryptoLayerUtils.cryptoEncryptionAlgorithmFromCipher(secretKeyHandle.spec.cipher);
+        const encryptionAlgorithm = await secretKeyHandle.encryptionAlgorithm();
 
         CryptoValidation.checkCounter(counter);
         CryptoValidation.checkNonceForAlgorithm(nonce, encryptionAlgorithm);
@@ -218,7 +218,7 @@ export class CryptoEncryptionHandle {
         portableKeyHandle: PortableKeyHandle | PortableDerivedKeyHandle
     ): Promise<CryptoSecretKey> {
         const rawKeyPromise = CryptoEncryptionHandle.extractRawKey(portableKeyHandle);
-        const algorithm = CryptoLayerUtils.cryptoEncryptionAlgorithmFromCipher(portableKeyHandle.spec.cipher);
+        const algorithm = await portableKeyHandle.encryptionAlgorithm();
         const cryptoSecretKeyObj: ICryptoSecretKey = {
             algorithm: algorithm,
             secretKey: await rawKeyPromise

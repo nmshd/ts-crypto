@@ -12,7 +12,6 @@ export class DeviceBoundKeyHandle extends BaseKeyHandle {
         return {
             kid: this.id,
             pnm: this.providerName,
-            spc: this.spec,
             "@type": verbose ? "DeviceBoundKeyHandle" : undefined
         };
     }
