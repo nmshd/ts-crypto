@@ -90,8 +90,3 @@ export abstract class BaseKeyHandle extends CryptoSerializableAsync implements I
         return value;
     }
 }
-
-export abstract class ImportableBaseKeyHandle extends BaseKeyHandle {
-    // Phantom marker to make this type incompatible with `BaseKeyHandle`.
-    public readonly _importable = true;
-}

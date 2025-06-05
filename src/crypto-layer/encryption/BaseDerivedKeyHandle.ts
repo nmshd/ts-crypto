@@ -31,8 +31,3 @@ export abstract class BaseDerivedKeyHandle {
         return CryptoLayerUtils.cryptoHashAlgorithmFromCryptoHash(spec.signing_hash);
     }
 }
-
-export abstract class ImportableBaseDerivedKeyHandle extends BaseDerivedKeyHandle {
-    // Phantom marker to make this type incompatible with `BaseDerivedKeyHandle`.
-    public readonly _importable = true;
-}

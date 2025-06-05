@@ -1,10 +1,10 @@
 import { type } from "@js-soft/ts-serval";
 import { CoreBuffer } from "../../CoreBuffer";
-import { IBaseKeyHandleSerialized, ImportableBaseKeyHandle } from "./BaseKeyHandle";
+import { BaseKeyHandle, IBaseKeyHandleSerialized } from "./BaseKeyHandle";
 
 /** Key handle that is exportable and can also be created by importing a key. */
 @type("PortableKeyHandle")
-export class PortableKeyHandle extends ImportableBaseKeyHandle {
+export class PortableKeyHandle extends BaseKeyHandle {
     // Phantom marker to make this type incompatible to other types that extend `BaseKeyHandle`.
     public readonly _isPortableKeyHandle = true;
 
