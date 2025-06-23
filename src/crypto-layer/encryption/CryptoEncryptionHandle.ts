@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-import { KeySpec, Provider } from "@nmshd/rs-crypto-types";
+import { KeyHandle, KeySpec, Provider } from "@nmshd/rs-crypto-types";
 import { CoreBuffer } from "../../CoreBuffer";
 import { CryptoError } from "../../CryptoError";
 import { CryptoErrorCode } from "../../CryptoErrorCode";
@@ -10,22 +10,42 @@ import { CryptoSecretKey, ICryptoSecretKey } from "../../encryption/CryptoSecret
 import { CryptoHashAlgorithm } from "../../hash/CryptoHash";
 import { getProvider, ProviderIdentifier } from "../CryptoLayerProviders";
 import { CryptoLayerUtils } from "../CryptoLayerUtils";
-import { BaseKeyHandle, BaseKeyHandleConstructor } from "./BaseKeyHandle";
+import { BaseDerivedKeyHandle } from "./BaseDerivedKeyHandle";
+import { BaseKeyHandle } from "./BaseKeyHandle";
 import { DeviceBoundKeyHandle } from "./DeviceBoundKeyHandle";
 import { PortableDerivedKeyHandle } from "./PortableDerivedKeyHandle";
 import { PortableKeyHandle } from "./PortableKeyHandle";
 
 export class CryptoEncryptionHandle {
+    /**
+     * Creates a new {@link BaseKeyHandle} / {@link DerivedBaseKeyHandle} or its child from an existing {@link KeyHandle}.
+     */
+    public static async _keyHandleFromProviderAndCalKeyHandle<T extends BaseKeyHandle | BaseDerivedKeyHandle>(
+        constructor: new () => T,
+        provider: Provider,
+        keyHandle: KeyHandle
+    ): Promise<T> {
+        const result = new constructor();
+
+        [result.providerName, result.id] = await Promise.all([provider.providerName(), keyHandle.id()]);
+
+        result.provider = provider;
+        result.keyHandle = keyHandle;
+        return result;
+    }
+
     private static async generateKeyHandle<T extends BaseKeyHandle>(
-        constructor: BaseKeyHandleConstructor<T>,
+        constructor: new () => T,
         providerIdent: ProviderIdentifier,
         spec: KeySpec
     ): Promise<T> {
         const provider = getProvider(providerIdent);
         const keyHandle = await provider.createKey(spec);
-        const secretKeyHandle = await constructor.fromProviderAndKeyHandle(provider, keyHandle, {
-            keySpec: spec
-        });
+        const secretKeyHandle = await CryptoEncryptionHandle._keyHandleFromProviderAndCalKeyHandle(
+            constructor,
+            provider,
+            keyHandle
+        );
         return secretKeyHandle;
     }
 
@@ -59,15 +79,15 @@ export class CryptoEncryptionHandle {
         return await this.generateKeyHandle<PortableKeyHandle>(PortableKeyHandle, providerIdent, portableSpec);
     }
 
-    public static async encrypt<T extends BaseKeyHandle>(
+    public static async encrypt<T extends BaseKeyHandle | BaseDerivedKeyHandle>(
         plaintext: CoreBuffer,
         secretKeyHandle: T,
         nonce?: CoreBuffer
     ): Promise<CryptoCipher> {
-        const encryptionAlgorithm = CryptoLayerUtils.cryptoEncryptionAlgorithmFromCipher(secretKeyHandle.spec.cipher);
+        const encryptionAlgorithm = await secretKeyHandle.encryptionAlgorithm();
 
         if (nonce === undefined || nonce.buffer.length === 0) {
-            nonce = await this.createNonce(encryptionAlgorithm, secretKeyHandle.provider);
+            nonce = await this.createNonce({ providerName: secretKeyHandle.providerName }, encryptionAlgorithm);
         } else {
             CryptoValidation.checkNonceForAlgorithm(nonce, encryptionAlgorithm);
         }
@@ -92,13 +112,13 @@ export class CryptoEncryptionHandle {
         });
     }
 
-    public static async encryptWithCounter<T extends BaseKeyHandle>(
+    public static async encryptWithCounter<T extends BaseKeyHandle | BaseDerivedKeyHandle>(
         plaintext: CoreBuffer,
         secretKeyHandle: T,
         nonce: CoreBuffer,
         counter: number
     ): Promise<CryptoCipher> {
-        const encryptionAlgorithm = CryptoLayerUtils.cryptoEncryptionAlgorithmFromCipher(secretKeyHandle.spec.cipher);
+        const encryptionAlgorithm = await secretKeyHandle.encryptionAlgorithm();
 
         CryptoValidation.checkCounter(counter);
         CryptoValidation.checkNonceForAlgorithm(nonce, encryptionAlgorithm);
@@ -125,12 +145,12 @@ export class CryptoEncryptionHandle {
         });
     }
 
-    public static async decrypt<T extends BaseKeyHandle>(
+    public static async decrypt<T extends BaseKeyHandle | BaseDerivedKeyHandle>(
         cipher: CryptoCipher,
         secretKeyHandle: T,
         nonce?: CoreBuffer
     ): Promise<CoreBuffer> {
-        const encryptionAlgorithm = CryptoLayerUtils.cryptoEncryptionAlgorithmFromCipher(secretKeyHandle.spec.cipher);
+        const encryptionAlgorithm = await secretKeyHandle.encryptionAlgorithm();
 
         let publicNonce;
         if (nonce !== undefined) {
@@ -159,13 +179,13 @@ export class CryptoEncryptionHandle {
         }
     }
 
-    public static async decryptWithCounter<T extends BaseKeyHandle>(
+    public static async decryptWithCounter<T extends BaseKeyHandle | BaseDerivedKeyHandle>(
         cipher: CryptoCipher,
         secretKeyHandle: T,
         nonce: CoreBuffer,
         counter: number
     ): Promise<CoreBuffer> {
-        const encryptionAlgorithm = CryptoLayerUtils.cryptoEncryptionAlgorithmFromCipher(secretKeyHandle.spec.cipher);
+        const encryptionAlgorithm = await secretKeyHandle.encryptionAlgorithm();
 
         CryptoValidation.checkCounter(counter);
         CryptoValidation.checkNonceForAlgorithm(nonce, encryptionAlgorithm);
@@ -186,7 +206,12 @@ export class CryptoEncryptionHandle {
         }
     }
 
-    public static async createNonce(algorithm: CryptoEncryptionAlgorithm, provider: Provider): Promise<CoreBuffer> {
+    public static async createNonce(
+        providerIdent: ProviderIdentifier,
+        algorithm: CryptoEncryptionAlgorithm
+    ): Promise<CoreBuffer> {
+        const provider = getProvider(providerIdent);
+
         let nonceLength;
         switch (algorithm) {
             case CryptoEncryptionAlgorithm.AES128_GCM:
@@ -218,7 +243,7 @@ export class CryptoEncryptionHandle {
         portableKeyHandle: PortableKeyHandle | PortableDerivedKeyHandle
     ): Promise<CryptoSecretKey> {
         const rawKeyPromise = CryptoEncryptionHandle.extractRawKey(portableKeyHandle);
-        const algorithm = CryptoLayerUtils.cryptoEncryptionAlgorithmFromCipher(portableKeyHandle.spec.cipher);
+        const algorithm = await portableKeyHandle.encryptionAlgorithm();
         const cryptoSecretKeyObj: ICryptoSecretKey = {
             algorithm: algorithm,
             secretKey: await rawKeyPromise
@@ -226,8 +251,8 @@ export class CryptoEncryptionHandle {
         return CryptoSecretKey.from(cryptoSecretKeyObj);
     }
 
-    private static async keyHandleFromCryptoSecretKey<T extends BaseKeyHandle>(
-        constructor: BaseKeyHandleConstructor<T>,
+    private static async keyHandleFromCryptoSecretKey<T extends BaseKeyHandle | BaseDerivedKeyHandle>(
+        constructor: new () => T,
         providerIdent: ProviderIdentifier,
         cryptoSecretKey: CryptoSecretKey,
         signingHash: CryptoHashAlgorithm,
@@ -242,9 +267,20 @@ export class CryptoEncryptionHandle {
         };
 
         const provider = getProvider(providerIdent);
-        const keyHandle = await provider.importKey(keySpec, cryptoSecretKey.secretKey.buffer);
+        let keyHandle: KeyHandle;
+        try {
+            keyHandle = await provider.importKey(keySpec, cryptoSecretKey.secretKey.buffer);
+        } catch (e) {
+            throw new CryptoError(
+                CryptoErrorCode.CalImportOfKey,
+                "Failed to import crypto secret key.",
+                undefined,
+                e as Error,
+                CryptoEncryptionHandle.keyHandleFromCryptoSecretKey
+            );
+        }
 
-        return await constructor.fromProviderAndKeyHandle(provider, keyHandle);
+        return await CryptoEncryptionHandle._keyHandleFromProviderAndCalKeyHandle(constructor, provider, keyHandle);
     }
 
     public static async portableKeyHandleFromCryptoSecretKey(

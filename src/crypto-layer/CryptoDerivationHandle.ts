@@ -9,7 +9,9 @@ import { CryptoEncryptionAlgorithm } from "../encryption/CryptoEncryption";
 import { CryptoHashAlgorithm } from "../hash/CryptoHash";
 import { getProvider, ProviderIdentifier } from "./CryptoLayerProviders";
 import { CryptoLayerUtils } from "./CryptoLayerUtils";
-import { BaseKeyHandle, BaseKeyHandleConstructor } from "./encryption/BaseKeyHandle";
+import { BaseDerivedKeyHandle } from "./encryption/BaseDerivedKeyHandle";
+import { BaseKeyHandle } from "./encryption/BaseKeyHandle";
+import { CryptoEncryptionHandle } from "./encryption/CryptoEncryptionHandle";
 import { DeviceBoundDerivedKeyHandle } from "./encryption/DeviceBoundDerivedKeyHandle";
 import { DeviceBoundKeyHandle } from "./encryption/DeviceBoundKeyHandle";
 import { PortableDerivedKeyHandle } from "./encryption/PortableDerivedKeyHandle";
@@ -28,8 +30,8 @@ export interface DeriveKeyHandleFromPasswordParameters {
 }
 
 export class CryptoDerivationHandle {
-    private static async deriveKeyHandleFromPassword<T extends BaseKeyHandle>(
-        constructor: BaseKeyHandleConstructor<T>,
+    private static async deriveKeyHandleFromPassword<T extends BaseDerivedKeyHandle>(
+        constructor: new () => T,
         derivationParameters: DeriveKeyHandleFromPasswordParameters,
         keySpecOfResultingKey: KeySpec
     ): Promise<T> {
@@ -62,7 +64,7 @@ export class CryptoDerivationHandle {
             );
         }
 
-        return await constructor.fromProviderAndKeyHandle(provider, keyHandle);
+        return await CryptoEncryptionHandle._keyHandleFromProviderAndCalKeyHandle(constructor, provider, keyHandle);
     }
 
     /**
@@ -105,8 +107,8 @@ export class CryptoDerivationHandle {
         );
     }
 
-    private static async deriveKeyFromBaseKeyHandle<T extends BaseKeyHandle, R extends BaseKeyHandle>(
-        constructor: BaseKeyHandleConstructor<R>,
+    private static async deriveKeyFromBaseKeyHandle<T extends BaseKeyHandle, R extends BaseDerivedKeyHandle>(
+        constructor: new () => R,
         baseKey: T,
         keyId: number,
         context: string
@@ -126,7 +128,11 @@ export class CryptoDerivationHandle {
             );
         }
 
-        return await constructor.fromProviderAndKeyHandle(baseKey.provider, keyHandle);
+        return await CryptoEncryptionHandle._keyHandleFromProviderAndCalKeyHandle(
+            constructor,
+            baseKey.provider,
+            keyHandle
+        );
     }
 
     /**
