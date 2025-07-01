@@ -44,7 +44,7 @@ interface StorageSecurityConfig {
     encryption: StorageSecuritySpec;
 }
 
-const DEFAULT_STORAGE_SECURITY_SPEC: StorageSecurityConfig[] = [
+const DEFAULT_STORAGE_SECURITY_CONFIG: StorageSecurityConfig[] = [
     {
         name: ANDROID_HARDWARE_PROVIDER_NAME,
         signature: {
@@ -246,7 +246,7 @@ function storageSecurityForProviderName(
 ): StorageSecurityConfig | undefined {
     return (
         storageSecurityConfig?.find((config) => config.name === providerName) ??
-        DEFAULT_STORAGE_SECURITY_SPEC.find((config) => config.name === providerName)
+        DEFAULT_STORAGE_SECURITY_CONFIG.find((config) => config.name === providerName)
     );
 }
 
@@ -348,4 +348,9 @@ export function providersInitialized(): boolean {
     }
 
     return PROVIDERS.size !== 0;
+}
+
+export function clearProviders(): void {
+    PROVIDERS.clear();
+    PROVIDERS_BY_NAME.clear();
 }
