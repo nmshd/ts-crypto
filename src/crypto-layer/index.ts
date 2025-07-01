@@ -9,3 +9,5 @@ export * from "./encryption/DeviceBoundDerivedKeyHandle";
 export * from "./encryption/DeviceBoundKeyHandle";
 export * from "./encryption/PortableDerivedKeyHandle";
 export * from "./encryption/PortableKeyHandle";
+export * from "./signature/CryptoSignaturesHandle";
+export * from "./signature/DeviceBoundKeyPairHandle";

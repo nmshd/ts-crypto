@@ -7,11 +7,11 @@ import {
     SecurityLevel
 } from "@nmshd/rs-crypto-types";
 
-import { CryptoEncryptionAlgorithm } from "src/encryption/CryptoEncryption";
-import { CryptoHashAlgorithm } from "src/hash/CryptoHash";
-import { CryptoSignatureAlgorithm } from "src/signature/CryptoSignatureAlgorithm";
 import { CryptoError } from "../CryptoError";
 import { CryptoErrorCode } from "../CryptoErrorCode";
+import { CryptoEncryptionAlgorithm } from "../encryption/CryptoEncryption";
+import { CryptoHashAlgorithm } from "../hash/CryptoHash";
+import { CryptoSignatureAlgorithm } from "../signature/CryptoSignatureAlgorithm";
 import { CryptoLayerProviderIdentifier, CryptoLayerProviderToBeInitialized } from "./CryptoLayerConfig";
 import { CryptoEncryptionHandle } from "./encryption/CryptoEncryptionHandle";
 import { DeviceBoundKeyHandle } from "./encryption/DeviceBoundKeyHandle";
