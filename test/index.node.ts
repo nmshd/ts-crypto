@@ -57,8 +57,6 @@ Promise.all([
                     // eslint-disable-next-line @typescript-eslint/naming-convention
                     additional_config: [
                         // eslint-disable-next-line @typescript-eslint/naming-convention
-                        { StorageConfigPass: "12345678" },
-                        // eslint-disable-next-line @typescript-eslint/naming-convention
                         { FileStoreConfig: { db_dir: "./test_cal_db" } }
                     ]
                 }
