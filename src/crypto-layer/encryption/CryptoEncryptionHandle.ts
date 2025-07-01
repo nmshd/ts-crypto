@@ -8,7 +8,8 @@ import { CryptoCipher } from "../../encryption/CryptoCipher";
 import { CryptoEncryptionAlgorithm } from "../../encryption/CryptoEncryption";
 import { CryptoSecretKey, ICryptoSecretKey } from "../../encryption/CryptoSecretKey";
 import { CryptoHashAlgorithm } from "../../hash/CryptoHash";
-import { getProvider, ProviderIdentifier } from "../CryptoLayerProviders";
+import { CryptoLayerProviderIdentifier } from "../CryptoLayerConfig";
+import { getProvider } from "../CryptoLayerProviders";
 import { CryptoLayerUtils } from "../CryptoLayerUtils";
 import { BaseDerivedKeyHandle } from "./BaseDerivedKeyHandle";
 import { BaseKeyHandle } from "./BaseKeyHandle";
@@ -36,7 +37,7 @@ export class CryptoEncryptionHandle {
 
     private static async generateKeyHandle<T extends BaseKeyHandle>(
         constructor: new () => T,
-        providerIdent: ProviderIdentifier,
+        providerIdent: CryptoLayerProviderIdentifier,
         spec: KeySpec
     ): Promise<T> {
         const provider = getProvider(providerIdent);
@@ -50,7 +51,7 @@ export class CryptoEncryptionHandle {
     }
 
     public static async generateDeviceBoundKeyHandle(
-        providerIdent: ProviderIdentifier,
+        providerIdent: CryptoLayerProviderIdentifier,
         encryptionAlgorithm: CryptoEncryptionAlgorithm,
         hashAlgorithm: CryptoHashAlgorithm
     ): Promise<DeviceBoundKeyHandle> {
@@ -65,7 +66,7 @@ export class CryptoEncryptionHandle {
     }
 
     public static async generatePortableKeyHandle(
-        providerIdent: ProviderIdentifier,
+        providerIdent: CryptoLayerProviderIdentifier,
         encryptionAlgorithm: CryptoEncryptionAlgorithm,
         hashAlgorithm: CryptoHashAlgorithm
     ): Promise<PortableKeyHandle> {
@@ -207,7 +208,7 @@ export class CryptoEncryptionHandle {
     }
 
     public static async createNonce(
-        providerIdent: ProviderIdentifier,
+        providerIdent: CryptoLayerProviderIdentifier,
         algorithm: CryptoEncryptionAlgorithm
     ): Promise<CoreBuffer> {
         const provider = getProvider(providerIdent);
@@ -253,7 +254,7 @@ export class CryptoEncryptionHandle {
 
     private static async keyHandleFromCryptoSecretKey<T extends BaseKeyHandle | BaseDerivedKeyHandle>(
         constructor: new () => T,
-        providerIdent: ProviderIdentifier,
+        providerIdent: CryptoLayerProviderIdentifier,
         cryptoSecretKey: CryptoSecretKey,
         signingHash: CryptoHashAlgorithm,
         ephemeral: boolean
@@ -284,7 +285,7 @@ export class CryptoEncryptionHandle {
     }
 
     public static async portableKeyHandleFromCryptoSecretKey(
-        providerIdent: ProviderIdentifier,
+        providerIdent: CryptoLayerProviderIdentifier,
         cryptoSecretKey: CryptoSecretKey,
         signingHash: CryptoHashAlgorithm = CryptoHashAlgorithm.SHA512
     ): Promise<PortableKeyHandle> {
@@ -298,7 +299,7 @@ export class CryptoEncryptionHandle {
     }
 
     public static async portableDerivedKeyHandleFromCryptoSecretKey(
-        providerIdent: ProviderIdentifier,
+        providerIdent: CryptoLayerProviderIdentifier,
         cryptoSecretKey: CryptoSecretKey,
         signingHash: CryptoHashAlgorithm = CryptoHashAlgorithm.SHA512
     ): Promise<PortableDerivedKeyHandle> {

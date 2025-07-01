@@ -7,7 +7,8 @@ import { CryptoErrorCode } from "../CryptoErrorCode";
 import { CryptoValidation } from "../CryptoValidation";
 import { CryptoEncryptionAlgorithm } from "../encryption/CryptoEncryption";
 import { CryptoHashAlgorithm } from "../hash/CryptoHash";
-import { getProvider, ProviderIdentifier } from "./CryptoLayerProviders";
+import { CryptoLayerProviderIdentifier } from "./CryptoLayerConfig";
+import { getProvider } from "./CryptoLayerProviders";
 import { CryptoLayerUtils } from "./CryptoLayerUtils";
 import { BaseDerivedKeyHandle } from "./encryption/BaseDerivedKeyHandle";
 import { BaseKeyHandle } from "./encryption/BaseKeyHandle";
@@ -18,7 +19,7 @@ import { PortableDerivedKeyHandle } from "./encryption/PortableDerivedKeyHandle"
 import { PortableKeyHandle } from "./encryption/PortableKeyHandle";
 
 export interface DeriveKeyHandleFromPasswordParameters {
-    providerIdent: ProviderIdentifier;
+    providerIdent: CryptoLayerProviderIdentifier;
     password: ICoreBuffer;
     salt: ICoreBuffer;
     resultingKeyEncryptionAlgorithm: CryptoEncryptionAlgorithm;

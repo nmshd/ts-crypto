@@ -23,6 +23,8 @@ export class CryptoLayerUtils {
                 return "P521";
             case CryptoSignatureAlgorithm.ECDSA_ED25519:
                 return "Curve25519";
+            case CryptoSignatureAlgorithm.RSA_2048:
+                return "RSA2048";
         }
     }
 
