@@ -10,6 +10,7 @@ import { CryptoDerivationHandleTest } from "./cal/CryptoDerivation.test";
 import { CryptoLayerProviderTest } from "./cal/CryptoLayerProviderTest.test";
 import { CryptoEncryptionHandleTest } from "./cal/encryption/CryptoEncryptionHandle.test";
 import { CryptoSecretKeyHandleTest } from "./cal/encryption/CryptoSecretKeyHandle.test";
+import { CryptoSignaturesHandleTest } from "./cal/signature/CryptoSignaturesHandle.test";
 import { CryptoDerivationTest } from "./crypto/CryptoDerivationTest.test";
 import { CryptoEncryptionTest } from "./crypto/CryptoEncryptionTest.test";
 import { CryptoExchangeTest } from "./crypto/CryptoExchangeTest.test";
@@ -64,5 +65,8 @@ Promise.all([
 
         // Derivation
         CryptoDerivationHandleTest.run();
+
+        // Signature
+        CryptoSignaturesHandleTest.run();
     })
     .catch((e) => console.log(e));
