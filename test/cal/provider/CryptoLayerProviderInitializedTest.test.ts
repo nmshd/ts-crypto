@@ -1,11 +1,11 @@
 import { getProvider } from "@nmshd/crypto";
 import { assertProvider } from "@nmshd/rs-crypto-types/checks";
 import { expect } from "chai";
-import { TEST_PROVIDER_IDENT } from "../index.node";
+import { TEST_PROVIDER_IDENT } from "../../index.node";
 
-export class CryptoLayerProviderTest {
+export class CryptoLayerProviderInitializedTest {
     public static run(): void {
-        describe("CryptoLayerProvider", function () {
+        describe("CryptoLayerProviderInitializedTest", function () {
             it("getProvider() should return a valid provider", async function () {
                 const provider = getProvider(TEST_PROVIDER_IDENT);
                 expect(provider).to.exist;

@@ -12,7 +12,13 @@ import { CryptoErrorCode } from "../CryptoErrorCode";
 import { CryptoEncryptionAlgorithm } from "../encryption/CryptoEncryption";
 import { CryptoHashAlgorithm } from "../hash/CryptoHash";
 import { CryptoSignatureAlgorithm } from "../signature/CryptoSignatureAlgorithm";
-import { CryptoLayerProviderIdentifier, CryptoLayerProviderToBeInitialized } from "./CryptoLayerConfig";
+import {
+    CryptoLayerProviderIdentifier,
+    CryptoLayerProviderToBeInitialized,
+    StorageConfig,
+    StorageSecurityConfig,
+    StorageSecuritySpec
+} from "./CryptoLayerConfig";
 import { CryptoEncryptionHandle } from "./encryption/CryptoEncryptionHandle";
 import { DeviceBoundKeyHandle } from "./encryption/DeviceBoundKeyHandle";
 import { CryptoSignaturesHandle } from "./signature/CryptoSignaturesHandle";
@@ -24,25 +30,6 @@ const ANDROID_HARDWARE_PROVIDER_NAME = "ANDROID_PROVIDER_SECURE_ELEMENT";
 const APPLE_SECURE_ENCLAVE_PROVIDER_NAME = "APPLE_SECURE_ENCLAVE";
 // const WINDOWS_PROVIDER_NAME = "";
 // const LINUX_PROVIDER_NAME = "Linux_Provider";
-
-type StorageSecuritySpec =
-    | {
-          type: "asymmetric";
-          asymmetricKeyAlgorithm: CryptoSignatureAlgorithm;
-          encryptionAlgorithm: CryptoEncryptionAlgorithm | undefined;
-          hashingAlgorithm: CryptoHashAlgorithm;
-      }
-    | {
-          type: "symmetric";
-          encryptionAlgorithm: CryptoEncryptionAlgorithm;
-          hashingAlgorithm: CryptoHashAlgorithm;
-      };
-
-interface StorageSecurityConfig {
-    name: string;
-    signature: StorageSecuritySpec;
-    encryption: StorageSecuritySpec;
-}
 
 const DEFAULT_STORAGE_SECURITY_CONFIG: StorageSecurityConfig[] = [
     {
@@ -94,8 +81,6 @@ async function updateProvidersByNameMap() {
         PROVIDERS_BY_NAME.set(name, provider);
     }
 }
-
-type StorageConfig = Extract<AdditionalConfig, { KVStoreConfig: any } | { FileStoreConfig: any }>;
 
 async function loadProviderFromName(
     providerName: string,
@@ -171,7 +156,7 @@ export async function loadProviderFromConfig(
         additional_config: [storageConfig]
     };
 
-    implConfig.additional_config.concat(additionalConfigFromProviderToBeInitializedConfig(providerConfig));
+    implConfig.additional_config.push(...additionalConfigFromProviderToBeInitializedConfig(providerConfig));
 
     await loadProviderFromName(providerConfig.providerName, implConfig, factoryFunctions);
 
@@ -322,7 +307,7 @@ export function getProvider(identifier: CryptoLayerProviderIdentifier): Provider
     if (provider === undefined) {
         throw new CryptoError(
             CryptoErrorCode.CalThisProviderNotInitialized,
-            `Failed finding provider with identifier ${identifier}`
+            `Failed finding provider with identifier ${JSON.stringify(identifier)}`
         ).setContext(getProvider);
     }
     return provider;

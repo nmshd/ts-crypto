@@ -1,5 +1,8 @@
 import { serialize, type, validate } from "@js-soft/ts-serval";
-import { SecurityLevel } from "@nmshd/rs-crypto-types";
+import { AdditionalConfig, SecurityLevel } from "@nmshd/rs-crypto-types";
+import { CryptoEncryptionAlgorithm } from "../encryption/CryptoEncryption";
+import { CryptoHashAlgorithm } from "../hash/CryptoHash";
+import { CryptoSignatureAlgorithm } from "../signature/CryptoSignatureAlgorithm";
 import { DeviceBoundKeyHandle } from "./encryption/DeviceBoundKeyHandle";
 import { DeviceBoundKeyPairHandle } from "./signature/DeviceBoundKeyPairHandle";
 
@@ -36,6 +39,9 @@ export class CryptoLayerProviderToBeInitialized {
     }
 }
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
+export type StorageConfig = Extract<AdditionalConfig, { KVStoreConfig: any } | { FileStoreConfig: any }>;
+
 export type CryptoLayerProviderIdentifier =
     | {
           providerName: string;
@@ -43,3 +49,22 @@ export type CryptoLayerProviderIdentifier =
     | {
           securityLevel: SecurityLevel;
       };
+
+export type StorageSecuritySpec =
+    | {
+          type: "asymmetric";
+          asymmetricKeyAlgorithm: CryptoSignatureAlgorithm;
+          encryptionAlgorithm: CryptoEncryptionAlgorithm | undefined;
+          hashingAlgorithm: CryptoHashAlgorithm;
+      }
+    | {
+          type: "symmetric";
+          encryptionAlgorithm: CryptoEncryptionAlgorithm;
+          hashingAlgorithm: CryptoHashAlgorithm;
+      };
+
+export interface StorageSecurityConfig {
+    name: string;
+    signature: StorageSecuritySpec;
+    encryption: StorageSecuritySpec;
+}

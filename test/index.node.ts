@@ -7,9 +7,10 @@ import {
 } from "@nmshd/rs-crypto-node";
 import { BufferTest } from "./BufferTest.test";
 import { CryptoDerivationHandleTest } from "./cal/CryptoDerivation.test";
-import { CryptoLayerProviderTest } from "./cal/CryptoLayerProviderTest.test";
 import { CryptoEncryptionHandleTest } from "./cal/encryption/CryptoEncryptionHandle.test";
 import { CryptoSecretKeyHandleTest } from "./cal/encryption/CryptoSecretKeyHandle.test";
+import { CryptoLayerProviderInitializedTest } from "./cal/provider/CryptoLayerProviderInitializedTest.test";
+import { CryptoLayerProvidersTest } from "./cal/provider/CryptoLayerProviders.test";
 import { CryptoSignaturesHandleTest } from "./cal/signature/CryptoSignaturesHandle.test";
 import { CryptoDerivationTest } from "./crypto/CryptoDerivationTest.test";
 import { CryptoEncryptionTest } from "./crypto/CryptoEncryptionTest.test";
@@ -57,7 +58,7 @@ Promise.all([
     SodiumWrapper.ready()
 ])
     .then(function () {
-        CryptoLayerProviderTest.run();
+        CryptoLayerProviderInitializedTest.run();
 
         // Encryption
         CryptoSecretKeyHandleTest.run();
@@ -68,5 +69,8 @@ Promise.all([
 
         // Signature
         CryptoSignaturesHandleTest.run();
+
+        // Test Provider initialization via Mocks.
+        CryptoLayerProvidersTest.run();
     })
     .catch((e) => console.log(e));

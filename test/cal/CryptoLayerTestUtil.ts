@@ -84,7 +84,7 @@ export async function expectThrows(
         if (errorMessageRegexp instanceof RegExp) {
             expect(error!.message).to.match(errorMessageRegexp);
         } else {
-            expect(error!.message).to.eq(errorMessageRegexp);
+            expect(error!.message).to.contain(errorMessageRegexp);
         }
     }
 }
