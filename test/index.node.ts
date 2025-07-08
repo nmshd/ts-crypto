@@ -7,6 +7,7 @@ import {
 } from "@nmshd/rs-crypto-node";
 import { BufferTest } from "./BufferTest.test";
 import { CryptoDerivationHandleTest } from "./cal/CryptoDerivation.test";
+import { CryptoLayerConfigTest } from "./cal/CryptoLayerConfig.test";
 import { CryptoEncryptionHandleTest } from "./cal/encryption/CryptoEncryptionHandle.test";
 import { CryptoSecretKeyHandleTest } from "./cal/encryption/CryptoSecretKeyHandle.test";
 import { CryptoLayerProviderInitializedTest } from "./cal/provider/CryptoLayerProviderInitializedTest.test";
@@ -70,7 +71,11 @@ Promise.all([
         // Signature
         CryptoSignaturesHandleTest.run();
 
+        // Config
+        CryptoLayerConfigTest.run();
+
         // Test Provider initialization via Mocks.
         CryptoLayerProvidersTest.run();
+        // CryptoLayerProvidersTest REPLACES ALL PROVIDERS WITH MOCKS!
     })
     .catch((e) => console.log(e));

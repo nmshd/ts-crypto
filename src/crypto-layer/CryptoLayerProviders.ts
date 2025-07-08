@@ -25,7 +25,7 @@ import { CryptoSignaturesHandle } from "./signature/CryptoSignaturesHandle";
 import { DeviceBoundKeyPairHandle } from "./signature/DeviceBoundKeyPairHandle";
 
 const SOFTWARE_PROVIDER_NAME = "SoftwareProvider";
-// const ANDROID_SOFTWARE_PROVIDER_NAME = "ANDROID_PROVIDER";
+const ANDROID_PROVIDER_NAME = "ANDROID_PROVIDER";
 const ANDROID_HARDWARE_PROVIDER_NAME = "ANDROID_PROVIDER_SECURE_ELEMENT";
 const APPLE_SECURE_ENCLAVE_PROVIDER_NAME = "APPLE_SECURE_ENCLAVE";
 // const WINDOWS_PROVIDER_NAME = "";
@@ -34,6 +34,20 @@ const APPLE_SECURE_ENCLAVE_PROVIDER_NAME = "APPLE_SECURE_ENCLAVE";
 const DEFAULT_STORAGE_SECURITY_CONFIG: StorageSecurityConfig[] = [
     {
         name: ANDROID_HARDWARE_PROVIDER_NAME,
+        signature: {
+            type: "asymmetric",
+            asymmetricKeyAlgorithm: CryptoSignatureAlgorithm.RSA_2048,
+            encryptionAlgorithm: undefined,
+            hashingAlgorithm: CryptoHashAlgorithm.SHA256
+        },
+        encryption: {
+            type: "symmetric",
+            encryptionAlgorithm: CryptoEncryptionAlgorithm.AES256_CBC,
+            hashingAlgorithm: CryptoHashAlgorithm.SHA256
+        }
+    },
+    {
+        name: ANDROID_PROVIDER_NAME,
         signature: {
             type: "asymmetric",
             asymmetricKeyAlgorithm: CryptoSignatureAlgorithm.RSA_2048,

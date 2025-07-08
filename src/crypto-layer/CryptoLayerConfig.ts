@@ -1,5 +1,6 @@
 import { serialize, type, validate } from "@js-soft/ts-serval";
 import { AdditionalConfig, SecurityLevel } from "@nmshd/rs-crypto-types";
+import { CryptoSerializableAsync } from "../CryptoSerializable";
 import { CryptoEncryptionAlgorithm } from "../encryption/CryptoEncryption";
 import { CryptoHashAlgorithm } from "../hash/CryptoHash";
 import { CryptoSignatureAlgorithm } from "../signature/CryptoSignatureAlgorithm";
@@ -7,22 +8,26 @@ import { DeviceBoundKeyHandle } from "./encryption/DeviceBoundKeyHandle";
 import { DeviceBoundKeyPairHandle } from "./signature/DeviceBoundKeyPairHandle";
 
 @type("CryptoLayerProviderToBeInitialized")
-export class CryptoLayerProviderToBeInitialized {
+export class CryptoLayerProviderToBeInitialized extends CryptoSerializableAsync {
     @validate()
     @serialize()
     public providerName: string;
 
     @validate({ nullable: true })
-    @serialize()
-    public masterEncryptionKeyHandle: DeviceBoundKeyHandle | DeviceBoundKeyPairHandle | undefined;
+    @serialize({
+        unionTypes: [DeviceBoundKeyHandle, DeviceBoundKeyPairHandle]
+    })
+    public masterEncryptionKeyHandle?: DeviceBoundKeyHandle | DeviceBoundKeyPairHandle;
+
+    @validate({ nullable: true })
+    @serialize({
+        unionTypes: [DeviceBoundKeyHandle, DeviceBoundKeyPairHandle]
+    })
+    public masterSignatureKeyHandle?: DeviceBoundKeyHandle | DeviceBoundKeyPairHandle;
 
     @validate({ nullable: true })
     @serialize()
-    public masterSignatureKeyHandle: DeviceBoundKeyHandle | DeviceBoundKeyPairHandle | undefined;
-
-    @validate({ nullable: true })
-    @serialize()
-    public dependentProvider: CryptoLayerProviderToBeInitialized | undefined;
+    public dependentProvider?: CryptoLayerProviderToBeInitialized;
 
     public static new(value: {
         providerName: string;
