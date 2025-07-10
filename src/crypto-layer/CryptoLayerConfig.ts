@@ -7,8 +7,8 @@ import { CryptoSignatureAlgorithm } from "../signature/CryptoSignatureAlgorithm"
 import { DeviceBoundKeyHandle } from "./encryption/DeviceBoundKeyHandle";
 import { DeviceBoundKeyPairHandle } from "./signature/DeviceBoundKeyPairHandle";
 
-@type("CryptoLayerProviderToBeInitialized")
-export class CryptoLayerProviderToBeInitialized extends CryptoSerializableAsync {
+@type("ProviderInitConfig")
+export class ProviderInitConfig extends CryptoSerializableAsync {
     @validate()
     @serialize()
     public providerName: string;
@@ -27,15 +27,15 @@ export class CryptoLayerProviderToBeInitialized extends CryptoSerializableAsync 
 
     @validate({ nullable: true })
     @serialize()
-    public dependentProvider?: CryptoLayerProviderToBeInitialized;
+    public dependentProvider?: ProviderInitConfig;
 
     public static new(value: {
         providerName: string;
         masterEncryptionKeyHandle?: DeviceBoundKeyHandle | DeviceBoundKeyPairHandle;
         masterSignatureKeyHandle?: DeviceBoundKeyHandle | DeviceBoundKeyPairHandle;
-        dependentProvider?: CryptoLayerProviderToBeInitialized;
-    }): CryptoLayerProviderToBeInitialized {
-        const instance = new CryptoLayerProviderToBeInitialized();
+        dependentProvider?: ProviderInitConfig;
+    }): ProviderInitConfig {
+        const instance = new ProviderInitConfig();
         instance.providerName = value.providerName;
         instance.masterEncryptionKeyHandle = value.masterEncryptionKeyHandle;
         instance.masterSignatureKeyHandle = value.masterSignatureKeyHandle;

@@ -14,7 +14,7 @@ import { CryptoHashAlgorithm } from "../hash/CryptoHash";
 import { CryptoSignatureAlgorithm } from "../signature/CryptoSignatureAlgorithm";
 import {
     CryptoLayerProviderIdentifier,
-    CryptoLayerProviderToBeInitialized,
+    ProviderInitConfig,
     StorageConfig,
     StorageSecurityConfig,
     StorageSecuritySpec
@@ -131,9 +131,7 @@ async function loadProviderFromName(
     PROVIDERS.set(securityLevel, provider);
 }
 
-function additionalConfigFromProviderToBeInitializedConfig(
-    providerConfig: CryptoLayerProviderToBeInitialized
-): AdditionalConfig[] {
+function additionalConfigFromProviderToBeInitializedConfig(providerConfig: ProviderInitConfig): AdditionalConfig[] {
     const additionalConfig = [];
 
     if (providerConfig.masterEncryptionKeyHandle instanceof DeviceBoundKeyHandle) {
@@ -158,7 +156,7 @@ function additionalConfigFromProviderToBeInitializedConfig(
 }
 
 export async function loadProviderFromConfig(
-    providerConfig: CryptoLayerProviderToBeInitialized,
+    providerConfig: ProviderInitConfig,
     storageConfig: StorageConfig,
     factoryFunctions: ProviderFactoryFunctions
 ): Promise<void> {
@@ -181,8 +179,8 @@ async function initializeNewFallbackSoftwareProvider(
     softwareProviderName: string,
     storageConfig: StorageConfig,
     factoryFunctions: ProviderFactoryFunctions
-): Promise<CryptoLayerProviderToBeInitialized> {
-    const providerToBeInitializedConfig = CryptoLayerProviderToBeInitialized.new({
+): Promise<ProviderInitConfig> {
+    const providerToBeInitializedConfig = ProviderInitConfig.new({
         providerName: softwareProviderName
     });
 
@@ -214,8 +212,8 @@ async function initializeNewHybridProvider(
     storageConfig: StorageConfig,
     storageSecurityConfig: StorageSecurityConfig,
     factoryFunctions: ProviderFactoryFunctions
-): Promise<CryptoLayerProviderToBeInitialized> {
-    const hwProviderToBeInitialized = CryptoLayerProviderToBeInitialized.new({
+): Promise<ProviderInitConfig> {
+    const hwProviderToBeInitialized = ProviderInitConfig.new({
         providerName: hwProviderName
     });
 
@@ -226,7 +224,7 @@ async function initializeNewHybridProvider(
         keyHandleFromStorageSecuritySpec(storageSecurityConfig.signature)
     ]);
 
-    const swProviderToBeInitialized = CryptoLayerProviderToBeInitialized.new({
+    const swProviderToBeInitialized = ProviderInitConfig.new({
         providerName: SOFTWARE_PROVIDER_NAME,
         masterSignatureKeyHandle: signatureKeyHandle,
         masterEncryptionKeyHandle: encryptionKeyHandle
@@ -253,7 +251,7 @@ export async function initializeNewProviders(
     storageConfig: StorageConfig,
     factoryFunctions: ProviderFactoryFunctions,
     storageSecurityConfig?: StorageSecurityConfig[]
-): Promise<CryptoLayerProviderToBeInitialized | undefined> {
+): Promise<ProviderInitConfig | undefined> {
     const basicProviderImplConfig: ProviderImplConfig = {
         additional_config: [storageConfig]
     };
