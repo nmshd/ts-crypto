@@ -1,46 +1,86 @@
 import { serialize, type, validate } from "@js-soft/ts-serval";
-import { AdditionalConfig, SecurityLevel } from "@nmshd/rs-crypto-types";
-import { CryptoSerializableAsync } from "../CryptoSerializable";
+import { AdditionalConfig, KeyHandle, KeyPairHandle, SecurityLevel } from "@nmshd/rs-crypto-types";
+import { CryptoSerializable } from "../CryptoSerializable";
 import { CryptoEncryptionAlgorithm } from "../encryption/CryptoEncryption";
 import { CryptoHashAlgorithm } from "../hash/CryptoHash";
 import { CryptoSignatureAlgorithm } from "../signature/CryptoSignatureAlgorithm";
+import { getProvider } from "./CryptoLayerProviders";
 import { DeviceBoundKeyHandle } from "./encryption/DeviceBoundKeyHandle";
 import { DeviceBoundKeyPairHandle } from "./signature/DeviceBoundKeyPairHandle";
 
+type KeyHandleType = "symmetric" | "asymmetric";
+
+interface IProviderInitConfigKeyHandle {
+    type: KeyHandleType;
+    keyId: string;
+    providerName: string;
+}
+
+@type("ProviderInitConfigKeyHandle")
+export class ProviderInitConfigKeyHandle extends CryptoSerializable {
+    @validate()
+    @serialize()
+    public type: KeyHandleType;
+
+    @validate()
+    @serialize()
+    public keyId: string;
+
+    @validate()
+    @serialize()
+    public providerName: string;
+
+    public static from(value: IProviderInitConfigKeyHandle): ProviderInitConfigKeyHandle {
+        return ProviderInitConfigKeyHandle.fromAny(value);
+    }
+
+    public static encode(handle: DeviceBoundKeyHandle | DeviceBoundKeyPairHandle): ProviderInitConfigKeyHandle {
+        return ProviderInitConfigKeyHandle.from({
+            type: handle instanceof DeviceBoundKeyHandle ? "symmetric" : "asymmetric",
+            keyId: handle.id,
+            providerName: handle.providerName
+        });
+    }
+
+    public async load(): Promise<KeyHandle | KeyPairHandle> {
+        const provider = getProvider({ providerName: this.providerName });
+
+        switch (this.type) {
+            case "asymmetric":
+                return await provider.loadKeyPair(this.keyId);
+            case "symmetric":
+                return await provider.loadKey(this.keyId);
+        }
+    }
+}
+
+interface IProviderInitConfig {
+    providerName: string;
+    masterEncryptionKeyHandle?: ProviderInitConfigKeyHandle;
+    masterSignatureKeyHandle?: ProviderInitConfigKeyHandle;
+    dependentProvider?: ProviderInitConfig;
+}
+
 @type("ProviderInitConfig")
-export class ProviderInitConfig extends CryptoSerializableAsync {
+export class ProviderInitConfig extends CryptoSerializable {
     @validate()
     @serialize()
     public providerName: string;
 
     @validate({ nullable: true })
-    @serialize({
-        unionTypes: [DeviceBoundKeyHandle, DeviceBoundKeyPairHandle]
-    })
-    public masterEncryptionKeyHandle?: DeviceBoundKeyHandle | DeviceBoundKeyPairHandle;
+    @serialize()
+    public masterEncryptionKeyHandle?: ProviderInitConfigKeyHandle;
 
     @validate({ nullable: true })
-    @serialize({
-        unionTypes: [DeviceBoundKeyHandle, DeviceBoundKeyPairHandle]
-    })
-    public masterSignatureKeyHandle?: DeviceBoundKeyHandle | DeviceBoundKeyPairHandle;
+    @serialize()
+    public masterSignatureKeyHandle?: ProviderInitConfigKeyHandle;
 
     @validate({ nullable: true })
     @serialize()
     public dependentProvider?: ProviderInitConfig;
 
-    public static new(value: {
-        providerName: string;
-        masterEncryptionKeyHandle?: DeviceBoundKeyHandle | DeviceBoundKeyPairHandle;
-        masterSignatureKeyHandle?: DeviceBoundKeyHandle | DeviceBoundKeyPairHandle;
-        dependentProvider?: ProviderInitConfig;
-    }): ProviderInitConfig {
-        const instance = new ProviderInitConfig();
-        instance.providerName = value.providerName;
-        instance.masterEncryptionKeyHandle = value.masterEncryptionKeyHandle;
-        instance.masterSignatureKeyHandle = value.masterSignatureKeyHandle;
-        instance.dependentProvider = value.dependentProvider;
-        return instance;
+    public static from(value: IProviderInitConfig): ProviderInitConfig {
+        return ProviderInitConfig.fromAny(value);
     }
 }
 

@@ -15,6 +15,7 @@ import { CryptoSignatureAlgorithm } from "../signature/CryptoSignatureAlgorithm"
 import {
     CryptoLayerProviderIdentifier,
     ProviderInitConfig,
+    ProviderInitConfigKeyHandle,
     StorageConfig,
     StorageSecurityConfig,
     StorageSecuritySpec
@@ -131,25 +132,35 @@ async function loadProviderFromName(
     PROVIDERS.set(securityLevel, provider);
 }
 
-function additionalConfigFromProviderToBeInitializedConfig(providerConfig: ProviderInitConfig): AdditionalConfig[] {
+async function additionalConfigFromProviderToBeInitializedConfig(
+    providerConfig: ProviderInitConfig
+): Promise<AdditionalConfig[]> {
     const additionalConfig = [];
 
-    if (providerConfig.masterEncryptionKeyHandle instanceof DeviceBoundKeyHandle) {
-        additionalConfig.push({
-            StorageConfigSymmetricEncryption: providerConfig.masterEncryptionKeyHandle.keyHandle
-        });
-    } else if (providerConfig.masterEncryptionKeyHandle instanceof DeviceBoundKeyPairHandle) {
-        additionalConfig.push({
-            StorageConfigAsymmetricEncryption: providerConfig.masterEncryptionKeyHandle.keyPairHandle
-        });
+    if (providerConfig.masterEncryptionKeyHandle) {
+        const handle = await providerConfig.masterEncryptionKeyHandle.load();
+        if (providerConfig.masterEncryptionKeyHandle.type === "symmetric") {
+            additionalConfig.push({
+                StorageConfigSymmetricEncryption: handle
+            });
+        } else {
+            additionalConfig.push({
+                StorageConfigAsymmetricEncryption: handle
+            });
+        }
     }
 
-    if (providerConfig.masterSignatureKeyHandle instanceof DeviceBoundKeyHandle) {
-        additionalConfig.push({ StorageConfigHMAC: providerConfig.masterSignatureKeyHandle.keyHandle });
-    } else if (providerConfig.masterSignatureKeyHandle instanceof DeviceBoundKeyPairHandle) {
-        additionalConfig.push({
-            StorageConfigDSA: providerConfig.masterSignatureKeyHandle.keyPairHandle
-        });
+    if (providerConfig.masterSignatureKeyHandle) {
+        const handle = await providerConfig.masterSignatureKeyHandle.load();
+        if (providerConfig.masterSignatureKeyHandle.type === "symmetric") {
+            additionalConfig.push({
+                StorageConfigHMAC: handle
+            });
+        } else {
+            additionalConfig.push({
+                StorageConfigDSA: handle
+            });
+        }
     }
 
     return additionalConfig;
@@ -168,7 +179,7 @@ export async function loadProviderFromConfig(
         additional_config: [storageConfig]
     };
 
-    implConfig.additional_config.push(...additionalConfigFromProviderToBeInitializedConfig(providerConfig));
+    implConfig.additional_config.push(...(await additionalConfigFromProviderToBeInitializedConfig(providerConfig)));
 
     await loadProviderFromName(providerConfig.providerName, implConfig, factoryFunctions);
 
@@ -180,7 +191,7 @@ async function initializeNewFallbackSoftwareProvider(
     storageConfig: StorageConfig,
     factoryFunctions: ProviderFactoryFunctions
 ): Promise<ProviderInitConfig> {
-    const providerToBeInitializedConfig = ProviderInitConfig.new({
+    const providerToBeInitializedConfig = ProviderInitConfig.from({
         providerName: softwareProviderName
     });
 
@@ -213,7 +224,7 @@ async function initializeNewHybridProvider(
     storageSecurityConfig: StorageSecurityConfig,
     factoryFunctions: ProviderFactoryFunctions
 ): Promise<ProviderInitConfig> {
-    const hwProviderToBeInitialized = ProviderInitConfig.new({
+    const hwProviderToBeInitialized = ProviderInitConfig.from({
         providerName: hwProviderName
     });
 
@@ -224,10 +235,10 @@ async function initializeNewHybridProvider(
         keyHandleFromStorageSecuritySpec(storageSecurityConfig.signature)
     ]);
 
-    const swProviderToBeInitialized = ProviderInitConfig.new({
+    const swProviderToBeInitialized = ProviderInitConfig.from({
         providerName: SOFTWARE_PROVIDER_NAME,
-        masterSignatureKeyHandle: signatureKeyHandle,
-        masterEncryptionKeyHandle: encryptionKeyHandle
+        masterSignatureKeyHandle: ProviderInitConfigKeyHandle.encode(signatureKeyHandle),
+        masterEncryptionKeyHandle: ProviderInitConfigKeyHandle.encode(encryptionKeyHandle)
     });
 
     await loadProviderFromConfig(swProviderToBeInitialized, storageConfig, factoryFunctions);
