@@ -1,6 +1,7 @@
 export * from "./BaseX";
 export * from "./buildInformation";
 export * from "./CoreBuffer";
+export * from "./crypto-layer";
 export * from "./CryptoDerivation";
 export * from "./CryptoError";
 export * from "./CryptoErrorCode";

@@ -29,6 +29,7 @@ export class CryptoSignatures {
                 }
             case CryptoSignatureAlgorithm.ECDSA_P256:
             case CryptoSignatureAlgorithm.ECDSA_P521:
+            case CryptoSignatureAlgorithm.RSA_2048:
             default:
                 throw new CryptoError(CryptoErrorCode.NotYetImplemented);
         }
@@ -54,6 +55,7 @@ export class CryptoSignatures {
                 break;
             case CryptoSignatureAlgorithm.ECDSA_P256:
             case CryptoSignatureAlgorithm.ECDSA_P521:
+            case CryptoSignatureAlgorithm.RSA_2048:
             default:
                 throw new CryptoError(CryptoErrorCode.NotYetImplemented);
         }
