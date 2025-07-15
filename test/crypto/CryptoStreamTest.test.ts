@@ -1,4 +1,4 @@
-/* eslint-disable jest/expect-expect */
+/* eslint-disable jest/expect-expect, no-console */
 import {
     CoreBuffer,
     CryptoExchange,

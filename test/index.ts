@@ -33,4 +33,5 @@ SodiumWrapper.ready()
         CryptoStateTest.run();
         BufferTest.run();
     })
-    .catch((e) => console.log(e));
+    // eslint-disable-next-line no-console
+    .catch((e) => console.error(e));
