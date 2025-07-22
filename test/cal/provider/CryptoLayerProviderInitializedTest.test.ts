@@ -1,4 +1,4 @@
-import { getProvider } from "@nmshd/crypto";
+import { getProvider, hasProviderForSecurityLevel, providersInitialized } from "@nmshd/crypto";
 import { assertProvider } from "@nmshd/rs-crypto-types/checks";
 import { expect } from "chai";
 import { TEST_PROVIDER_IDENT } from "../../index.node";
@@ -16,6 +16,14 @@ export class CryptoLayerProviderInitializedTest {
                     const capabilities = await provider.getCapabilities();
                     expect(capabilities?.min_security_level).to.eq(TEST_PROVIDER_IDENT.securityLevel);
                 }
+            });
+
+            it("hasProviderForSecurityLevel() should be true for test provider", function () {
+                expect(hasProviderForSecurityLevel("Software")).to.be.true;
+            });
+
+            it("providersInitialized() should be true", function () {
+                expect(providersInitialized()).to.be.true;
             });
         });
     }

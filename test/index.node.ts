@@ -10,6 +10,7 @@ import { CryptoDerivationHandleTest } from "./cal/CryptoDerivation.test";
 import { CryptoLayerConfigTest } from "./cal/CryptoLayerConfig.test";
 import { CryptoEncryptionHandleTest } from "./cal/encryption/CryptoEncryptionHandle.test";
 import { CryptoSecretKeyHandleTest } from "./cal/encryption/CryptoSecretKeyHandle.test";
+import { CryptoLayerProviderGetAllKeyMetadata } from "./cal/provider/CryptoLayerProviderGetAllKeyMetadata.test";
 import { CryptoLayerProviderInitializedTest } from "./cal/provider/CryptoLayerProviderInitializedTest.test";
 import { CryptoLayerProvidersTest } from "./cal/provider/CryptoLayerProviders.test";
 import { CryptoSignaturesHandleTest } from "./cal/signature/CryptoSignaturesHandle.test";
@@ -73,6 +74,9 @@ Promise.all([
 
         // Config
         CryptoLayerConfigTest.run();
+
+        // Test Provider key metadata retrieval functionality.
+        CryptoLayerProviderGetAllKeyMetadata.run();
 
         // Test Provider initialization via Mocks.
         CryptoLayerProvidersTest.run();

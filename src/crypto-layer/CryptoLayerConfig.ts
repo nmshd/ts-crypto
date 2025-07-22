@@ -113,3 +113,22 @@ export interface StorageSecurityConfig {
     signature: StorageSecuritySpec;
     encryption: StorageSecuritySpec;
 }
+
+export type KeyMetadata =
+    | {
+          id: string;
+          type: "symmetric";
+          encryptionAlgorithm: CryptoEncryptionAlgorithm;
+          hashAlgorithm: CryptoHashAlgorithm;
+          deviceBound: boolean;
+          ephemeral: boolean;
+      }
+    | {
+          id: string;
+          type: "asymmetric";
+          asymmetricKeyAlgorithm: CryptoSignatureAlgorithm;
+          encryptionAlgorithm?: CryptoEncryptionAlgorithm;
+          hashAlgorithm: CryptoHashAlgorithm;
+          deviceBound: boolean;
+          ephemeral: boolean;
+      };

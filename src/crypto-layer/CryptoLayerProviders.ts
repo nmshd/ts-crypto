@@ -14,12 +14,14 @@ import { CryptoHashAlgorithm } from "../hash/CryptoHash";
 import { CryptoSignatureAlgorithm } from "../signature/CryptoSignatureAlgorithm";
 import {
     CryptoLayerProviderIdentifier,
+    KeyMetadata,
     ProviderInitConfig,
     ProviderInitConfigKeyHandle,
     StorageConfig,
     StorageSecurityConfig,
     StorageSecuritySpec
 } from "./CryptoLayerConfig";
+import { CryptoLayerUtils } from "./CryptoLayerUtils";
 import { CryptoEncryptionHandle } from "./encryption/CryptoEncryptionHandle";
 import { DeviceBoundKeyHandle } from "./encryption/DeviceBoundKeyHandle";
 import { CryptoSignaturesHandle } from "./signature/CryptoSignaturesHandle";
@@ -361,4 +363,42 @@ export function providersInitialized(): boolean {
 export function clearProviders(): void {
     PROVIDERS.clear();
     PROVIDERS_BY_NAME.clear();
+}
+
+export async function keyCountOfProvider(providerIdent: CryptoLayerProviderIdentifier): Promise<number> {
+    const provider = getProvider(providerIdent);
+
+    return (await provider.getAllKeys()).length;
+}
+
+export async function keysOfProvider(providerIdent: CryptoLayerProviderIdentifier): Promise<KeyMetadata[]> {
+    const provider = getProvider(providerIdent);
+    const keys = await provider.getAllKeys();
+
+    return keys.map(([id, spec]) => {
+        if ("KeySpec" in spec) {
+            return {
+                id: id,
+                type: "symmetric",
+                encryptionAlgorithm: CryptoLayerUtils.cryptoEncryptionAlgorithmFromCipher(spec.KeySpec.cipher),
+                hashAlgorithm: CryptoLayerUtils.cryptoHashAlgorithmFromCryptoHash(spec.KeySpec.signing_hash),
+                deviceBound: spec.KeySpec.non_exportable,
+                ephemeral: spec.KeySpec.ephemeral
+            };
+        }
+
+        return {
+            id: id,
+            type: "asymmetric",
+            encryptionAlgorithm: spec.KeyPairSpec.cipher
+                ? CryptoLayerUtils.cryptoEncryptionAlgorithmFromCipher(spec.KeyPairSpec.cipher)
+                : undefined,
+            asymmetricKeyAlgorithm: CryptoLayerUtils.cryptoSignatureAlgorithmFromAsymmetricKeySpec(
+                spec.KeyPairSpec.asym_spec
+            ),
+            hashAlgorithm: CryptoLayerUtils.cryptoHashAlgorithmFromCryptoHash(spec.KeyPairSpec.signing_hash),
+            deviceBound: spec.KeyPairSpec.non_exportable,
+            ephemeral: spec.KeyPairSpec.ephemeral
+        };
+    });
 }

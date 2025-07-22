@@ -28,6 +28,25 @@ export class CryptoLayerUtils {
         }
     }
 
+    public static cryptoSignatureAlgorithmFromAsymmetricKeySpec(spec: AsymmetricKeySpec): CryptoSignatureAlgorithm {
+        // eslint-disable-next-line @typescript-eslint/switch-exhaustiveness-check
+        switch (spec) {
+            case "P256":
+                return CryptoSignatureAlgorithm.ECDSA_P256;
+            case "P521":
+                return CryptoSignatureAlgorithm.ECDSA_P521;
+            case "Curve25519":
+                return CryptoSignatureAlgorithm.ECDSA_ED25519;
+            case "RSA2048":
+                return CryptoSignatureAlgorithm.RSA_2048;
+            default:
+                throw new CryptoError(
+                    CryptoErrorCode.CalUnsupportedAlgorithm,
+                    `Asymmetric key algorithm ${spec} is not supported by ts crypto.`
+                ).setContext(CryptoLayerUtils.cryptoSignatureAlgorithmFromAsymmetricKeySpec);
+        }
+    }
+
     public static cryptoHashAlgorithmFromCryptoHash(cryptoHash: CryptoHash): CryptoHashAlgorithm {
         // eslint-disable-next-line @typescript-eslint/switch-exhaustiveness-check
         switch (cryptoHash) {
@@ -41,7 +60,7 @@ export class CryptoLayerUtils {
                 throw new CryptoError(
                     CryptoErrorCode.CalUnsupportedAlgorithm,
                     `Hash function ${cryptoHash} is not supported by ts crypto.`
-                );
+                ).setContext(CryptoLayerUtils.cryptoHashAlgorithmFromCryptoHash);
         }
     }
 
