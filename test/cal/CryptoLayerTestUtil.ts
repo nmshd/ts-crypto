@@ -9,10 +9,6 @@ function formatEncryptionAlgorithm(algo: CryptoEncryptionAlgorithm): string {
             return "AES256_GCM";
         case CryptoEncryptionAlgorithm.XCHACHA20_POLY1305:
             return "XCHACHA20_POLY1305";
-        case CryptoEncryptionAlgorithm.AES128_CBC:
-            return "AES128_CBC";
-        case CryptoEncryptionAlgorithm.AES256_CBC:
-            return "AES256_CBC";
         case CryptoEncryptionAlgorithm.CHACHA20_POLY1305:
             return "CHACHA20_POLY1305";
     }

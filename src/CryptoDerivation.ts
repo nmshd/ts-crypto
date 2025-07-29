@@ -71,8 +71,6 @@ export class CryptoDerivation implements ICryptoDerivation {
             case CryptoEncryptionAlgorithm.XCHACHA20_POLY1305:
                 keyLength = 32;
                 break;
-            case CryptoEncryptionAlgorithm.AES128_CBC:
-            case CryptoEncryptionAlgorithm.AES256_CBC:
             case CryptoEncryptionAlgorithm.CHACHA20_POLY1305:
             default:
                 throw new Error("KeyAlgorithm not supported.");
@@ -122,8 +120,6 @@ export class CryptoDerivation implements ICryptoDerivation {
             case CryptoEncryptionAlgorithm.XCHACHA20_POLY1305:
                 keyLength = 32;
                 break;
-            case CryptoEncryptionAlgorithm.AES128_CBC:
-            case CryptoEncryptionAlgorithm.AES256_CBC:
             case CryptoEncryptionAlgorithm.CHACHA20_POLY1305:
             default:
                 throw new Error("KeyAlgorithm not supported.");

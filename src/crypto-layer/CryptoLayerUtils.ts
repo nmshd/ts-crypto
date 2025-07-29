@@ -83,10 +83,6 @@ export class CryptoLayerUtils {
                 return "AesGcm256";
             case CryptoEncryptionAlgorithm.XCHACHA20_POLY1305:
                 return "XChaCha20Poly1305";
-            case CryptoEncryptionAlgorithm.AES128_CBC:
-                return "AesCbc128";
-            case CryptoEncryptionAlgorithm.AES256_CBC:
-                return "AesCbc256";
             case CryptoEncryptionAlgorithm.CHACHA20_POLY1305:
                 return "ChaCha20Poly1305";
         }
@@ -99,9 +95,11 @@ export class CryptoLayerUtils {
             case "AesGcm256":
                 return CryptoEncryptionAlgorithm.AES256_GCM;
             case "AesCbc128":
-                return CryptoEncryptionAlgorithm.AES128_CBC;
             case "AesCbc256":
-                return CryptoEncryptionAlgorithm.AES256_CBC;
+                throw new CryptoError(
+                    CryptoErrorCode.CalUnsupportedAlgorithm,
+                    "ts-crypto does not support aes cbc"
+                ).setContext(CryptoLayerUtils.cryptoEncryptionAlgorithmFromCipher);
             case "XChaCha20Poly1305":
                 return CryptoEncryptionAlgorithm.XCHACHA20_POLY1305;
             case "ChaCha20Poly1305":

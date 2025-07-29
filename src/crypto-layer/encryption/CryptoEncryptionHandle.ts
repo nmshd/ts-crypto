@@ -220,10 +220,6 @@ export class CryptoEncryptionHandle {
             case CryptoEncryptionAlgorithm.CHACHA20_POLY1305:
                 nonceLength = 12;
                 break;
-            case CryptoEncryptionAlgorithm.AES128_CBC:
-            case CryptoEncryptionAlgorithm.AES256_CBC:
-                nonceLength = 16;
-                break;
             case CryptoEncryptionAlgorithm.XCHACHA20_POLY1305:
                 nonceLength = 24;
                 break;

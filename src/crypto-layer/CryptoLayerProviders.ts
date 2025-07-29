@@ -45,7 +45,7 @@ const DEFAULT_STORAGE_SECURITY_CONFIG: StorageSecurityConfig[] = [
         },
         encryption: {
             type: "symmetric",
-            encryptionAlgorithm: CryptoEncryptionAlgorithm.AES256_CBC,
+            encryptionAlgorithm: CryptoEncryptionAlgorithm.AES256_GCM,
             hashingAlgorithm: CryptoHashAlgorithm.SHA256
         }
     },
@@ -59,7 +59,7 @@ const DEFAULT_STORAGE_SECURITY_CONFIG: StorageSecurityConfig[] = [
         },
         encryption: {
             type: "symmetric",
-            encryptionAlgorithm: CryptoEncryptionAlgorithm.AES256_CBC,
+            encryptionAlgorithm: CryptoEncryptionAlgorithm.AES256_GCM,
             hashingAlgorithm: CryptoHashAlgorithm.SHA256
         }
     },
