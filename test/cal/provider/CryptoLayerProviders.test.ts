@@ -80,6 +80,12 @@ when(mockedImaginaryProvider.getCapabilities()).thenResolve(instance(mockedImagi
 
 const mockedStorageConfig: StorageConfig = mock<StorageConfig>();
 
+/**
+ * Test provider initialization via mocks.
+ *
+ * Currently it is impossible to detect, wether a crypto layer provider is incorrectly initialized.
+ * Moreover some configurations, like hybrid constructs with hardware providers, are not possible in ci.
+ */
 export class CryptoLayerProvidersTest {
     public static run(): void {
         describe("CryptoLayerProviders", function () {
