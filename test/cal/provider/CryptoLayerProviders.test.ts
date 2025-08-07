@@ -7,8 +7,8 @@ import {
     CryptoHashAlgorithm,
     getProvider,
     hasProviderForSecurityLevel,
-    initializeNewProviders,
-    loadProviderFromConfig,
+    initializeProviders,
+    newInitializedProviders,
     ProviderInitConfig,
     providersInitialized,
     StorageConfig
@@ -55,6 +55,7 @@ when(mockedAndroidProvider.createKeyPair(anything())).thenResolve(instance(mocke
 when(mockedAndroidProvider.loadKeyPair(anything())).thenResolve(instance(mockedKeyPairHandle));
 when(mockedAndroidProvider.getCapabilities()).thenResolve(instance(mockedAndroidProviderCaps));
 
+// The real android provider (ANDROID_PROVIDER) is in fact a hardware provider.
 const mockedAndroidSoftwareProviderCaps: ProviderConfig = mock<ProviderConfig>();
 when(mockedAndroidSoftwareProviderCaps.min_security_level).thenReturn("Software");
 when(mockedAndroidSoftwareProviderCaps.max_security_level).thenReturn("Software");
@@ -64,10 +65,6 @@ when(mockedAndroidSoftwareProvider.providerName()).thenResolve("ANDROID_PROVIDER
 when(mockedAndroidSoftwareProvider.createKey(anything())).thenResolve(instance(mockedKeyHandle));
 when(mockedAndroidSoftwareProvider.createKeyPair(anything())).thenResolve(instance(mockedKeyPairHandle));
 when(mockedAndroidSoftwareProvider.getCapabilities()).thenResolve(instance(mockedAndroidSoftwareProviderCaps));
-
-const mockedAppleSecureEnclaveProviderCaps: ProviderConfig = mock<ProviderConfig>();
-when(mockedAppleSecureEnclaveProviderCaps.min_security_level).thenReturn("Hardware");
-when(mockedAppleSecureEnclaveProviderCaps.max_security_level).thenReturn("Hardware");
 
 const mockedImaginaryProviderCaps: ProviderConfig = mock<ProviderConfig>();
 when(mockedImaginaryProviderCaps.min_security_level).thenReturn("Hardware");
@@ -101,13 +98,16 @@ export class CryptoLayerProvidersTest {
                     instance(mockedSoftwareProvider)
                 );
 
-                const loadConfig = await initializeNewProviders(instance(mockedStorageConfig), instance(mockedFactory));
+                const loadConfig = await newInitializedProviders(
+                    instance(mockedStorageConfig),
+                    instance(mockedFactory)
+                );
 
                 expect(loadConfig).to.exist.and.to.be.instanceOf(ProviderInitConfig);
                 expect(loadConfig?.providerName).to.equal("SoftwareProvider");
                 expect(loadConfig?.masterEncryptionKeyHandle).to.be.undefined;
                 expect(loadConfig?.masterSignatureKeyHandle).to.be.undefined;
-                expect(loadConfig?.dependentProvider).to.be.undefined;
+                expect(loadConfig?.requiredProvider).to.be.undefined;
 
                 expect(await getProvider({ securityLevel: "Software" }).providerName()).to.equal("SoftwareProvider");
                 expect(await getProvider({ providerName: "SoftwareProvider" }).providerName()).to.equal(
@@ -125,7 +125,10 @@ export class CryptoLayerProvidersTest {
                 const mockedFactory: ProviderFactoryFunctions = mock<ProviderFactoryFunctions>();
                 when(mockedFactory.getProviderCapabilities(anything())).thenResolve([]);
 
-                const loadConfig = await initializeNewProviders(instance(mockedStorageConfig), instance(mockedFactory));
+                const loadConfig = await newInitializedProviders(
+                    instance(mockedStorageConfig),
+                    instance(mockedFactory)
+                );
 
                 expect(loadConfig).to.be.undefined;
 
@@ -142,13 +145,16 @@ export class CryptoLayerProvidersTest {
                     instance(mockedSoftwareProvider)
                 );
 
-                const loadConfig = await initializeNewProviders(instance(mockedStorageConfig), instance(mockedFactory));
+                const loadConfig = await newInitializedProviders(
+                    instance(mockedStorageConfig),
+                    instance(mockedFactory)
+                );
 
                 expect(loadConfig).to.exist.and.to.be.instanceOf(ProviderInitConfig);
                 expect(loadConfig?.providerName).to.equal("SoftwareProvider");
                 expect(loadConfig?.masterEncryptionKeyHandle).to.be.undefined;
                 expect(loadConfig?.masterSignatureKeyHandle).to.be.undefined;
-                expect(loadConfig?.dependentProvider).to.be.undefined;
+                expect(loadConfig?.requiredProvider).to.be.undefined;
 
                 expect(await getProvider({ securityLevel: "Software" }).providerName()).to.equal("SoftwareProvider");
                 expect(hasProviderForSecurityLevel("Hardware")).to.be.false;
@@ -167,16 +173,19 @@ export class CryptoLayerProvidersTest {
                     instance(mockedAndroidProvider)
                 );
 
-                const loadConfig = await initializeNewProviders(instance(mockedStorageConfig), instance(mockedFactory));
+                const loadConfig = await newInitializedProviders(
+                    instance(mockedStorageConfig),
+                    instance(mockedFactory)
+                );
 
                 expect(loadConfig).to.exist.and.to.be.instanceOf(ProviderInitConfig);
                 expect(loadConfig?.providerName).to.equal("SoftwareProvider");
                 expect(loadConfig?.masterEncryptionKeyHandle?.keyId).to.equal(mockKeyId);
                 expect(loadConfig?.masterSignatureKeyHandle?.keyId).to.equal(mockKeyPairId);
-                expect(loadConfig?.dependentProvider?.providerName).to.equal("ANDROID_PROVIDER_SECURE_ELEMENT");
-                expect(loadConfig?.dependentProvider?.masterEncryptionKeyHandle).to.be.undefined;
-                expect(loadConfig?.dependentProvider?.masterSignatureKeyHandle).to.be.undefined;
-                expect(loadConfig?.dependentProvider?.dependentProvider).to.be.undefined;
+                expect(loadConfig?.requiredProvider?.providerName).to.equal("ANDROID_PROVIDER_SECURE_ELEMENT");
+                expect(loadConfig?.requiredProvider?.masterEncryptionKeyHandle).to.be.undefined;
+                expect(loadConfig?.requiredProvider?.masterSignatureKeyHandle).to.be.undefined;
+                expect(loadConfig?.requiredProvider?.requiredProvider).to.be.undefined;
 
                 expect(await getProvider({ securityLevel: "Software" }).providerName()).to.equal("SoftwareProvider");
                 expect(await getProvider({ securityLevel: "Hardware" }).providerName()).to.equal(
@@ -197,7 +206,7 @@ export class CryptoLayerProvidersTest {
                     instance(mockedImaginaryProvider)
                 );
 
-                const loadConfig = await initializeNewProviders(
+                const loadConfig = await newInitializedProviders(
                     instance(mockedStorageConfig),
                     instance(mockedFactory),
                     [
@@ -221,7 +230,7 @@ export class CryptoLayerProvidersTest {
                 expect(loadConfig?.providerName).to.equal("SoftwareProvider");
                 expect(loadConfig?.masterEncryptionKeyHandle?.keyId).to.equal(mockKeyId);
                 expect(loadConfig?.masterSignatureKeyHandle?.keyId).to.equal(mockKeyId);
-                expect(loadConfig?.dependentProvider?.providerName).to.equal("IMAGINARY_PROVIDER");
+                expect(loadConfig?.requiredProvider?.providerName).to.equal("IMAGINARY_PROVIDER");
 
                 expect(await getProvider({ securityLevel: "Software" }).providerName()).to.equal("SoftwareProvider");
                 expect(await getProvider({ securityLevel: "Hardware" }).providerName()).to.equal("IMAGINARY_PROVIDER");
@@ -274,13 +283,16 @@ export class CryptoLayerProvidersTest {
                     instance(mockedAndroidSoftwareProvider)
                 );
 
-                const loadConfig = await initializeNewProviders(instance(mockedStorageConfig), instance(mockedFactory));
+                const loadConfig = await newInitializedProviders(
+                    instance(mockedStorageConfig),
+                    instance(mockedFactory)
+                );
 
                 expect(loadConfig).to.exist.and.to.be.instanceOf(ProviderInitConfig);
                 expect(loadConfig?.providerName).to.equal("ANDROID_PROVIDER");
                 expect(loadConfig?.masterEncryptionKeyHandle).to.be.undefined;
                 expect(loadConfig?.masterSignatureKeyHandle).to.be.undefined;
-                expect(loadConfig?.dependentProvider).to.be.undefined;
+                expect(loadConfig?.requiredProvider).to.be.undefined;
 
                 expect(await getProvider({ securityLevel: "Software" }).providerName()).to.equal("ANDROID_PROVIDER");
                 expect(hasProviderForSecurityLevel("Hardware")).to.be.false;
@@ -295,13 +307,13 @@ export class CryptoLayerProvidersTest {
                     instance(mockedSoftwareProvider)
                 );
 
-                const _loadConfig = await initializeNewProviders(
+                const _loadConfig = await newInitializedProviders(
                     instance(mockedStorageConfig),
                     instance(mockedFactory)
                 );
 
                 await expectThrows(
-                    initializeNewProviders(instance(mockedStorageConfig), instance(mockedFactory)),
+                    newInitializedProviders(instance(mockedStorageConfig), instance(mockedFactory)),
                     CryptoErrorCode.CalProvidersAlreadyInitialized
                 );
 
@@ -318,7 +330,10 @@ export class CryptoLayerProvidersTest {
                     instance(mockedSoftwareProvider)
                 );
 
-                const loadConfig = await initializeNewProviders(instance(mockedStorageConfig), instance(mockedFactory));
+                const loadConfig = await newInitializedProviders(
+                    instance(mockedStorageConfig),
+                    instance(mockedFactory)
+                );
 
                 expect(await getProvider({ securityLevel: "Software" }).providerName()).to.equal("SoftwareProvider");
                 expect(hasProviderForSecurityLevel("Hardware")).to.be.false;
@@ -327,7 +342,7 @@ export class CryptoLayerProvidersTest {
                 clearProviders();
                 expect(providersInitialized()).to.be.false;
 
-                await loadProviderFromConfig(loadConfig!, instance(mockedStorageConfig), instance(mockedFactory));
+                await initializeProviders(loadConfig!, instance(mockedStorageConfig), instance(mockedFactory));
 
                 expect(await getProvider({ securityLevel: "Software" }).providerName()).to.equal("SoftwareProvider");
                 expect(hasProviderForSecurityLevel("Hardware")).to.be.false;
@@ -350,7 +365,10 @@ export class CryptoLayerProvidersTest {
                     instance(mockedAndroidProvider)
                 );
 
-                const loadConfig = await initializeNewProviders(instance(mockedStorageConfig), instance(mockedFactory));
+                const loadConfig = await newInitializedProviders(
+                    instance(mockedStorageConfig),
+                    instance(mockedFactory)
+                );
 
                 expect(await getProvider({ securityLevel: "Software" }).providerName()).to.equal("SoftwareProvider");
                 expect(await getProvider({ securityLevel: "Hardware" }).providerName()).to.equal(
@@ -361,7 +379,7 @@ export class CryptoLayerProvidersTest {
                 clearProviders();
                 expect(providersInitialized()).to.be.false;
 
-                await loadProviderFromConfig(loadConfig!, instance(mockedStorageConfig), instance(mockedFactory));
+                await initializeProviders(loadConfig!, instance(mockedStorageConfig), instance(mockedFactory));
 
                 expect(await getProvider({ securityLevel: "Software" }).providerName()).to.equal("SoftwareProvider");
                 expect(await getProvider({ securityLevel: "Hardware" }).providerName()).to.equal(

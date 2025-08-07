@@ -83,27 +83,34 @@ const DEFAULT_STORAGE_SECURITY_CONFIG: StorageSecurityConfig[] = [
 const PROVIDERS: Map<SecurityLevel, Provider> = new Map();
 const PROVIDERS_BY_NAME: Map<string, Provider> = new Map();
 
-async function updateProvidersByNameMap() {
-    PROVIDERS_BY_NAME.clear();
-    for (const provider of PROVIDERS.values()) {
-        const name = await provider.providerName();
+async function insertProviderIntoProviderMaps(provider: Provider): Promise<void> {
+    const [capabilities, name] = await Promise.all([provider.getCapabilities(), provider.providerName()]);
 
-        if (PROVIDERS_BY_NAME.has(name)) {
-            throw new CryptoError(
-                CryptoErrorCode.CalProvidersAlreadyInitialized,
-                `Provider '${name}' has already been initialized. Due to scope issues with storage scope this provider cannot be initialized again.`
-            ).setContext(updateProvidersByNameMap);
-        }
-
-        PROVIDERS_BY_NAME.set(name, provider);
+    if (capabilities === undefined) {
+        throw new CryptoError(
+            CryptoErrorCode.CalLoadingProvider,
+            `Failed getting capabilities of provider: '${name}'`
+        ).setContext(insertProviderIntoProviderMaps);
     }
+
+    const securityLevel = capabilities.min_security_level;
+
+    if (PROVIDERS.has(securityLevel)) {
+        throw new CryptoError(
+            CryptoErrorCode.CalProvidersAlreadyInitialized,
+            `Only one provider of a security level can be initialized at a time. Provider for security level '${securityLevel}' has already been loaded.`
+        ).setContext(insertProviderIntoProviderMaps);
+    }
+
+    PROVIDERS.set(securityLevel, provider);
+    PROVIDERS_BY_NAME.set(name, provider);
 }
 
 async function loadProviderFromName(
     providerName: string,
     providerImplConfig: ProviderImplConfig,
     factoryFunctions: ProviderFactoryFunctions
-): Promise<void> {
+): Promise<Provider> {
     const provider = await factoryFunctions.createProviderFromName(providerName, providerImplConfig);
 
     if (provider === undefined) {
@@ -113,25 +120,7 @@ async function loadProviderFromName(
         ).setContext(loadProviderFromName);
     }
 
-    const capabilities = await provider.getCapabilities();
-
-    if (capabilities === undefined) {
-        throw new CryptoError(
-            CryptoErrorCode.CalLoadingProvider,
-            `Failed getting capabilities of provider: '${providerName}'`
-        ).setContext(loadProviderFromName);
-    }
-
-    const securityLevel = capabilities.min_security_level;
-
-    if (PROVIDERS.has(securityLevel)) {
-        throw new CryptoError(
-            CryptoErrorCode.CalProvidersAlreadyInitialized,
-            `Only one provider of a security level can be initialized at a time. Provider for security level '${securityLevel}' has already been loaded.`
-        ).setContext(loadProviderFromName);
-    }
-
-    PROVIDERS.set(securityLevel, provider);
+    return provider;
 }
 
 async function additionalConfigFromProviderToBeInitializedConfig(
@@ -140,7 +129,7 @@ async function additionalConfigFromProviderToBeInitializedConfig(
     const additionalConfig = [];
 
     if (providerConfig.masterEncryptionKeyHandle) {
-        const handle = await providerConfig.masterEncryptionKeyHandle.load();
+        const handle = await providerConfig.masterEncryptionKeyHandle.loadKeyHandle();
         if (providerConfig.masterEncryptionKeyHandle.type === "symmetric") {
             additionalConfig.push({
                 StorageConfigSymmetricEncryption: handle
@@ -153,7 +142,7 @@ async function additionalConfigFromProviderToBeInitializedConfig(
     }
 
     if (providerConfig.masterSignatureKeyHandle) {
-        const handle = await providerConfig.masterSignatureKeyHandle.load();
+        const handle = await providerConfig.masterSignatureKeyHandle.loadKeyHandle();
         if (providerConfig.masterSignatureKeyHandle.type === "symmetric") {
             additionalConfig.push({
                 StorageConfigHMAC: handle
@@ -168,13 +157,13 @@ async function additionalConfigFromProviderToBeInitializedConfig(
     return additionalConfig;
 }
 
-export async function loadProviderFromConfig(
+export async function initializeProviders(
     providerConfig: ProviderInitConfig,
     storageConfig: StorageConfig,
     factoryFunctions: ProviderFactoryFunctions
 ): Promise<void> {
-    if (providerConfig.dependentProvider !== undefined) {
-        await loadProviderFromConfig(providerConfig.dependentProvider, storageConfig, factoryFunctions);
+    if (providerConfig.requiredProvider !== undefined) {
+        await initializeProviders(providerConfig.requiredProvider, storageConfig, factoryFunctions);
     }
 
     const implConfig: ProviderImplConfig = {
@@ -183,12 +172,12 @@ export async function loadProviderFromConfig(
 
     implConfig.additional_config.push(...(await additionalConfigFromProviderToBeInitializedConfig(providerConfig)));
 
-    await loadProviderFromName(providerConfig.providerName, implConfig, factoryFunctions);
+    const provider = await loadProviderFromName(providerConfig.providerName, implConfig, factoryFunctions);
 
-    await updateProvidersByNameMap();
+    await insertProviderIntoProviderMaps(provider);
 }
 
-async function initializeNewFallbackSoftwareProvider(
+async function newFallbackSoftwareProvider(
     softwareProviderName: string,
     storageConfig: StorageConfig,
     factoryFunctions: ProviderFactoryFunctions
@@ -197,7 +186,7 @@ async function initializeNewFallbackSoftwareProvider(
         providerName: softwareProviderName
     });
 
-    await loadProviderFromConfig(providerToBeInitializedConfig, storageConfig, factoryFunctions);
+    await initializeProviders(providerToBeInitializedConfig, storageConfig, factoryFunctions);
 
     return providerToBeInitializedConfig;
 }
@@ -220,7 +209,7 @@ async function keyHandleFromStorageSecuritySpec(
     );
 }
 
-async function initializeNewHybridProvider(
+async function newHybridProvider(
     hwProviderName: string,
     storageConfig: StorageConfig,
     storageSecurityConfig: StorageSecurityConfig,
@@ -230,7 +219,7 @@ async function initializeNewHybridProvider(
         providerName: hwProviderName
     });
 
-    await loadProviderFromConfig(hwProviderToBeInitialized, storageConfig, factoryFunctions);
+    await initializeProviders(hwProviderToBeInitialized, storageConfig, factoryFunctions);
 
     const [encryptionKeyHandle, signatureKeyHandle] = await Promise.all([
         keyHandleFromStorageSecuritySpec(storageSecurityConfig.encryption),
@@ -239,39 +228,33 @@ async function initializeNewHybridProvider(
 
     const swProviderToBeInitialized = ProviderInitConfig.from({
         providerName: SOFTWARE_PROVIDER_NAME,
-        masterSignatureKeyHandle: ProviderInitConfigKeyHandle.encode(signatureKeyHandle),
-        masterEncryptionKeyHandle: ProviderInitConfigKeyHandle.encode(encryptionKeyHandle)
+        masterSignatureKeyHandle: ProviderInitConfigKeyHandle.fromDeviceBoundHandle(signatureKeyHandle),
+        masterEncryptionKeyHandle: ProviderInitConfigKeyHandle.fromDeviceBoundHandle(encryptionKeyHandle)
     });
 
-    await loadProviderFromConfig(swProviderToBeInitialized, storageConfig, factoryFunctions);
+    await initializeProviders(swProviderToBeInitialized, storageConfig, factoryFunctions);
 
-    swProviderToBeInitialized.dependentProvider = hwProviderToBeInitialized;
+    swProviderToBeInitialized.requiredProvider = hwProviderToBeInitialized;
 
     return swProviderToBeInitialized;
 }
 
-function storageSecurityForProviderName(
-    providerName: string,
-    storageSecurityConfig?: StorageSecurityConfig[]
-): StorageSecurityConfig | undefined {
-    return (
-        storageSecurityConfig?.find((config) => config.name === providerName) ??
-        DEFAULT_STORAGE_SECURITY_CONFIG.find((config) => config.name === providerName)
-    );
-}
-
-export async function initializeNewProviders(
+export async function newInitializedProviders(
     storageConfig: StorageConfig,
     factoryFunctions: ProviderFactoryFunctions,
     storageSecurityConfig?: StorageSecurityConfig[]
 ): Promise<ProviderInitConfig | undefined> {
+    const getStorageSecurityConfig = (providerName: string) =>
+        storageSecurityConfig?.find((config) => config.name === providerName) ??
+        DEFAULT_STORAGE_SECURITY_CONFIG.find((config) => config.name === providerName);
+
     const basicProviderImplConfig: ProviderImplConfig = {
         additional_config: [storageConfig]
     };
     const providerNamesAndCaps = await factoryFunctions.getProviderCapabilities(basicProviderImplConfig);
     const hardwareProviderNamesAndCaps = providerNamesAndCaps
         .filter(([, cap]) => cap.min_security_level === "Hardware")
-        .filter(([name]) => storageSecurityForProviderName(name, storageSecurityConfig));
+        .filter(([name]) => getStorageSecurityConfig(name));
 
     const softwareProviderNamesAndCaps = providerNamesAndCaps.filter(
         ([, cap]) => cap.min_security_level === "Software"
@@ -286,30 +269,30 @@ export async function initializeNewProviders(
             ([name]) => name !== SOFTWARE_PROVIDER_NAME
         );
         if (nonFallbackSoftwareProviders.length !== 0) {
-            return await initializeNewFallbackSoftwareProvider(
+            return await newFallbackSoftwareProvider(
                 nonFallbackSoftwareProviders[0][0],
                 storageConfig,
                 factoryFunctions
             );
         }
-        return await initializeNewFallbackSoftwareProvider(SOFTWARE_PROVIDER_NAME, storageConfig, factoryFunctions);
+        return await newFallbackSoftwareProvider(SOFTWARE_PROVIDER_NAME, storageConfig, factoryFunctions);
     }
 
     const hwProviderName = hardwareProviderNamesAndCaps[0][0];
-    const hwStorageSecurityConfig = storageSecurityForProviderName(hwProviderName, storageSecurityConfig);
+    const hwStorageSecurityConfig = getStorageSecurityConfig(hwProviderName);
 
     if (hwStorageSecurityConfig === undefined) {
         return undefined;
     }
 
-    return await initializeNewHybridProvider(hwProviderName, storageConfig, hwStorageSecurityConfig, factoryFunctions);
+    return await newHybridProvider(hwProviderName, storageConfig, hwStorageSecurityConfig, factoryFunctions);
 }
 
 /**
  * Returns an initialized provider with the given provider identifier if possible,
  * otherwise throws {@link CryptoError} with {@link CryptoErrorCode.CalThisProviderNotInitialized}.
  *
- * Providers need to be initialized via the {@link initCryptoLayerProviders} function,
+ * Providers need to be initialized via the {@link newInitializedProviders} or {@link initializeProviders} functions,
  * else throws {@link CryptoError} with  {@link CryptoErrorCode.CalProvidersNotInitialized}.
  */
 export function getProvider(identifier: CryptoLayerProviderIdentifier): Provider {

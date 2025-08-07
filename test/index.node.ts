@@ -1,4 +1,4 @@
-import { CryptoLayerProviderIdentifier, initializeNewProviders, SodiumWrapper } from "@nmshd/crypto";
+import { CryptoLayerProviderIdentifier, newInitializedProviders, SodiumWrapper } from "@nmshd/crypto";
 import {
     createProvider,
     createProviderFromName,
@@ -52,7 +52,7 @@ SodiumWrapper.ready()
 export const TEST_PROVIDER_IDENT: CryptoLayerProviderIdentifier = { securityLevel: "Software" };
 
 Promise.all([
-    initializeNewProviders(
+    newInitializedProviders(
         // eslint-disable-next-line @typescript-eslint/naming-convention
         { FileStoreConfig: { db_dir: "./test_cal_db" } },
         { getAllProviders, createProvider, createProviderFromName, getProviderCapabilities }

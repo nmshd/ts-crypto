@@ -16,6 +16,9 @@ interface IProviderInitConfigKeyHandle {
     providerName: string;
 }
 
+/**
+ * Configuration for loading a key handle from a provider without loading on deserialization.
+ */
 @type("ProviderInitConfigKeyHandle")
 export class ProviderInitConfigKeyHandle extends CryptoSerializable {
     @validate()
@@ -34,7 +37,9 @@ export class ProviderInitConfigKeyHandle extends CryptoSerializable {
         return ProviderInitConfigKeyHandle.fromAny(value);
     }
 
-    public static encode(handle: DeviceBoundKeyHandle | DeviceBoundKeyPairHandle): ProviderInitConfigKeyHandle {
+    public static fromDeviceBoundHandle(
+        handle: DeviceBoundKeyHandle | DeviceBoundKeyPairHandle
+    ): ProviderInitConfigKeyHandle {
         return ProviderInitConfigKeyHandle.from({
             type: handle instanceof DeviceBoundKeyHandle ? "symmetric" : "asymmetric",
             keyId: handle.id,
@@ -42,7 +47,7 @@ export class ProviderInitConfigKeyHandle extends CryptoSerializable {
         });
     }
 
-    public async load(): Promise<KeyHandle | KeyPairHandle> {
+    public async loadKeyHandle(): Promise<KeyHandle | KeyPairHandle> {
         const provider = getProvider({ providerName: this.providerName });
 
         switch (this.type) {
@@ -58,9 +63,12 @@ interface IProviderInitConfig {
     providerName: string;
     masterEncryptionKeyHandle?: ProviderInitConfigKeyHandle;
     masterSignatureKeyHandle?: ProviderInitConfigKeyHandle;
-    dependentProvider?: ProviderInitConfig;
+    requiredProvider?: ProviderInitConfig;
 }
 
+/**
+ * Recursive configuration used to load providers and their dependencies.
+ */
 @type("ProviderInitConfig")
 export class ProviderInitConfig extends CryptoSerializable {
     @validate()
@@ -77,7 +85,7 @@ export class ProviderInitConfig extends CryptoSerializable {
 
     @validate({ nullable: true })
     @serialize()
-    public dependentProvider?: ProviderInitConfig;
+    public requiredProvider?: ProviderInitConfig;
 
     public static from(value: IProviderInitConfig): ProviderInitConfig {
         return ProviderInitConfig.fromAny(value);

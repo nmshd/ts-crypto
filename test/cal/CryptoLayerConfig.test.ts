@@ -22,7 +22,7 @@ export class CryptoLayerConfigTest {
                 expect(deserialized.providerName).to.exist.and.to.equal(config.providerName);
                 expect(deserialized.masterEncryptionKeyHandle).to.be.undefined;
                 expect(deserialized.masterSignatureKeyHandle).to.be.undefined;
-                expect(deserialized.dependentProvider).to.be.undefined;
+                expect(deserialized.requiredProvider).to.be.undefined;
             });
 
             it("should serialize and deserialize with handles", async function () {
@@ -37,7 +37,7 @@ export class CryptoLayerConfigTest {
 
                 const config = ProviderInitConfig.from({
                     providerName: "TestProvider",
-                    masterEncryptionKeyHandle: ProviderInitConfigKeyHandle.encode(keyHandle)
+                    masterEncryptionKeyHandle: ProviderInitConfigKeyHandle.fromDeviceBoundHandle(keyHandle)
                 });
 
                 const blob = config.serialize();
@@ -46,7 +46,7 @@ export class CryptoLayerConfigTest {
 
                 expect(deserialized.providerName).to.exist.and.to.equal(config.providerName);
                 expect(deserialized.masterSignatureKeyHandle).to.be.undefined;
-                expect(deserialized.dependentProvider).to.be.undefined;
+                expect(deserialized.requiredProvider).to.be.undefined;
 
                 expect(deserialized.masterEncryptionKeyHandle).to.exist.and.to.be.instanceOf(
                     ProviderInitConfigKeyHandle
@@ -57,7 +57,7 @@ export class CryptoLayerConfigTest {
 
                 expect(deserialized.masterEncryptionKeyHandle.keyId).to.exist.and.to.equal(keyHandle.id);
 
-                const loadedEncryptionKeyHandle = await deserialized.masterEncryptionKeyHandle.load();
+                const loadedEncryptionKeyHandle = await deserialized.masterEncryptionKeyHandle.loadKeyHandle();
 
                 expect(loadedEncryptionKeyHandle).to.exist.and.to.satisfy(isKeyHandle);
                 expect(await loadedEncryptionKeyHandle.id()).to.exist.and.to.equal(keyHandle.id);
@@ -70,7 +70,7 @@ export class CryptoLayerConfigTest {
 
                 const config = ProviderInitConfig.from({
                     providerName: "TestProvider",
-                    dependentProvider: dependantConfig
+                    requiredProvider: dependantConfig
                 });
 
                 const blob = config.serialize();
@@ -80,9 +80,7 @@ export class CryptoLayerConfigTest {
                 expect(deserialized.providerName).to.exist.and.to.equal(config.providerName);
                 expect(deserialized.masterEncryptionKeyHandle).to.be.undefined;
                 expect(deserialized.masterSignatureKeyHandle).to.be.undefined;
-                expect(deserialized.dependentProvider?.providerName).to.exist.and.to.equal(
-                    dependantConfig.providerName
-                );
+                expect(deserialized.requiredProvider?.providerName).to.exist.and.to.equal(dependantConfig.providerName);
             });
         });
 
@@ -107,7 +105,7 @@ export class CryptoLayerConfigTest {
                     CryptoHashAlgorithm.SHA256
                 );
 
-                const configKeyHandle = ProviderInitConfigKeyHandle.encode(keyHandle);
+                const configKeyHandle = ProviderInitConfigKeyHandle.fromDeviceBoundHandle(keyHandle);
 
                 expect(configKeyHandle).to.exist.and.to.be.instanceOf(ProviderInitConfigKeyHandle);
                 expect(configKeyHandle.type).to.equal("symmetric");
@@ -122,9 +120,9 @@ export class CryptoLayerConfigTest {
                     CryptoHashAlgorithm.SHA256
                 );
 
-                const configKeyHandle = ProviderInitConfigKeyHandle.encode(keyHandle);
+                const configKeyHandle = ProviderInitConfigKeyHandle.fromDeviceBoundHandle(keyHandle);
 
-                const loadedKeyHandle = await configKeyHandle.load();
+                const loadedKeyHandle = await configKeyHandle.loadKeyHandle();
 
                 assertKeyHandle(loadedKeyHandle);
 
