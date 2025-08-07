@@ -47,6 +47,7 @@ SodiumWrapper.ready()
         CryptoStateTest.run();
         BufferTest.run();
     })
+    // eslint-disable-next-line no-console
     .catch((e) => console.log(e));
 
 export const TEST_PROVIDER_IDENT: CryptoLayerProviderIdentifier = { securityLevel: "Software" };
@@ -82,4 +83,5 @@ Promise.all([
         CryptoLayerProvidersTest.run();
         // CryptoLayerProvidersTest REPLACES ALL PROVIDERS WITH MOCKS!
     })
+    // eslint-disable-next-line no-console
     .catch((e) => console.log(e));
