@@ -83,8 +83,6 @@ export class CryptoLayerUtils {
                 return "AesGcm256";
             case CryptoEncryptionAlgorithm.XCHACHA20_POLY1305:
                 return "XChaCha20Poly1305";
-            case CryptoEncryptionAlgorithm.CHACHA20_POLY1305:
-                return "ChaCha20Poly1305";
         }
     }
 
@@ -103,7 +101,10 @@ export class CryptoLayerUtils {
             case "XChaCha20Poly1305":
                 return CryptoEncryptionAlgorithm.XCHACHA20_POLY1305;
             case "ChaCha20Poly1305":
-                return CryptoEncryptionAlgorithm.CHACHA20_POLY1305;
+                throw new CryptoError(
+                    CryptoErrorCode.CalUnsupportedAlgorithm,
+                    "ts-crypto does not support ChaCha20"
+                ).setContext(CryptoLayerUtils.cryptoEncryptionAlgorithmFromCipher);
         }
     }
 

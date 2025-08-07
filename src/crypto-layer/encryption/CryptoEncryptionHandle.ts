@@ -217,7 +217,6 @@ export class CryptoEncryptionHandle {
         switch (algorithm) {
             case CryptoEncryptionAlgorithm.AES128_GCM:
             case CryptoEncryptionAlgorithm.AES256_GCM:
-            case CryptoEncryptionAlgorithm.CHACHA20_POLY1305:
                 nonceLength = 12;
                 break;
             case CryptoEncryptionAlgorithm.XCHACHA20_POLY1305:

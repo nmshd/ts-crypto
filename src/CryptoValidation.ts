@@ -109,7 +109,6 @@ export class CryptoValidation {
 
         switch (algorithm) {
             case CryptoEncryptionAlgorithm.XCHACHA20_POLY1305:
-            case CryptoEncryptionAlgorithm.CHACHA20_POLY1305:
             case CryptoEncryptionAlgorithm.AES128_GCM:
             case CryptoEncryptionAlgorithm.AES256_GCM:
                 break;
@@ -195,7 +194,6 @@ export class CryptoValidation {
                     break;
                 case CryptoEncryptionAlgorithm.AES256_GCM:
                 case CryptoEncryptionAlgorithm.XCHACHA20_POLY1305:
-                case CryptoEncryptionAlgorithm.CHACHA20_POLY1305:
                     if (byteLength !== 32) {
                         errorLength = 32;
                     }
@@ -240,7 +238,6 @@ export class CryptoValidation {
                     break;
                 case CryptoEncryptionAlgorithm.AES256_GCM:
                 case CryptoEncryptionAlgorithm.XCHACHA20_POLY1305:
-                case CryptoEncryptionAlgorithm.CHACHA20_POLY1305:
                     if (buffer.byteLength !== 32) {
                         errorLength = 32;
                     }
@@ -309,7 +306,6 @@ export class CryptoValidation {
             switch (algorithm) {
                 case CryptoEncryptionAlgorithm.AES128_GCM:
                 case CryptoEncryptionAlgorithm.AES256_GCM:
-                case CryptoEncryptionAlgorithm.CHACHA20_POLY1305:
                     if (buffer.byteLength !== 12) {
                         errorLength = 12;
                     }

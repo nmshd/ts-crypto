@@ -25,9 +25,7 @@ export const enum CryptoEncryptionAlgorithm {
     // eslint-disable-next-line @typescript-eslint/naming-convention
     AES256_GCM = 2,
     // eslint-disable-next-line @typescript-eslint/naming-convention
-    XCHACHA20_POLY1305 = 3,
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    CHACHA20_POLY1305 = 6
+    XCHACHA20_POLY1305 = 3
 }
 
 export abstract class CryptoEncryption {
@@ -48,7 +46,6 @@ export abstract class CryptoEncryption {
                 break;
             case CryptoEncryptionAlgorithm.AES128_GCM:
             case CryptoEncryptionAlgorithm.AES256_GCM:
-            case CryptoEncryptionAlgorithm.CHACHA20_POLY1305:
             default:
                 throw new CryptoError(CryptoErrorCode.NotYetImplemented);
         }
@@ -120,7 +117,6 @@ export abstract class CryptoEncryption {
                 break;
             case CryptoEncryptionAlgorithm.AES128_GCM:
             case CryptoEncryptionAlgorithm.AES256_GCM:
-            case CryptoEncryptionAlgorithm.CHACHA20_POLY1305:
             default:
                 throw new CryptoError(CryptoErrorCode.NotYetImplemented);
         }
@@ -179,7 +175,6 @@ export abstract class CryptoEncryption {
                 }
             case CryptoEncryptionAlgorithm.AES128_GCM:
             case CryptoEncryptionAlgorithm.AES256_GCM:
-            case CryptoEncryptionAlgorithm.CHACHA20_POLY1305:
             default:
                 throw new CryptoError(CryptoErrorCode.NotYetImplemented);
         }
@@ -242,7 +237,6 @@ export abstract class CryptoEncryption {
                 }
             case CryptoEncryptionAlgorithm.AES128_GCM:
             case CryptoEncryptionAlgorithm.AES256_GCM:
-            case CryptoEncryptionAlgorithm.CHACHA20_POLY1305:
             default:
                 throw new CryptoError(CryptoErrorCode.NotYetImplemented);
         }
@@ -285,7 +279,6 @@ export abstract class CryptoEncryption {
             case CryptoEncryptionAlgorithm.XCHACHA20_POLY1305:
                 nonceLength = 24;
                 break;
-            case CryptoEncryptionAlgorithm.CHACHA20_POLY1305:
             default:
                 throw new CryptoError(
                     CryptoErrorCode.EncryptionWrongAlgorithm,
