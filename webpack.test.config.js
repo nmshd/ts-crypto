@@ -1,6 +1,5 @@
 const path = require("path");
 const { IgnorePlugin } = require("webpack");
-/* const { plugins } = require("./webpack.config"); */
 
 module.exports = {
     mode: "development",
