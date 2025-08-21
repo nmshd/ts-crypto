@@ -1,4 +1,5 @@
 const path = require("path");
+const { IgnorePlugin } = require("webpack");
 
 module.exports = {
     mode: "development",
@@ -25,5 +26,6 @@ module.exports = {
         chai: "chai",
         path: "NMSHDCrypto",
         crypto: "NMSHDCrypto"
-    }
+    },
+    plugins: [new IgnorePlugin({ resourceRegExp: /rs\-crypto\-node/g })]
 };
