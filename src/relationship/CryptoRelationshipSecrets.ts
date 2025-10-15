@@ -158,16 +158,14 @@ export class CryptoRelationshipSecrets extends CryptoSerializable implements ICr
             CryptoDerivation.deriveKeyFromBase(derivedKey.receivingKey, 1, "RELTEM01")
         ]);
 
-        const [receiveState, transmitState] = await Promise.all([
-            CryptoPrivateStateReceive.fromPublicState(peerPublicTransmitState, derivedRx.secretKey, 0),
-            CryptoPrivateStateTransmit.from({
-                algorithm: CryptoEncryptionAlgorithm.XCHACHA20_POLY1305,
-                counter: 0,
-                nonce: request.nonce,
-                secretKey: derivedTx.secretKey,
-                stateType: CryptoStateType.Transmit
-            })
-        ]);
+        const receiveState = CryptoPrivateStateReceive.fromPublicState(peerPublicTransmitState, derivedRx.secretKey, 0);
+        const transmitState = CryptoPrivateStateTransmit.from({
+            algorithm: CryptoEncryptionAlgorithm.XCHACHA20_POLY1305,
+            counter: 0,
+            nonce: request.nonce,
+            secretKey: derivedTx.secretKey,
+            stateType: CryptoStateType.Transmit
+        });
 
         return CryptoRelationshipSecrets.from({
             exchangeKeypair: exchangeKeypair,
@@ -231,10 +229,8 @@ export class CryptoRelationshipSecrets extends CryptoSerializable implements ICr
             CryptoDerivation.deriveKeyFromBase(derivedKey.receivingKey, 1, "RELREQ01")
         ]);
 
-        const [receiveState, transmitState] = await Promise.all([
-            CryptoPrivateStateReceive.fromNonce(peerGeneratedNonce, derivedRx.secretKey),
-            CryptoPrivateStateTransmit.generate(derivedTx.secretKey)
-        ]);
+        const receiveState = CryptoPrivateStateReceive.fromNonce(peerGeneratedNonce, derivedRx.secretKey);
+        const transmitState = CryptoPrivateStateTransmit.generate(derivedTx.secretKey);
 
         const masterKey = await CryptoExchange.deriveTemplator(templateExchangeKeypair, peerTemplateKey);
         const secretKey = await CryptoDerivation.deriveKeyFromBase(masterKey.receivingKey, 1, "REQTMP01");
