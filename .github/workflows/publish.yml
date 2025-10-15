@@ -33,6 +33,5 @@ jobs:
       - run: bash .ci/test.sh
       - run: bash .ci/publish.sh
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           VERSION: ${{ github.ref_name }}
     needs: ["run-checks"]
