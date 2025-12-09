@@ -4,7 +4,7 @@
     extends: ["config:recommended", ":disableDependencyDashboard"],
     labels: ["dependencies"],
     schedule: ["after 10pm every weekday", "before 5am every weekday", "every weekend"],
-    reviewers: ["jkoenig134"],
+    reviewers: ["Milena-Czierlinski", "britsta"],
     packageRules: [
         {
             // we don't want to update eslint currently, because there is a breaking change in its config
