@@ -32,7 +32,7 @@
     },
     "dependencies": {
         "libsodium-wrappers-sumo": "0.7.15",
-        "uuid": "^11.1.0"
+        "uuid": "^14.0.0"
     },
     "devDependencies": {
         "@js-soft/eslint-config-ts": "^2.0.4",
