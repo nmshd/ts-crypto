@@ -1,6 +1,6 @@
 {
     "name": "@nmshd/crypto",
-    "description": "The Enmeshed crypto library.",
+    "description": "The enmeshed crypto library.",
     "homepage": "https://enmeshed.eu",
     "repository": "github:nmshd/ts-crypto",
     "license": "MIT",
