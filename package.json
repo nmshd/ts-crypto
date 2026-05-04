@@ -31,8 +31,7 @@
         "test:web:debug": "browsertest-runner --debug"
     },
     "dependencies": {
-        "libsodium-wrappers-sumo": "0.7.15",
-        "uuid": "^14.0.0"
+        "libsodium-wrappers-sumo": "0.7.15"
     },
     "devDependencies": {
         "@js-soft/eslint-config-ts": "^2.0.4",

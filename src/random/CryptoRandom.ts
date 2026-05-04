@@ -1,4 +1,3 @@
-import { v4 as uuidv4 } from "uuid";
 import { CoreBuffer } from "../CoreBuffer";
 import { CryptoError } from "../CryptoError";
 import { CryptoErrorCode } from "../CryptoErrorCode";
@@ -52,10 +51,6 @@ export class CryptoRandom {
     }
     public static async array(length: number): Promise<any> {
         return (await CryptoRandom.bytes(length)).toArray();
-    }
-
-    public static uuid(): string {
-        return uuidv4();
     }
 
     public static async scramble(input: string): Promise<string> {
