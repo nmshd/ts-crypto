@@ -1,4 +1,4 @@
 export enum CryptoStateType {
-    "Receive" = 1,
-    "Transmit" = 2
+    Receive = 1,
+    Transmit = 2
 }
