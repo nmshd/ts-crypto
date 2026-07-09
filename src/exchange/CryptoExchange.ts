@@ -41,8 +41,12 @@ export class CryptoExchange {
                 privateKeyBuffer = pair.privateKey;
                 publicKeyBuffer = pair.publicKey;
                 break;
-            case CryptoExchangeAlgorithm.ECDH_P256: { throw new Error('Not implemented yet: CryptoExchangeAlgorithm.ECDH_P256 case') }
-            case CryptoExchangeAlgorithm.ECDH_P521: { throw new Error('Not implemented yet: CryptoExchangeAlgorithm.ECDH_P521 case') }
+            case CryptoExchangeAlgorithm.ECDH_P256: {
+                throw new Error("Not implemented yet: CryptoExchangeAlgorithm.ECDH_P256 case");
+            }
+            case CryptoExchangeAlgorithm.ECDH_P521: {
+                throw new Error("Not implemented yet: CryptoExchangeAlgorithm.ECDH_P521 case");
+            }
             default:
                 throw new CryptoError(CryptoErrorCode.NotYetImplemented);
         }
