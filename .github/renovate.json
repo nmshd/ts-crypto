@@ -8,26 +8,6 @@
             "matchPackageNames": ["eslint"],
             "matchUpdateTypes": ["major"],
             "enabled": false
-        },
-        {
-            "groupName": "patch-all",
-            "matchUpdateTypes": ["patch", "digest"],
-            "automerge": true
-        },
-        {
-            "groupName": "minor-updates-npm",
-            "matchDatasources": ["npm"],
-            "matchUpdateTypes": ["minor"]
-        },
-        {
-            "groupName": "minor-updates-docker",
-            "matchDatasources": ["docker"],
-            "matchUpdateTypes": ["minor"]
-        },
-        {
-            "groupName": "minor-updates-github-tags-and-runners",
-            "matchDatasources": ["github-tags", "github-runners"],
-            "matchUpdateTypes": ["minor"]
         }
     ]
 }
