@@ -24,6 +24,8 @@ module.exports = {
     externals: {
         chai: "chai",
         path: "NMSHDCrypto",
-        crypto: "NMSHDCrypto"
+        crypto: "NMSHDCrypto",
+        // libsodium-sumo contains a bare node:fs require in a Node-only branch. So we can safely ignore this here.
+        "node:fs": "{}"
     }
 };
