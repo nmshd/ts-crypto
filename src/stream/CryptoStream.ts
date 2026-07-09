@@ -38,7 +38,7 @@ export class CryptoStream implements ICryptoStream {
         const stream = sodium.crypto_secretstream_xchacha20poly1305_init_push(key.buffer);
         const headerBuffer = CoreBuffer.from(stream.header);
         return CryptoStreamState.from({
-            address: CryptoStreamAddress.from(stream.state as unknown as string),
+            address: CryptoStreamAddress.from(stream.state),
             header: CryptoStreamHeader.from(headerBuffer)
         });
     }
