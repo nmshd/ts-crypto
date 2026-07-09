@@ -63,7 +63,7 @@ export class BaseX {
             let i = 0;
             for (let it1 = size - 1; (carry !== 0 || i < length) && it1 !== -1; it1--, i++) {
                 carry += (256 * b58[it1]) >>> 0;
-                b58[it1] = carry % this.base >>> 0;
+                b58[it1] = (carry % this.base) >>> 0;
                 carry = (carry / this.base) >>> 0;
             }
             if (carry !== 0) {
@@ -117,7 +117,7 @@ export class BaseX {
             let i = 0;
             for (let it3 = size - 1; (carry !== 0 || i < length) && it3 !== -1; it3--, i++) {
                 carry += (this.base * b256[it3]) >>> 0;
-                b256[it3] = carry % 256 >>> 0;
+                b256[it3] = (carry % 256) >>> 0;
                 carry = (carry / 256) >>> 0;
             }
             if (carry !== 0) {
