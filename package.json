@@ -17,7 +17,7 @@
         "build:node": "tsc -p tsconfig.json",
         "build:test": "tsc -p tsconfig.test.json",
         "bundle:test": "webpack --stats-all --config webpack.test.config.js",
-        "cdep": "tsc && depcruise --config .dependency-cruiser.cjs src",
+        "cdep": "tsc && depcruise --config .dependency-cruiser.cjs dist",
         "lint": "npm run lint:prettier && npm run lint:eslint && npm run lint:tsc",
         "lint:eslint": "eslint --ext .ts ./src ./test",
         "lint:prettier": "prettier --check .",
