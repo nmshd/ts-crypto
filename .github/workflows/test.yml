@@ -19,7 +19,10 @@ jobs:
         with:
           node-version: current
       - uses: browser-actions/setup-chrome@v2
+        id: chrome
       - run: npm ci
       - run: npm run build
       - run: bash .ci/test.sh
+        env:
+          PUPPETEER_EXECUTABLE_PATH: ${{ steps.chrome.outputs.chrome-path }}
     needs: ["run-checks"]
